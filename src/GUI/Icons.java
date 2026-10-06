@@ -89,7 +89,48 @@ public final class Icons {
                 g.draw(new Line2D.Double(6, 18, 14, 10));
                 g.draw(new Ellipse2D.Double(11, 3.5, 7, 7));
             }
+            case "exit" -> {
+                g.draw(new RoundRectangle2D.Double(9, 5, 10, 14, 3, 3));
+                g.draw(new Line2D.Double(12, 12, 4, 12));
+                g.draw(new Line2D.Double(4, 12, 7, 9));
+                g.draw(new Line2D.Double(4, 12, 7, 15));
+            }
+            case "lock" -> {
+                g.draw(new RoundRectangle2D.Double(6, 11, 12, 9, 2, 2));
+                g.draw(new Arc2D.Double(8, 5, 8, 10, 0, 180, Arc2D.OPEN));
+                g.draw(new Line2D.Double(12, 15, 12, 17));
+            }
+            case "sync" -> {
+                g.draw(new Arc2D.Double(5, 5, 14, 14, 45, 270, Arc2D.OPEN));
+                g.draw(new Line2D.Double(18, 12, 21, 9));
+                g.draw(new Line2D.Double(18, 12, 15, 9));
+            }
+            case "bar-chart" -> {
+                g.draw(new Line2D.Double(4, 20, 20, 20));
+                g.draw(new RoundRectangle2D.Double(6, 12, 3, 8, 1, 1));
+                g.draw(new RoundRectangle2D.Double(11, 6, 3, 14, 1, 1));
+                g.draw(new RoundRectangle2D.Double(16, 10, 3, 10, 1, 1));
+            }
+            case "logo" -> {
+                Shape[] s = {
+                    new Ellipse2D.Double(8, 11, 8, 8),
+                    new Ellipse2D.Double(3.5, 7.5, 4.5, 4.5),
+                    new Ellipse2D.Double(9.75, 4, 4.5, 4.5),
+                    new Ellipse2D.Double(16, 7.5, 4.5, 4.5)
+                };
+                for (Shape sh : s) { if (filled) g.fill(sh); else g.draw(sh); }
+            }
+            case "settings" -> {
+                g.draw(new Ellipse2D.Double(7, 7, 10, 10));
+                for (int i = 0; i < 8; i++) {
+                    double a = i * Math.PI / 4.0;
+                    double c = Math.cos(a), s = Math.sin(a);
+                    g.draw(new Line2D.Double(12 + 5 * c, 12 + 5 * s, 12 + 7 * c, 12 + 7 * s));
+                }
+            }
             default -> { }
+
+
         }
         g.dispose();
     }
