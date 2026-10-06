@@ -14,13 +14,11 @@ import Entity.TaiKhoan;
 public class MainFrame extends JFrame {
     private static final String[][] MENU = {
         // tên hiển thị, icon, mô tả
-        {"Tổng quan", "dashboard", "Số liệu hoạt động của cửa hàng trong ngày"},
-        {"Lịch hẹn", "calendar", "Đặt lịch khám, spa, grooming và lưu trú"},
-        {"Thú cưng", "paw", "Hồ sơ thú cưng, tiêm chủng và lịch sử khám"},
-        {"Khách hàng", "customers", ""},
-        {"Nhân sự", "person", "Quản lý nhân viên, ca làm và phân quyền"},
-        {"Kho hàng", "box", "Theo dõi sản phẩm, tồn kho và nhập xuất"},
-        {"Thanh toán", "card", "Hóa đơn, thanh toán và công nợ"},
+        {"Hệ Thống", "settings", "Quản lý phiên đăng nhập, mật khẩu và thông tin cá nhân"},
+        {"Danh Mục", "dashboard", "Quản lý các danh mục từ điển"},
+        {"Xử Lý", "sync", "Xử lý nghiệp vụ"},
+        {"Tìm Kiếm", "search", "Tra cứu thông tin"},
+        {"Thống Kê", "bar-chart", "Báo cáo thống kê"},
     };
 
     private final TaiKhoan taiKhoan;
@@ -39,42 +37,47 @@ public class MainFrame extends JFrame {
 
         content.setBackground(Theme.BG);
         for (String[] m : MENU) {
-            JPanel p = m[0].equals("Khách hàng")
-                    ? new KhachHangPanel()
-                    : new ModulePlaceholderPanel(m[0], m[2], m[1]);
+            JPanel p;
+            if (m[0].equals("Hệ Thống")) {
+                p = new HeThongPanel(taiKhoan, this);
+            } else if (m[0].equals("Khách hàng")) {
+                p = new KhachHangPanel();
+            } else {
+                p = new ModulePlaceholderPanel(m[0], m[2], m[1]);
+            }
             content.add(p, m[0]);
         }
 
         JPanel root = new JPanel(new BorderLayout());
-        root.add(buildSidebar(), BorderLayout.WEST);
+        root.add(buildHeader(), BorderLayout.NORTH);
         root.add(content, BorderLayout.CENTER);
         setContentPane(root);
 
-        chon("Khách hàng"); // màn hình đã hoàn thiện; đổi thành "Tổng quan" nếu muốn mở trang đầu
+        chon("Hệ Thống"); // màn hình đã hoàn thiện; đổi thành "Tổng quan" nếu muốn mở trang đầu
         setSize(1280, 800);
         setMinimumSize(new Dimension(1050, 680));
         setLocationRelativeTo(null);
     }
 
-    private JPanel buildSidebar() {
-        JPanel side = new JPanel();
-        side.setBackground(Theme.SIDEBAR);
-        side.setPreferredSize(new Dimension(230, 0));
-        side.setLayout(new BoxLayout(side, BoxLayout.Y_AXIS));
+    private JPanel buildHeader() {
+        JPanel header = new JPanel();
+        header.setBackground(Theme.SIDEBAR); // Keep the header color the same
+        header.setPreferredSize(new Dimension(0, 56));
+        header.setLayout(new BoxLayout(header, BoxLayout.X_AXIS));
 
         // Thương hiệu
         JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         brand.setOpaque(false);
-        brand.setBorder(new EmptyBorder(26, 20, 22, 10));
-        brand.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
-        brand.setAlignmentX(Component.LEFT_ALIGNMENT);
-        JLabel logo = new JLabel(Icons.of("paw", 26, Color.WHITE));
-        JLabel name = new JLabel("PetCare POS");
-        name.setFont(Theme.font(Font.BOLD, 17));
+        brand.setBorder(new EmptyBorder(10, 20, 10, 20));
+        brand.setAlignmentY(Component.CENTER_ALIGNMENT);
+        JLabel logo = new JLabel(Icons.of("logo", 24, Color.WHITE));
+        JLabel name = new JLabel("Pet Station");
+        name.setFont(Theme.font(Font.BOLD, 18));
         name.setForeground(Color.WHITE);
         brand.add(logo);
         brand.add(name);
-        side.add(brand);
+        header.add(brand);
+        header.add(Box.createHorizontalStrut(20));
 
         // Menu
         for (String[] m : MENU) {
@@ -83,54 +86,54 @@ public class MainFrame extends JFrame {
             navs.put(m[0], b);
             JPanel wrap = new JPanel(new BorderLayout());
             wrap.setOpaque(false);
-            wrap.setBorder(new EmptyBorder(2, 12, 2, 12));
-            wrap.setMaximumSize(new Dimension(Integer.MAX_VALUE, 44));
-            wrap.setAlignmentX(Component.LEFT_ALIGNMENT);
+            wrap.setBorder(new EmptyBorder(8, 5, 8, 5));
+            wrap.setAlignmentY(Component.CENTER_ALIGNMENT);
             wrap.add(b);
-            side.add(wrap);
+            header.add(wrap);
         }
-        side.add(Box.createVerticalGlue());
-        side.add(buildUserBox());
-        return side;
+        header.add(Box.createHorizontalGlue());
+        header.add(buildUserBox());
+        return header;
     }
 
     private JComponent buildUserBox() {
         JPanel box = new JPanel(new BorderLayout(10, 0));
         box.setOpaque(false);
-        box.setBorder(new EmptyBorder(16, 16, 20, 16));
-        box.setMaximumSize(new Dimension(Integer.MAX_VALUE, 84));
-        box.setAlignmentX(Component.LEFT_ALIGNMENT);
+        box.setBorder(new EmptyBorder(5, 10, 5, 20));
+        box.setAlignmentY(Component.CENTER_ALIGNMENT);
         box.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
         JComponent avatar = new JComponent() {
-            { setPreferredSize(new Dimension(40, 40)); }
+            { setPreferredSize(new Dimension(32, 32)); }
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
                 g2.setColor(new Color(0xEEF3F6));
-                g2.fillOval(0, 0, 40, 40);
+                g2.fillOval(0, 0, 32, 32);
                 g2.setColor(Theme.TEXT);
-                g2.setFont(Theme.font(Font.BOLD, 13));
+                g2.setFont(Theme.font(Font.BOLD, 12));
                 FontMetrics fm = g2.getFontMetrics();
                 String s = initials(taiKhoan.getHoTen());
-                g2.drawString(s, (40 - fm.stringWidth(s)) / 2, (40 - fm.getHeight()) / 2 + fm.getAscent());
+                g2.drawString(s, (32 - fm.stringWidth(s)) / 2, (32 - fm.getHeight()) / 2 + fm.getAscent());
                 g2.dispose();
             }
         };
+        
         JPanel text = new JPanel();
         text.setOpaque(false);
         text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
         JLabel n = new JLabel(taiKhoan.getHoTen());
-        n.setFont(Theme.font(Font.BOLD, 13));
+        n.setFont(Theme.font(Font.BOLD, 12));
         n.setForeground(Color.WHITE);
         JLabel r = new JLabel(taiKhoan.getVaiTro());
-        r.setFont(Theme.font(Font.PLAIN, 11));
+        r.setFont(Theme.font(Font.PLAIN, 10));
         r.setForeground(new Color(255, 255, 255, 200));
         text.add(Box.createVerticalGlue());
         text.add(n);
         text.add(r);
         text.add(Box.createVerticalGlue());
+        
         box.add(avatar, BorderLayout.WEST);
         box.add(text, BorderLayout.CENTER);
 
@@ -141,7 +144,7 @@ public class MainFrame extends JFrame {
         menu.add(logout);
         box.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
-                menu.show(box, 16, -menu.getPreferredSize().height + 4);
+                menu.show(box, 0, box.getHeight());
             }
         });
         return box;
@@ -158,7 +161,7 @@ public class MainFrame extends JFrame {
         navs.forEach((k, b) -> b.setSelected(k.equals(key)));
     }
 
-    private void dangXuat() {
+    public void dangXuat() {
         int r = JOptionPane.showOptionDialog(this, "Bạn có chắc chắn muốn đăng xuất?", "Đăng xuất",
                 JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE, null,
                 new String[] {"Đăng xuất", "Hủy"}, "Hủy");
@@ -189,9 +192,13 @@ public class MainFrame extends JFrame {
             setBorderPainted(false);
             setFocusPainted(false);
             setOpaque(false);
-            setHorizontalAlignment(SwingConstants.LEFT);
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            setPreferredSize(new Dimension(100, 40));
+            
+            // Calculate width dynamically
+            FontMetrics fm = getFontMetrics(getFont());
+            int width = 12 + 20 + 8 + fm.stringWidth(getText()) + 12; // padding + icon + gap + text + padding
+            setPreferredSize(new Dimension(width, 34));
+            
             addMouseListener(new MouseAdapter() {
                 @Override public void mouseEntered(MouseEvent e) { hovering = true; repaint(); }
                 @Override public void mouseExited(MouseEvent e) { hovering = false; repaint(); }
@@ -204,13 +211,13 @@ public class MainFrame extends JFrame {
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             if (isSelected() || hovering) {
                 g2.setColor(isSelected() ? Theme.SIDEBAR_ACTIVE : Theme.SIDEBAR_HOVER);
-                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
             }
-            Icons.draw(g2, iconName, 14, (getHeight() - 20) / 2.0, 20, Color.WHITE, false);
+            Icons.draw(g2, iconName, 12, (getHeight() - 20) / 2.0, 20, Color.WHITE, false);
             g2.setFont(getFont());
             g2.setColor(getForeground());
             FontMetrics fm = g2.getFontMetrics();
-            g2.drawString(getText(), 46, (getHeight() - fm.getHeight()) / 2 + fm.getAscent());
+            g2.drawString(getText(), 12 + 20 + 8, (getHeight() - fm.getHeight()) / 2 + fm.getAscent());
             g2.dispose();
         }
     }
