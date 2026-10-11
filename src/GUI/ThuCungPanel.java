@@ -3,6 +3,7 @@ package GUI;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
@@ -410,78 +411,231 @@ public class ThuCungPanel extends JPanel {
     // ---------------- Thêm / Sửa / Chi tiết Thú cưng ----------------
     private void themThuCung() {
         Window owner = SwingUtilities.getWindowAncestor(this);
-        JDialog dlg = new JDialog(owner, "Thêm thú cưng mới", Dialog.ModalityType.APPLICATION_MODAL);
+        JDialog dlg = new JDialog(owner, Dialog.ModalityType.APPLICATION_MODAL);
+        dlg.setUndecorated(true);
+        dlg.setBackground(new Color(0, 0, 0, 0));
 
-        JTextField tfTen = field();
-        JComboBox<String> cbLoai = new JComboBox<>(new String[] {"Chó", "Mèo"});
-        cbLoai.setFont(Theme.font(Font.PLAIN, 14));
-        JTextField tfGiong = field();
-        JTextField tfChu = field();
-        JTextField tfSdt = field();
-        JTextField tfCanNang = field();
-        JComboBox<String> cbSucKhoe = new JComboBox<>(new String[] {"Khỏe mạnh", "Cần theo dõi", "Đang điều trị"});
-        cbSucKhoe.setFont(Theme.font(Font.PLAIN, 14));
-        JCheckBox chkLuuTru = new JCheckBox("Đang gửi chăm sóc / lưu trú tại cửa hàng");
-        chkLuuTru.setFont(Theme.font(Font.PLAIN, 13));
-        chkLuuTru.setOpaque(false);
-        JLabel err = new JLabel(" ");
-        err.setFont(Theme.font(Font.PLAIN, 12));
-        err.setForeground(Theme.RED);
+        RoundedPanel card = new RoundedPanel(18, Color.WHITE, Theme.BORDER);
+        card.setLayout(new BorderLayout(0, 16));
+        card.setBorder(new EmptyBorder(22, 28, 22, 28));
 
-        JPanel form = new JPanel(new GridBagLayout());
-        form.setBackground(Color.WHITE);
-        form.setBorder(new EmptyBorder(16, 24, 8, 24));
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0;
-        c.weightx = 1;
-        c.fill = GridBagConstraints.HORIZONTAL;
+        // Kéo di chuyển dialog bằng chuột
+        final Point[] dragPoint = new Point[1];
+        card.addMouseListener(new MouseAdapter() {
+            @Override public void mousePressed(MouseEvent e) { dragPoint[0] = e.getPoint(); }
+        });
+        card.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override public void mouseDragged(MouseEvent e) {
+                if (dragPoint[0] != null) {
+                    Point p = dlg.getLocation();
+                    dlg.setLocation(p.x + e.getX() - dragPoint[0].x, p.y + e.getY() - dragPoint[0].y);
+                }
+            }
+        });
 
-        String[] labels = {"Tên thú cưng *", "Loài *", "Giống loài *", "Tên chủ sở hữu *", "Số điện thoại chủ *", "Cân nặng (kg) *", "Trạng thái sức khỏe"};
-        JComponent[] inputs = {tfTen, cbLoai, tfGiong, tfChu, tfSdt, tfCanNang, cbSucKhoe};
-        int y = 0;
-        for (int i = 0; i < labels.length; i++) {
-            JLabel l = new JLabel(labels[i]);
-            l.setFont(Theme.font(Font.BOLD, 13));
-            c.gridy = y++; c.insets = new Insets(0, 0, 4, 0); form.add(l, c);
-            c.gridy = y++; c.insets = new Insets(0, 0, 10, 0); form.add(inputs[i], c);
+        // 1. Header: Tiêu đề + nút đóng X
+        JPanel head = new JPanel(new BorderLayout());
+        head.setOpaque(false);
+
+        JLabel lblTitle = new JLabel("Thêm mới hồ sơ thú cưng");
+        lblTitle.setFont(Theme.font(Font.BOLD, 17));
+        lblTitle.setForeground(Theme.TEXT);
+
+        JButton btnClose = new JButton(Icons.of("close", 14, Theme.MUTED));
+        btnClose.setBorder(new EmptyBorder(4, 8, 4, 0));
+        btnClose.setContentAreaFilled(false);
+        btnClose.setBorderPainted(false);
+        btnClose.setFocusPainted(false);
+        btnClose.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnClose.addActionListener(e -> dlg.dispose());
+
+        head.add(lblTitle, BorderLayout.WEST);
+        head.add(btnClose, BorderLayout.EAST);
+        card.add(head, BorderLayout.NORTH);
+
+        // 2. Nội dung Form
+        JPanel body = new JPanel();
+        body.setOpaque(false);
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+
+        // Phân vùng ảnh thú cưng
+        AvatarUploadBox avatarBox = new AvatarUploadBox();
+        avatarBox.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent e) {
+                JFileChooser fc = new JFileChooser();
+                fc.setDialogTitle("Chọn ảnh thú cưng");
+                fc.setFileFilter(new javax.swing.filechooser.FileNameExtensionFilter("Hình ảnh (JPG, PNG)", "jpg", "jpeg", "png"));
+                if (fc.showOpenDialog(dlg) == JFileChooser.APPROVE_OPTION) {
+                    try {
+                        java.awt.image.BufferedImage img = javax.imageio.ImageIO.read(fc.getSelectedFile());
+                        if (img != null) avatarBox.setImage(img);
+                    } catch (Exception ex) {
+                        JOptionPane.showMessageDialog(dlg, "Không đọc được file ảnh: " + ex.getMessage());
+                    }
+                }
+            }
+        });
+
+        JPanel pnlAvatarText = new JPanel();
+        pnlAvatarText.setOpaque(false);
+        pnlAvatarText.setLayout(new BoxLayout(pnlAvatarText, BoxLayout.Y_AXIS));
+
+        JLabel lblAvTitle = new JLabel("Ảnh thú cưng");
+        lblAvTitle.setFont(Theme.font(Font.BOLD, 13));
+        lblAvTitle.setForeground(Theme.TEXT);
+
+        JLabel lblAvSub1 = new JLabel("Nhấn vào biểu tượng camera để tải ảnh lên.");
+        lblAvSub1.setFont(Theme.font(Font.PLAIN, 12));
+        lblAvSub1.setForeground(Theme.MUTED);
+
+        JLabel lblAvSub2 = new JLabel("JPG, PNG · Tối đa 5 MB");
+        lblAvSub2.setFont(Theme.font(Font.PLAIN, 11));
+        lblAvSub2.setForeground(Theme.MUTED);
+
+        pnlAvatarText.add(lblAvTitle);
+        pnlAvatarText.add(Box.createVerticalStrut(3));
+        pnlAvatarText.add(lblAvSub1);
+        pnlAvatarText.add(Box.createVerticalStrut(2));
+        pnlAvatarText.add(lblAvSub2);
+
+        JPanel pnlAvatarRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 0));
+        pnlAvatarRow.setOpaque(false);
+        pnlAvatarRow.add(avatarBox);
+        pnlAvatarRow.add(pnlAvatarText);
+        body.add(pnlAvatarRow);
+        body.add(Box.createVerticalStrut(18));
+
+        // Hàng 1: Tên thú cưng & Loài (2 cột)
+        PlaceholderField tfTen = new PlaceholderField("Nhập tên thú cưng...");
+        setupField(tfTen);
+
+        String[] loaiOptions = {"Chọn loài (Chó, Mèo)", "Chó", "Mèo"};
+        JComboBox<String> cbLoai = new JComboBox<>(loaiOptions);
+        styleComboBox(cbLoai, loaiOptions[0]);
+
+        JPanel r1 = new JPanel(new GridLayout(1, 2, 16, 0));
+        r1.setOpaque(false);
+        r1.add(createFieldGroup("Tên thú cưng", wrapInput(tfTen, 38)));
+        r1.add(createFieldGroup("Loài", wrapInput(cbLoai, 38)));
+        body.add(r1);
+        body.add(Box.createVerticalStrut(14));
+
+        // Hàng 2: Giống (Breed) & Cân nặng ban đầu (Weight)
+        String[] giongOptions = {
+            "Ví dụ: Poodle, Corgi...", "Poodle", "Corgi", "Golden Retriever", "Husky",
+            "Anh lông ngắn", "Anh lông dài", "Munchkin", "Mèo ta", "Shiba Inu", "Pug"
+        };
+        JComboBox<String> cbGiong = new JComboBox<>(giongOptions);
+        cbGiong.setEditable(true);
+        styleComboBox(cbGiong, giongOptions[0]);
+        if (cbGiong.getEditor().getEditorComponent() instanceof JTextField editorTf) {
+            editorTf.setFont(Theme.font(Font.PLAIN, 13));
+            editorTf.setBorder(new EmptyBorder(0, 10, 0, 4));
         }
-        c.gridy = y++; c.insets = new Insets(4, 0, 10, 0); form.add(chkLuuTru, c);
-        c.gridy = y; c.insets = new Insets(0, 0, 0, 0); form.add(err, c);
 
-        RoundedButton ok = new RoundedButton("Lưu thú cưng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(22, 9);
-        RoundedButton cancel = new RoundedButton("Hủy", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(22, 9);
-        cancel.setFont(Theme.font(Font.PLAIN, 13));
-        JPanel btns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        btns.setBackground(Color.WHITE);
-        btns.setBorder(new EmptyBorder(4, 24, 18, 24));
-        btns.add(cancel);
-        btns.add(ok);
+        cbLoai.addActionListener(e -> {
+            String sel = (String) cbLoai.getSelectedItem();
+            cbGiong.removeAllItems();
+            cbGiong.addItem("Ví dụ: Poodle, Corgi...");
+            if ("Chó".equals(sel)) {
+                String[] choBreeds = {"Poodle", "Corgi", "Golden Retriever", "Husky", "Shiba Inu", "Pug", "Chihuahua", "Bulldog"};
+                for (String b : choBreeds) cbGiong.addItem(b);
+            } else if ("Mèo".equals(sel)) {
+                String[] meoBreeds = {"Anh lông ngắn", "Anh lông dài", "Munchkin", "Mèo ta", "Mèo Ba Tư", "Scottish Fold", "Xiêm"};
+                for (String b : meoBreeds) cbGiong.addItem(b);
+            } else {
+                for (int i = 1; i < giongOptions.length; i++) cbGiong.addItem(giongOptions[i]);
+            }
+        });
 
-        cancel.addActionListener(e -> dlg.dispose());
-        ok.addActionListener(e -> {
+        PlaceholderField tfCanNang = new PlaceholderField("Ví dụ: 4.2 kg");
+        setupField(tfCanNang);
+
+        JPanel r2 = new JPanel(new GridLayout(1, 2, 16, 0));
+        r2.setOpaque(false);
+        r2.add(createFieldGroup("Giống (Breed)", wrapInput(cbGiong, 38)));
+        r2.add(createFieldGroup("Cân nặng ban đầu (Weight)", wrapInput(tfCanNang, 38)));
+        body.add(r2);
+        body.add(Box.createVerticalStrut(14));
+
+        // Hàng 3: Chủ sở hữu (Owner) - Full width
+        PlaceholderField tfChu = new PlaceholderField("Tìm tên hoặc số điện thoại khách hàng...");
+        setupField(tfChu);
+
+        JPanel boxChu = new RoundedPanel(10, Color.WHITE, Theme.BORDER);
+        boxChu.setLayout(new BorderLayout());
+        boxChu.setPreferredSize(new Dimension(0, 38));
+        JLabel icSearch = new JLabel(Icons.of("search", 16, new Color(0x8795A0)));
+        icSearch.setBorder(new EmptyBorder(0, 12, 0, 4));
+        JLabel icDown = new JLabel(Icons.of("chevron-down", 14, new Color(0x8795A0)));
+        icDown.setBorder(new EmptyBorder(0, 4, 0, 12));
+        boxChu.add(icSearch, BorderLayout.WEST);
+        boxChu.add(tfChu, BorderLayout.CENTER);
+        boxChu.add(icDown, BorderLayout.EAST);
+
+        body.add(createFieldGroup("Chủ sở hữu (Owner)", boxChu));
+        body.add(Box.createVerticalStrut(14));
+
+        // Hàng 4: Cảnh báo y tế / Dị ứng (Medical alerts / Allergies)
+        PlaceholderArea taCanhBao = new PlaceholderArea("Ví dụ: Dị ứng thuốc, bệnh nền...");
+        JPanel boxCanhBao = new RoundedPanel(10, Color.WHITE, Theme.BORDER);
+        boxCanhBao.setLayout(new BorderLayout());
+        boxCanhBao.setPreferredSize(new Dimension(0, 78));
+        boxCanhBao.add(taCanhBao, BorderLayout.CENTER);
+
+        body.add(createFieldGroup("Cảnh báo y tế / Dị ứng (Medical alerts / Allergies)", boxCanhBao));
+        card.add(body, BorderLayout.CENTER);
+
+        // 3. Footer: Nút Hủy và Lưu hồ sơ
+        JLabel lblErr = new JLabel(" ");
+        lblErr.setFont(Theme.font(Font.PLAIN, 12));
+        lblErr.setForeground(Theme.RED);
+
+        RoundedButton btnHuy = new RoundedButton("Hủy", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(22, 10);
+        RoundedButton btnLuu = new RoundedButton("Lưu hồ sơ", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(22, 10);
+        btnLuu.setFont(Theme.font(Font.BOLD, 13));
+
+        btnHuy.addActionListener(e -> dlg.dispose());
+        btnLuu.addActionListener(e -> {
             String ten = tfTen.getText().trim();
-            String giong = tfGiong.getText().trim();
             String loai = (String) cbLoai.getSelectedItem();
-            String chu = tfChu.getText().trim();
-            String sdt = ThuCungBUS.chiSo(tfSdt.getText());
-            String cnStr = tfCanNang.getText().trim().replace(',', '.');
+            if (loai == null || loai.startsWith("Chọn loài")) loai = "Chó";
 
-            if (ten.isEmpty()) { err.setText("Vui lòng nhập tên thú cưng."); tfTen.requestFocus(); return; }
-            if (giong.isEmpty()) { err.setText("Vui lòng nhập giống loài."); tfGiong.requestFocus(); return; }
-            if (chu.isEmpty()) { err.setText("Vui lòng nhập tên chủ."); tfChu.requestFocus(); return; }
-            if (sdt.length() < 9 || sdt.length() > 11) { err.setText("Số điện thoại phải gồm 9–11 chữ số."); tfSdt.requestFocus(); return; }
+            Object giongObj = cbGiong.isEditable() ? cbGiong.getEditor().getItem() : cbGiong.getSelectedItem();
+            String giong = giongObj == null ? "" : giongObj.toString().trim();
+            if (giong.isEmpty() || giong.startsWith("Ví dụ:")) {
+                giong = "Chó".equals(loai) ? "Poodle" : "Anh lông ngắn";
+            }
 
-            double canNang;
-            try {
-                canNang = Double.parseDouble(cnStr);
-                if (canNang <= 0 || canNang > 120) throw new NumberFormatException();
-            } catch (Exception ex) {
-                err.setText("Cân nặng không hợp lệ (ví dụ: 4.2).");
-                tfCanNang.requestFocus();
+            String chuInput = tfChu.getText().trim();
+            String tenChu = "Nguyễn Minh Anh";
+            String sdtChu = "0901 234 456";
+            if (!chuInput.isEmpty() && !chuInput.startsWith("Tìm tên")) {
+                tenChu = chuInput;
+                sdtChu = "09" + String.format("%08d", (int)(Math.random() * 90000000 + 10000000));
+            }
+
+            String cnStr = tfCanNang.getText().trim().replace("kg", "").replace(',', '.').trim();
+            double canNang = 4.2;
+            if (!cnStr.isEmpty() && !cnStr.startsWith("Ví dụ:")) {
+                try {
+                    canNang = Double.parseDouble(cnStr);
+                    if (canNang <= 0 || canNang > 120) throw new NumberFormatException();
+                } catch (Exception ex) {
+                    lblErr.setText("Cân nặng không hợp lệ (ví dụ: 4.2 kg).");
+                    tfCanNang.requestFocus();
+                    return;
+                }
+            }
+
+            if (ten.isEmpty()) {
+                lblErr.setText("Vui lòng nhập tên thú cưng.");
+                tfTen.requestFocus();
                 return;
             }
 
-            bus.them(ten, giong, loai, chu, sdt, canNang, (String) cbSucKhoe.getSelectedItem(), chkLuuTru.isSelected(), "");
+            String canhBao = taCanhBao.getText().trim();
+            bus.them(ten, giong, loai, tenChu, sdtChu, canNang, "Khỏe mạnh", false, canhBao);
             dlg.dispose();
             txtTim.setText("");
             boLocHienTai = "Tất cả";
@@ -489,14 +643,169 @@ public class ThuCungPanel extends JPanel {
             refresh();
         });
 
-        dlg.getRootPane().setDefaultButton(ok);
-        dlg.setLayout(new BorderLayout());
-        dlg.add(form, BorderLayout.CENTER);
-        dlg.add(btns, BorderLayout.SOUTH);
-        dlg.setSize(440, 560);
-        dlg.setResizable(false);
+        JPanel foot = new JPanel(new BorderLayout());
+        foot.setOpaque(false);
+        foot.add(lblErr, BorderLayout.WEST);
+
+        JPanel pnlBtns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        pnlBtns.setOpaque(false);
+        pnlBtns.add(btnHuy);
+        pnlBtns.add(btnLuu);
+        foot.add(pnlBtns, BorderLayout.EAST);
+
+        card.add(foot, BorderLayout.SOUTH);
+
+        // Hỗ trợ đóng bằng ESC
+        dlg.getRootPane().registerKeyboardAction(e -> dlg.dispose(),
+                KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        dlg.getRootPane().setDefaultButton(btnLuu);
+
+        dlg.setContentPane(card);
+        dlg.setSize(630, 560);
         dlg.setLocationRelativeTo(owner);
         dlg.setVisible(true);
+    }
+
+    private static void setupField(JTextField f) {
+        f.setFont(Theme.font(Font.PLAIN, 13));
+        f.setForeground(Theme.TEXT);
+        f.setOpaque(false);
+        f.setBorder(new EmptyBorder(0, 12, 0, 12));
+    }
+
+    private static JPanel wrapInput(JComponent comp, int height) {
+        RoundedPanel box = new RoundedPanel(10, Color.WHITE, Theme.BORDER);
+        box.setLayout(new BorderLayout());
+        box.setPreferredSize(new Dimension(0, height));
+        box.add(comp, BorderLayout.CENTER);
+        return box;
+    }
+
+    private static JPanel createFieldGroup(String labelText, JComponent inputComp) {
+        JPanel p = new JPanel(new BorderLayout(0, 6));
+        p.setOpaque(false);
+        JLabel lbl = new JLabel(labelText);
+        lbl.setFont(Theme.font(Font.BOLD, 13));
+        lbl.setForeground(Theme.TEXT);
+        p.add(lbl, BorderLayout.NORTH);
+        p.add(inputComp, BorderLayout.CENTER);
+        return p;
+    }
+
+    private static void styleComboBox(JComboBox<String> cb, String placeholder) {
+        cb.setFont(Theme.font(Font.PLAIN, 13));
+        cb.setForeground(Theme.TEXT);
+        cb.setBackground(Color.WHITE);
+        cb.setOpaque(false);
+        cb.setBorder(new EmptyBorder(0, 6, 0, 6));
+        cb.setRenderer(new PlaceholderComboRenderer(placeholder));
+        cb.setUI(new javax.swing.plaf.basic.BasicComboBoxUI() {
+            @Override
+            protected JButton createArrowButton() {
+                JButton b = new JButton(Icons.of("chevron-down", 14, new Color(0x8795A0)));
+                b.setBorder(new EmptyBorder(0, 0, 0, 10));
+                b.setContentAreaFilled(false);
+                b.setBorderPainted(false);
+                b.setFocusPainted(false);
+                b.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+                return b;
+            }
+            @Override
+            public void paintCurrentValueBackground(Graphics g, Rectangle bounds, boolean hasFocus) {
+                // Không vẽ ô nền vuông
+            }
+        });
+    }
+
+    private static class PlaceholderComboRenderer extends DefaultListCellRenderer {
+        private final String placeholder;
+        PlaceholderComboRenderer(String placeholder) { this.placeholder = placeholder; }
+        @Override
+        public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+            JLabel l = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            l.setFont(Theme.font(Font.PLAIN, 13));
+            l.setBorder(new EmptyBorder(6, 10, 6, 10));
+            if (placeholder != null && placeholder.equals(value)) {
+                l.setForeground(new Color(0x9AA6B0));
+            } else {
+                l.setForeground(isSelected ? Color.WHITE : Theme.TEXT);
+            }
+            return l;
+        }
+    }
+
+    private static class PlaceholderArea extends JTextArea {
+        private final String placeholder;
+
+        PlaceholderArea(String placeholder) {
+            this.placeholder = placeholder;
+            setFont(Theme.font(Font.PLAIN, 13));
+            setForeground(Theme.TEXT);
+            setLineWrap(true);
+            setWrapStyleWord(true);
+            setOpaque(false);
+            setBorder(new EmptyBorder(8, 12, 8, 12));
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            if (getText().isEmpty()) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+                g2.setColor(new Color(0x9AA6B0));
+                g2.setFont(getFont());
+                Insets in = getInsets();
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(placeholder, in.left, in.top + fm.getAscent());
+                g2.dispose();
+            }
+        }
+    }
+
+    private static class AvatarUploadBox extends JComponent {
+        private BufferedImage image = null;
+
+        AvatarUploadBox() {
+            setPreferredSize(new Dimension(64, 64));
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            setToolTipText("Nhấn vào biểu tượng camera để tải ảnh lên");
+        }
+
+        void setImage(BufferedImage img) {
+            this.image = img;
+            repaint();
+        }
+
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+
+            int d = 60;
+            g2.setColor(new Color(0xEEF3F6));
+            g2.fillOval(0, 0, d, d);
+
+            if (image != null) {
+                Shape oldClip = g2.getClip();
+                g2.setClip(new java.awt.geom.Ellipse2D.Double(0, 0, d, d));
+                g2.drawImage(image, 0, 0, d, d, null);
+                g2.setClip(oldClip);
+            } else {
+                Icons.draw(g2, "paw", (d - 28) / 2.0, (d - 28) / 2.0, 28, new Color(0x9BA8B2), false);
+            }
+
+            int badgeD = 22;
+            int bx = d - badgeD + 2;
+            int by = d - badgeD + 2;
+            g2.setColor(Color.WHITE);
+            g2.fillOval(bx - 1, by - 1, badgeD + 2, badgeD + 2);
+            g2.setColor(new Color(0x56788A));
+            g2.fillOval(bx, by, badgeD, badgeD);
+            Icons.draw(g2, "camera", bx + (badgeD - 12) / 2.0, by + (badgeD - 12) / 2.0, 12, Color.WHITE, false);
+
+            g2.dispose();
+        }
     }
 
     private void suaThuCung(ThuCung tc) {
