@@ -184,6 +184,16 @@ public final class Icons {
                 p.lineTo(17.5, 9.5);
                 g.draw(p);
             }
+            case "warning" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(12, 4);
+                p.lineTo(21, 19.5);
+                p.lineTo(3, 19.5);
+                p.closePath();
+                g.draw(p);
+                g.draw(new Line2D.Double(12, 9.5, 12, 14));
+                g.fill(new Ellipse2D.Double(11, 16, 2, 2));
+            }
             default -> { }
 
 

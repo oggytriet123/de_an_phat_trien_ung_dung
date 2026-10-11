@@ -44,6 +44,8 @@ public class MainFrame extends JFrame {
                 p = new ThuCungPanel();
             } else if (m[0].equals("Khách hàng")) {
                 p = new KhachHangPanel();
+            } else if (m[0].equals("Kho hàng")) {
+                p = new KhoHangPanel();
             } else {
                 p = new ModulePlaceholderPanel(m[0], m[2], m[1]);
             }

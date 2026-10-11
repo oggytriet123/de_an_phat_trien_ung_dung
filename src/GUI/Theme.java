@@ -27,6 +27,7 @@ public final class Theme {
     public static final Color ORANGE         = new Color(0xD97706);
     public static final Color ORANGE_BG      = new Color(0xFEF3E6);
     public static final Color RED            = new Color(0xD64545);
+    public static final Color RED_BG         = new Color(0xFDE8E8);
     public static final Color BADGE_GRAY_BG  = new Color(0xEEF2F5);
     public static final Color AVATAR_BG      = new Color(0xDCE4EA);
     public static final Color ACTION_ICON    = new Color(0x8C9BA5);
