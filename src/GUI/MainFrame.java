@@ -63,7 +63,7 @@ public class MainFrame extends JFrame {
         root.add(content, BorderLayout.CENTER);
         setContentPane(root);
 
-        chon("Thú cưng"); // Chọn màn hình Thú cưng theo thiết kế tham chiếu
+        chon("Lịch sử Nhập / Xuất Kho"); // Mở thẳng màn hình Lịch sử Nhập / Xuất Kho vừa hoàn thiện
         setSize(1320, 840);
         setMinimumSize(new Dimension(1100, 720));
         setLocationRelativeTo(null);
