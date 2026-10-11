@@ -264,7 +264,7 @@ public class KhoHangPanel extends JPanel {
                     SanPham sp = (SanPham) model.getValueAt(row, 1);
                     int xInCell = e.getX() - table.getCellRect(row, col, false).x;
                     if (xInCell < 54) {
-                        nhapHang(sp);
+                        lapPhieuNhapKho(sp);
                     } else if (xInCell < 84) {
                         suaSanPham(sp);
                     } else {
@@ -545,22 +545,507 @@ public class KhoHangPanel extends JPanel {
         dlg.setVisible(true);
     }
 
-    private void nhapHang(SanPham sp) {
-        String input = JOptionPane.showInputDialog(this,
-                "Nhập số lượng hàng bổ sung cho " + sp.getTenSP() + " (" + sp.getDonViTinh() + "):",
-                "Nhập hàng bổ sung - " + sp.getMaSKU(), JOptionPane.QUESTION_MESSAGE);
-        if (input != null && !input.trim().isEmpty()) {
-            try {
-                int sl = Integer.parseInt(input.trim());
-                if (sl <= 0) throw new NumberFormatException();
-                bus.nhapKho(sp.getMaSKU(), sl);
-                refresh();
-                JOptionPane.showMessageDialog(this, "Đã nhập thành công " + sl + " " + sp.getDonViTinh() + " cho " + sp.getTenSP(),
-                        "Nhập hàng thành công", JOptionPane.INFORMATION_MESSAGE);
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Số lượng nhập không hợp lệ.", "Lỗi", JOptionPane.ERROR_MESSAGE);
+    // ---------------- Dữ liệu mặt hàng trong Phiếu nhập ----------------
+    public static class PhieuItem {
+        public String maSKU;
+        public String tenSP;
+        public String quyCach;
+        public int soLuong;
+        public long donGia;
+
+        public PhieuItem(String maSKU, String tenSP, String quyCach, int soLuong, long donGia) {
+            this.maSKU = maSKU;
+            this.tenSP = tenSP;
+            this.quyCach = quyCach;
+            this.soLuong = soLuong;
+            this.donGia = donGia;
+        }
+
+        public long getThanhTien() {
+            return (long) soLuong * donGia;
+        }
+    }
+
+    public void lapPhieuNhapKho(SanPham spChon) {
+        Window owner = SwingUtilities.getWindowAncestor(this);
+        JDialog dlg = new JDialog(owner, Dialog.ModalityType.APPLICATION_MODAL);
+        dlg.setUndecorated(true);
+        dlg.setBackground(new Color(0, 0, 0, 0));
+
+        RoundedPanel card = new RoundedPanel(18, Color.WHITE, Theme.BORDER);
+        card.setLayout(new BorderLayout(0, 14));
+        card.setBorder(new EmptyBorder(22, 28, 22, 28));
+
+        // Kéo di chuyển dialog
+        final Point[] dragPoint = new Point[1];
+        card.addMouseListener(new MouseAdapter() {
+            @Override public void mousePressed(MouseEvent e) { dragPoint[0] = e.getPoint(); }
+        });
+        card.addMouseMotionListener(new java.awt.event.MouseMotionAdapter() {
+            @Override public void mouseDragged(MouseEvent e) {
+                if (dragPoint[0] != null) {
+                    Point p = dlg.getLocation();
+                    dlg.setLocation(p.x + e.getX() - dragPoint[0].x, p.y + e.getY() - dragPoint[0].y);
+                }
+            }
+        });
+
+        // 1. Header: Tiêu đề + Nút đóng X
+        JPanel head = new JPanel(new BorderLayout());
+        head.setOpaque(false);
+        JLabel lblTitle = new JLabel("Lập Phiếu Nhập Kho Mới");
+        lblTitle.setFont(Theme.font(Font.BOLD, 18));
+        lblTitle.setForeground(Theme.TEXT);
+
+        JButton btnClose = new JButton(Icons.of("close", 14, Theme.MUTED));
+        btnClose.setBorder(new EmptyBorder(4, 8, 4, 0));
+        btnClose.setContentAreaFilled(false);
+        btnClose.setBorderPainted(false);
+        btnClose.setFocusPainted(false);
+        btnClose.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnClose.addActionListener(e -> dlg.dispose());
+        head.add(lblTitle, BorderLayout.WEST);
+        head.add(btnClose, BorderLayout.EAST);
+        card.add(head, BorderLayout.NORTH);
+
+        // 2. Nội dung Form + Bảng sản phẩm
+        JPanel body = new JPanel();
+        body.setOpaque(false);
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+
+        // Hàng 1: Loại phiếu + Nhà cung cấp + Ngày lập phiếu
+        JPanel row1 = new JPanel(new BorderLayout(14, 0));
+        row1.setOpaque(false);
+
+        // 1.1 Loại phiếu
+        JComboBox<String> cbLoai = new JComboBox<>(new String[] {"Nhập kho", "Xuất kho", "Kiểm kê"});
+        styleComboBox(cbLoai);
+        JPanel boxLoai = wrapInput(cbLoai, 38);
+        boxLoai.setPreferredSize(new Dimension(140, 38));
+        JPanel groupLoai = createFieldGroup("Loại phiếu", boxLoai);
+        groupLoai.setPreferredSize(new Dimension(140, 62));
+
+        // 1.2 Nhà cung cấp / Đối tác
+        String[] nccList = {
+            "Chọn hoặc nhập tên nhà cung cấp...",
+            "Công ty Cổ phần PetCare Việt Nam",
+            "Nhà phân phối Royal Canin HCM",
+            "Công ty Dược Thú Y Marphavet",
+            "Đại lý Phụ kiện thú cưng Sài Gòn"
+        };
+        JComboBox<String> cbNcc = new JComboBox<>(nccList);
+        cbNcc.setEditable(true);
+        styleComboBox(cbNcc);
+        if (cbNcc.getEditor().getEditorComponent() instanceof JTextField editorTf) {
+            setupField(editorTf);
+            editorTf.setText("Chọn hoặc nhập tên nhà cung cấp...");
+            editorTf.setForeground(Theme.MUTED);
+            editorTf.addFocusListener(new java.awt.event.FocusAdapter() {
+                @Override public void focusGained(java.awt.event.FocusEvent e) {
+                    if ("Chọn hoặc nhập tên nhà cung cấp...".equals(editorTf.getText())) {
+                        editorTf.setText("");
+                        editorTf.setForeground(Theme.TEXT);
+                    }
+                }
+                @Override public void focusLost(java.awt.event.FocusEvent e) {
+                    if (editorTf.getText().trim().isEmpty()) {
+                        editorTf.setText("Chọn hoặc nhập tên nhà cung cấp...");
+                        editorTf.setForeground(Theme.MUTED);
+                    }
+                }
+            });
+        }
+        JPanel boxNcc = wrapInput(cbNcc, 38);
+        JPanel groupNcc = createFieldGroup("Nhà cung cấp / Đối tác", boxNcc);
+
+        // 1.3 Ngày lập phiếu
+        JTextField tfNgay = new JTextField("04/10/2026");
+        setupField(tfNgay);
+        JLabel icCal = new JLabel(Icons.of("calendar", 16, Theme.MUTED));
+        icCal.setBorder(new EmptyBorder(0, 0, 0, 10));
+        JPanel boxNgay = new RoundedPanel(10, Color.WHITE, Theme.BORDER);
+        boxNgay.setLayout(new BorderLayout());
+        boxNgay.setPreferredSize(new Dimension(150, 38));
+        boxNgay.add(tfNgay, BorderLayout.CENTER);
+        boxNgay.add(icCal, BorderLayout.EAST);
+        JPanel groupNgay = createFieldGroup("Ngày lập phiếu", boxNgay);
+        groupNgay.setPreferredSize(new Dimension(150, 62));
+
+        row1.add(groupLoai, BorderLayout.WEST);
+        row1.add(groupNcc, BorderLayout.CENTER);
+        row1.add(groupNgay, BorderLayout.EAST);
+        body.add(row1);
+        body.add(Box.createVerticalStrut(12));
+
+        // Hàng 2: Ghi chú
+        PlaceholderField tfGhiChu = new PlaceholderField("Nhập mô tả hoặc ghi chú cho phiếu...");
+        setupField(tfGhiChu);
+        JPanel boxGhiChu = wrapInput(tfGhiChu, 38);
+        body.add(createFieldGroup("Ghi chú", boxGhiChu));
+        body.add(Box.createVerticalStrut(16));
+
+        // Section Tiêu đề Sản phẩm trong phiếu
+        JPanel pnlSecHead = new JPanel(new BorderLayout());
+        pnlSecHead.setOpaque(false);
+
+        JPanel leftSec = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
+        leftSec.setOpaque(false);
+        JLabel lblSecTitle = new JLabel("Sản phẩm trong phiếu");
+        lblSecTitle.setFont(Theme.font(Font.BOLD, 14));
+        lblSecTitle.setForeground(Theme.TEXT);
+
+        JLabel lblSecSub = new JLabel("3 sản phẩm • 28 đơn vị");
+        lblSecSub.setFont(Theme.font(Font.PLAIN, 12));
+        lblSecSub.setForeground(Theme.MUTED);
+        leftSec.add(lblSecTitle);
+        leftSec.add(lblSecSub);
+
+        JLabel lblDonVi = new JLabel("Đơn vị: VND");
+        lblDonVi.setFont(Theme.font(Font.PLAIN, 11));
+        lblDonVi.setForeground(Theme.MUTED);
+
+        pnlSecHead.add(leftSec, BorderLayout.WEST);
+        pnlSecHead.add(lblDonVi, BorderLayout.EAST);
+        body.add(pnlSecHead);
+        body.add(Box.createVerticalStrut(8));
+
+        // Danh sách mặt hàng (3 mặt hàng mẫu theo thiết kế)
+        List<PhieuItem> items = new ArrayList<>();
+        items.add(new PhieuItem("TA-0042", "Royal Canin Kitten 2 kg", "Thức ăn cho mèo con • Túi 2 kg", 10, 385_000));
+        items.add(new PhieuItem("VT-0031", "Gel dinh dưỡng Nutri-Plus", "Bổ sung vitamin • Tuýp 120 g", 6, 210_000));
+        items.add(new PhieuItem("TA-0088", "Hạt Me-O vị cá ngừ 1,2 kg", "Thức ăn cho mèo trưởng thành • Túi", 12, 95_000));
+
+        if (spChon != null) {
+            boolean exists = items.stream().anyMatch(it -> it.maSKU.equalsIgnoreCase(spChon.getMaSKU()));
+            if (!exists) {
+                long giaNhap = Math.max(10_000, spChon.getDonGia() * 80 / 100);
+                items.add(new PhieuItem(spChon.getMaSKU(), spChon.getTenSP(), spChon.getQuyCach(), 5, giaNhap));
             }
         }
+
+        // Container bảng sản phẩm
+        RoundedPanel pnlTableCard = new RoundedPanel(10, Color.WHITE, Theme.BORDER);
+        pnlTableCard.setLayout(new BorderLayout());
+
+        // Header bảng
+        JPanel pnlHeadRow = new JPanel(new GridBagLayout());
+        pnlHeadRow.setBackground(new Color(0xF8FAFC));
+        pnlHeadRow.setPreferredSize(new Dimension(0, 36));
+        pnlHeadRow.setBorder(new MatteBorder(0, 0, 1, 0, Theme.ROW_LINE));
+        addTableHeadCell(pnlHeadRow, "Mã SKU", 0, 75, SwingConstants.LEFT, 16);
+        addTableHeadCell(pnlHeadRow, "Tên sản phẩm", 1, 0, SwingConstants.LEFT, 8);
+        addTableHeadCell(pnlHeadRow, "Số lượng thực tế", 2, 120, SwingConstants.CENTER, 8);
+        addTableHeadCell(pnlHeadRow, "Đơn giá nhập", 3, 135, SwingConstants.CENTER, 8);
+        addTableHeadCell(pnlHeadRow, "Thành tiền", 4, 120, SwingConstants.RIGHT, 16);
+        pnlTableCard.add(pnlHeadRow, BorderLayout.NORTH);
+
+        // Vùng các dòng sản phẩm
+        JPanel pnlRows = new JPanel();
+        pnlRows.setOpaque(false);
+        pnlRows.setLayout(new BoxLayout(pnlRows, BoxLayout.Y_AXIS));
+
+        // Footer components
+        JLabel lblTongTienVal = new JLabel("6.250.000 đ");
+        lblTongTienVal.setFont(Theme.font(Font.BOLD, 22));
+        lblTongTienVal.setForeground(Theme.TEXT);
+
+        Runnable updateSummary = () -> {
+            int totalUnits = 0;
+            long totalMoney = 0;
+            for (PhieuItem it : items) {
+                totalUnits += it.soLuong;
+                totalMoney += it.getThanhTien();
+            }
+            lblSecSub.setText(items.size() + " sản phẩm • " + totalUnits + " đơn vị");
+            lblTongTienVal.setText(NUM_FMT.format(totalMoney) + " đ");
+        };
+
+        Runnable[] rebuildRef = new Runnable[1];
+        rebuildRef[0] = () -> {
+            pnlRows.removeAll();
+            for (int i = 0; i < items.size(); i++) {
+                final PhieuItem item = items.get(i);
+                final boolean isLast = (i == items.size() - 1);
+                JPanel r = createItemRow(item, isLast, updateSummary);
+                pnlRows.add(r);
+            }
+            pnlRows.revalidate();
+            pnlRows.repaint();
+            updateSummary.run();
+        };
+
+        rebuildRef[0].run();
+        pnlTableCard.add(pnlRows, BorderLayout.CENTER);
+        body.add(pnlTableCard);
+        body.add(Box.createVerticalStrut(10));
+
+        // Link "+ Thêm sản phẩm vào phiếu"
+        JPanel pnlAddLink = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+        pnlAddLink.setOpaque(false);
+        JLabel lblAdd = new JLabel("+ Thêm sản phẩm vào phiếu");
+        lblAdd.setFont(Theme.font(Font.BOLD, 13));
+        lblAdd.setForeground(Theme.ACCENT);
+        lblAdd.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lblAdd.addMouseListener(new MouseAdapter() {
+            @Override public void mouseEntered(MouseEvent e) { lblAdd.setForeground(Theme.ACCENT_HOVER); }
+            @Override public void mouseExited(MouseEvent e) { lblAdd.setForeground(Theme.ACCENT); }
+            @Override public void mouseClicked(MouseEvent e) {
+                JPopupMenu popup = new JPopupMenu();
+                for (SanPham sp : bus.layDanhSach()) {
+                    boolean alreadyIn = items.stream().anyMatch(it -> it.maSKU.equalsIgnoreCase(sp.getMaSKU()));
+                    if (!alreadyIn && popup.getComponentCount() < 8) {
+                        JMenuItem mi = new JMenuItem(sp.getMaSKU() + " - " + sp.getTenSP());
+                        mi.setFont(Theme.font(Font.PLAIN, 12));
+                        mi.addActionListener(ev -> {
+                            long giaNhap = Math.max(10_000, sp.getDonGia() * 80 / 100);
+                            items.add(new PhieuItem(sp.getMaSKU(), sp.getTenSP(), sp.getQuyCach(), 5, giaNhap));
+                            rebuildRef[0].run();
+                        });
+                        popup.add(mi);
+                    }
+                }
+                popup.show(lblAdd, 0, lblAdd.getHeight() + 2);
+            }
+        });
+        pnlAddLink.add(lblAdd);
+        body.add(pnlAddLink);
+
+        card.add(body, BorderLayout.CENTER);
+
+        // 3. Footer: Tổng tiền + Nút Hủy + Hoàn tất & Lưu phiếu
+        JPanel pnlFooter = new JPanel(new BorderLayout());
+        pnlFooter.setOpaque(false);
+        pnlFooter.setBorder(new EmptyBorder(14, 0, 0, 0));
+
+        JPanel leftFoot = new JPanel();
+        leftFoot.setOpaque(false);
+        leftFoot.setLayout(new BoxLayout(leftFoot, BoxLayout.Y_AXIS));
+        JLabel lblTongTienText = new JLabel("Tổng tiền nhập kho");
+        lblTongTienText.setFont(Theme.font(Font.PLAIN, 12));
+        lblTongTienText.setForeground(Theme.MUTED);
+        leftFoot.add(lblTongTienText);
+        leftFoot.add(Box.createVerticalStrut(2));
+        leftFoot.add(lblTongTienVal);
+
+        JPanel rightFoot = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        rightFoot.setOpaque(false);
+        RoundedButton btnHuy = new RoundedButton("Hủy", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(22, 10);
+        RoundedButton btnLuu = new RoundedButton("Hoàn tất & Lưu phiếu", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(22, 10);
+        btnLuu.setFont(Theme.font(Font.BOLD, 13));
+
+        btnHuy.addActionListener(e -> dlg.dispose());
+        btnLuu.addActionListener(e -> {
+            for (PhieuItem it : items) {
+                bus.nhapKho(it.maSKU, it.soLuong);
+            }
+            refresh();
+            dlg.dispose();
+            JOptionPane.showMessageDialog(this,
+                    "Đã lưu thành công phiếu nhập kho (" + items.size() + " mặt hàng, tổng tiền " + lblTongTienVal.getText() + ")!",
+                    "Nhập kho thành công", JOptionPane.INFORMATION_MESSAGE);
+        });
+
+        rightFoot.add(btnHuy);
+        rightFoot.add(btnLuu);
+
+        pnlFooter.add(leftFoot, BorderLayout.WEST);
+        pnlFooter.add(rightFoot, BorderLayout.EAST);
+        card.add(pnlFooter, BorderLayout.SOUTH);
+
+        dlg.getRootPane().registerKeyboardAction(e -> dlg.dispose(),
+                KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_IN_FOCUSED_WINDOW);
+        dlg.setContentPane(card);
+        dlg.setSize(890, 635);
+        dlg.setLocationRelativeTo(owner);
+        dlg.setVisible(true);
+    }
+
+    private static void addTableHeadCell(JPanel pnl, String text, int gridx, int width, int align, int marginSide) {
+        JLabel l = new JLabel(text);
+        l.setFont(Theme.font(Font.PLAIN, 12));
+        l.setForeground(Theme.MUTED);
+        l.setHorizontalAlignment(align);
+
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridx = gridx;
+        c.gridy = 0;
+        c.fill = (gridx == 1) ? GridBagConstraints.BOTH : GridBagConstraints.VERTICAL;
+        c.weightx = (gridx == 1) ? 1.0 : 0.0;
+        c.weighty = 1.0;
+        c.insets = new Insets(0, gridx == 0 ? marginSide : 8, 0, gridx == 4 ? marginSide : 8);
+        if (width > 0) l.setPreferredSize(new Dimension(width, 36));
+        pnl.add(l, c);
+    }
+
+    private static JPanel createItemRow(PhieuItem item, boolean isLast, Runnable onUpdate) {
+        JPanel r = new JPanel(new GridBagLayout());
+        r.setOpaque(false);
+        r.setPreferredSize(new Dimension(0, 52));
+        if (!isLast) {
+            r.setBorder(new MatteBorder(0, 0, 1, 0, Theme.ROW_LINE));
+        }
+
+        // Col 0: SKU
+        JLabel lblSku = new JLabel(item.maSKU);
+        lblSku.setFont(Theme.font(Font.PLAIN, 12));
+        lblSku.setForeground(Theme.MUTED);
+        lblSku.setPreferredSize(new Dimension(75, 48));
+        GridBagConstraints c0 = new GridBagConstraints();
+        c0.gridx = 0; c0.gridy = 0;
+        c0.insets = new Insets(0, 16, 0, 8);
+        r.add(lblSku, c0);
+
+        // Col 1: Tên sản phẩm + Quy cách
+        JPanel pnlName = new JPanel();
+        pnlName.setOpaque(false);
+        pnlName.setLayout(new BoxLayout(pnlName, BoxLayout.Y_AXIS));
+        JLabel lblName = new JLabel(item.tenSP);
+        lblName.setFont(Theme.font(Font.BOLD, 13));
+        lblName.setForeground(Theme.TEXT);
+        JLabel lblSpec = new JLabel(item.quyCach);
+        lblSpec.setFont(Theme.font(Font.PLAIN, 11));
+        lblSpec.setForeground(Theme.MUTED);
+        pnlName.add(Box.createVerticalGlue());
+        pnlName.add(lblName);
+        pnlName.add(Box.createVerticalStrut(1));
+        pnlName.add(lblSpec);
+        pnlName.add(Box.createVerticalGlue());
+
+        GridBagConstraints c1 = new GridBagConstraints();
+        c1.gridx = 1; c1.gridy = 0;
+        c1.fill = GridBagConstraints.BOTH;
+        c1.weightx = 1.0;
+        c1.insets = new Insets(0, 8, 0, 8);
+        r.add(pnlName, c1);
+
+        // Col 2: Số lượng thực tế (Stepper)
+        JPanel pnlStepWrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 8));
+        pnlStepWrap.setOpaque(false);
+        pnlStepWrap.setPreferredSize(new Dimension(120, 48));
+
+        RoundedPanel pnlStep = new RoundedPanel(8, Color.WHITE, Theme.BORDER);
+        pnlStep.setLayout(new BorderLayout());
+        pnlStep.setPreferredSize(new Dimension(100, 32));
+
+        JLabel lblQty = new JLabel(String.valueOf(item.soLuong), SwingConstants.CENTER);
+        lblQty.setFont(Theme.font(Font.BOLD, 13));
+        lblQty.setForeground(Theme.TEXT);
+
+        JButton btnMinus = new JButton() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Theme.MUTED);
+                g2.setStroke(new BasicStroke(1.5f));
+                g2.drawLine(8, getHeight() / 2, getWidth() - 8, getHeight() / 2);
+                g2.dispose();
+            }
+        };
+        btnMinus.setContentAreaFilled(false);
+        btnMinus.setBorderPainted(false);
+        btnMinus.setFocusPainted(false);
+        btnMinus.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnMinus.setPreferredSize(new Dimension(28, 32));
+
+        JButton btnPlus = new JButton() {
+            @Override protected void paintComponent(Graphics g) {
+                Graphics2D g2 = (Graphics2D) g.create();
+                g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                g2.setColor(Theme.MUTED);
+                g2.setStroke(new BasicStroke(1.5f));
+                int cx = getWidth() / 2;
+                int cy = getHeight() / 2;
+                g2.drawLine(cx - 5, cy, cx + 5, cy);
+                g2.drawLine(cx, cy - 5, cx, cy + 5);
+                g2.dispose();
+            }
+        };
+        btnPlus.setContentAreaFilled(false);
+        btnPlus.setBorderPainted(false);
+        btnPlus.setFocusPainted(false);
+        btnPlus.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btnPlus.setPreferredSize(new Dimension(28, 32));
+
+        pnlStep.add(btnMinus, BorderLayout.WEST);
+        pnlStep.add(lblQty, BorderLayout.CENTER);
+        pnlStep.add(btnPlus, BorderLayout.EAST);
+        pnlStepWrap.add(pnlStep);
+
+        GridBagConstraints c2 = new GridBagConstraints();
+        c2.gridx = 2; c2.gridy = 0;
+        c2.insets = new Insets(0, 8, 0, 8);
+        r.add(pnlStepWrap, c2);
+
+        // Col 3: Đơn giá nhập
+        JPanel pnlGiaWrap = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 8));
+        pnlGiaWrap.setOpaque(false);
+        pnlGiaWrap.setPreferredSize(new Dimension(135, 48));
+
+        RoundedPanel boxGia = new RoundedPanel(8, Color.WHITE, Theme.BORDER);
+        boxGia.setLayout(new BorderLayout());
+        boxGia.setPreferredSize(new Dimension(125, 32));
+        JTextField tfGia = new JTextField(NUM_FMT.format(item.donGia) + " đ");
+        tfGia.setHorizontalAlignment(SwingConstants.RIGHT);
+        tfGia.setFont(Theme.font(Font.PLAIN, 13));
+        tfGia.setForeground(Theme.TEXT);
+        tfGia.setOpaque(false);
+        tfGia.setBorder(new EmptyBorder(0, 6, 0, 10));
+        boxGia.add(tfGia, BorderLayout.CENTER);
+        pnlGiaWrap.add(boxGia);
+
+        GridBagConstraints c3 = new GridBagConstraints();
+        c3.gridx = 3; c3.gridy = 0;
+        c3.insets = new Insets(0, 8, 0, 8);
+        r.add(pnlGiaWrap, c3);
+
+        // Col 4: Thành tiền
+        JLabel lblThanhTien = new JLabel(NUM_FMT.format(item.getThanhTien()) + " đ", SwingConstants.RIGHT);
+        lblThanhTien.setFont(Theme.font(Font.BOLD, 13));
+        lblThanhTien.setForeground(Theme.TEXT);
+        lblThanhTien.setPreferredSize(new Dimension(120, 48));
+
+        GridBagConstraints c4 = new GridBagConstraints();
+        c4.gridx = 4; c4.gridy = 0;
+        c4.insets = new Insets(0, 8, 0, 16);
+        r.add(lblThanhTien, c4);
+
+        // Logic sự kiện stepper và đơn giá
+        btnMinus.addActionListener(e -> {
+            if (item.soLuong > 1) {
+                item.soLuong--;
+                lblQty.setText(String.valueOf(item.soLuong));
+                lblThanhTien.setText(NUM_FMT.format(item.getThanhTien()) + " đ");
+                if (onUpdate != null) onUpdate.run();
+            }
+        });
+
+        btnPlus.addActionListener(e -> {
+            item.soLuong++;
+            lblQty.setText(String.valueOf(item.soLuong));
+            lblThanhTien.setText(NUM_FMT.format(item.getThanhTien()) + " đ");
+            if (onUpdate != null) onUpdate.run();
+        });
+
+        java.awt.event.FocusAdapter updateGiaFocus = new java.awt.event.FocusAdapter() {
+            @Override public void focusLost(java.awt.event.FocusEvent e) {
+                try {
+                    String clean = tfGia.getText().replace(".", "").replace(",", "").replace("đ", "").trim();
+                    long val = Long.parseLong(clean);
+                    if (val >= 0) {
+                        item.donGia = val;
+                        tfGia.setText(NUM_FMT.format(val) + " đ");
+                        lblThanhTien.setText(NUM_FMT.format(item.getThanhTien()) + " đ");
+                        if (onUpdate != null) onUpdate.run();
+                    }
+                } catch (Exception ex) {
+                    tfGia.setText(NUM_FMT.format(item.donGia) + " đ");
+                }
+            }
+        };
+        tfGia.addFocusListener(updateGiaFocus);
+        tfGia.addActionListener(e -> updateGiaFocus.focusLost(null));
+
+        return r;
     }
 
     private void suaSanPham(SanPham sp) {
@@ -579,9 +1064,9 @@ public class KhoHangPanel extends JPanel {
 
     private void hienMenuThaoTac(Component invoker, int x, int y, SanPham sp) {
         JPopupMenu m = new JPopupMenu();
-        JMenuItem itNhap = new JMenuItem("Nhập thêm hàng");
+        JMenuItem itNhap = new JMenuItem("Lập phiếu nhập kho");
         itNhap.setFont(Theme.font(Font.PLAIN, 13));
-        itNhap.addActionListener(e -> nhapHang(sp));
+        itNhap.addActionListener(e -> lapPhieuNhapKho(sp));
 
         JMenuItem itSua = new JMenuItem("Chỉnh sửa thông tin");
         itSua.setFont(Theme.font(Font.PLAIN, 13));

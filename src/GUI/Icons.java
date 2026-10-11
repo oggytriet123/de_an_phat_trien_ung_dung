@@ -194,6 +194,13 @@ public final class Icons {
                 g.draw(new Line2D.Double(12, 9.5, 12, 14));
                 g.fill(new Ellipse2D.Double(11, 16, 2, 2));
             }
+            case "plus" -> {
+                g.draw(new Line2D.Double(12, 6, 12, 18));
+                g.draw(new Line2D.Double(6, 12, 18, 12));
+            }
+            case "minus" -> {
+                g.draw(new Line2D.Double(6, 12, 18, 12));
+            }
             default -> { }
 
 

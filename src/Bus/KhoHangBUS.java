@@ -73,6 +73,14 @@ public class KhoHangBUS {
         return ds.removeIf(sp -> sp.getMaSKU().equalsIgnoreCase(maSKU));
     }
 
+    public SanPham timTheoSKU(String maSKU) {
+        if (maSKU == null) return null;
+        for (SanPham sp : ds) {
+            if (sp.getMaSKU().equalsIgnoreCase(maSKU.trim())) return sp;
+        }
+        return null;
+    }
+
     private void add(String sku, String ten, String quyCach, String danhMuc, int ton, String dvt, long gia, String tt) {
         ds.add(new SanPham(sku, ten, quyCach, danhMuc, ton, dvt, gia, tt));
     }
