@@ -136,6 +136,7 @@ public final class Icons {
                 p.closePath();
                 g.draw(p);
                 g.draw(new Ellipse2D.Double(9.5, 9.5, 5, 5));
+                g.fill(new Ellipse2D.Double(11, 11, 2, 2));
             }
             case "edit" -> {
                 Path2D p = new Path2D.Double();
@@ -200,6 +201,22 @@ public final class Icons {
             }
             case "minus" -> {
                 g.draw(new Line2D.Double(6, 12, 18, 12));
+            }
+            case "excel" -> {
+                g.draw(new RoundRectangle2D.Double(4, 3.5, 16, 17, 2.5, 2.5));
+                g.draw(new Line2D.Double(4, 9, 20, 9));
+                g.draw(new Line2D.Double(10, 9, 10, 20.5));
+                g.draw(new Line2D.Double(4, 15, 20, 15));
+            }
+            case "chart" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(4, 18);
+                p.lineTo(9, 13);
+                p.lineTo(14, 16);
+                p.lineTo(20, 8);
+                g.draw(p);
+                g.draw(new Line2D.Double(16, 8, 20, 8));
+                g.draw(new Line2D.Double(20, 8, 20, 12));
             }
             default -> { }
 

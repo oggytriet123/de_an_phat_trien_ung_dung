@@ -1057,9 +1057,10 @@ public class KhoHangPanel extends JPanel {
     }
 
     private void xemLichSuNhapXuat() {
-        JOptionPane.showMessageDialog(this,
-                "Tính năng Lịch sử Nhập/Xuất kho đang được kết nối với phân hệ Quản lý Phiếu Kho.",
-                "Lịch sử Nhập/Xuất", JOptionPane.INFORMATION_MESSAGE);
+        Window w = SwingUtilities.getWindowAncestor(this);
+        if (w instanceof MainFrame mf) {
+            mf.chon("Lịch sử Nhập / Xuất Kho");
+        }
     }
 
     private void hienMenuThaoTac(Component invoker, int x, int y, SanPham sp) {

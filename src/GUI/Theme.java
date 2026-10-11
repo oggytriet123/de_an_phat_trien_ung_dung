@@ -29,6 +29,10 @@ public final class Theme {
     public static final Color RED            = new Color(0xD64545);
     public static final Color RED_BG         = new Color(0xFDE8E8);
     public static final Color BADGE_GRAY_BG  = new Color(0xEEF2F5);
+    public static final Color BLUE_BG        = new Color(0xE2EDF3);
+    public static final Color BLUE_TEXT      = new Color(0x1B6488);
+    public static final Color PEACH_BG       = new Color(0xFEEEDD);
+    public static final Color PEACH_TEXT     = new Color(0xC25E00);
     public static final Color AVATAR_BG      = new Color(0xDCE4EA);
     public static final Color ACTION_ICON    = new Color(0x8C9BA5);
 

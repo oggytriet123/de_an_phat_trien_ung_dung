@@ -21,12 +21,15 @@ public class MainFrame extends JFrame {
         {"Dịch vụ", "scissors", "Dịch vụ khám, spa, grooming"},
         {"Kho hàng", "box", "Theo dõi sản phẩm, tồn kho và nhập xuất"},
         {"Nhân viên", "person", "Quản lý nhân viên, ca làm và phân quyền"},
+        {"Báo cáo", "chart", "Báo cáo doanh thu, tồn kho và hoạt động"},
     };
 
     private final TaiKhoan taiKhoan;
     private final CardLayout cards = new CardLayout();
     private final JPanel content = new JPanel(cards);
     private final Map<String, NavButton> navs = new LinkedHashMap<>();
+    private JPanel pnlSubKhoHang;
+    private SubNavButton btnSubLichSu;
 
     public MainFrame(TaiKhoan taiKhoan) {
         super("PetCare POS");
@@ -51,6 +54,7 @@ public class MainFrame extends JFrame {
             }
             content.add(p, m[0]);
         }
+        content.add(new LichSuNhapXuatPanel(), "Lịch sử Nhập / Xuất Kho");
         // Giữ nguyên panel Hệ Thống của nhóm
         content.add(new HeThongPanel(taiKhoan, this), "Hệ Thống");
 
@@ -71,19 +75,44 @@ public class MainFrame extends JFrame {
         side.setPreferredSize(new Dimension(230, 0));
         side.setLayout(new BoxLayout(side, BoxLayout.Y_AXIS));
 
-        // Thương hiệu PetCare POS
+        // Thương hiệu PetCare POS (icon chân thú + tên)
         JPanel brand = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         brand.setOpaque(false);
-        brand.setBorder(new EmptyBorder(26, 20, 22, 10));
-        brand.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+        brand.setBorder(new EmptyBorder(24, 18, 16, 10));
+        brand.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
         brand.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JLabel icPaw = new JLabel(Icons.of("paw", 22, Color.WHITE));
         JLabel name = new JLabel("PetCare POS");
         name.setFont(Theme.font(Font.BOLD, 18));
         name.setForeground(Color.WHITE);
+        brand.add(icPaw);
         brand.add(name);
         side.add(brand);
 
-        // 7 mục menu
+        // Nhãn phân mục "Điều hành"
+        JLabel lblSec = new JLabel("Điều hành");
+        lblSec.setFont(Theme.font(Font.PLAIN, 11));
+        lblSec.setForeground(new Color(255, 255, 255, 140));
+        JPanel secWrap = new JPanel(new BorderLayout());
+        secWrap.setOpaque(false);
+        secWrap.setBorder(new EmptyBorder(0, 20, 8, 10));
+        secWrap.setMaximumSize(new Dimension(Integer.MAX_VALUE, 24));
+        secWrap.setAlignmentX(Component.LEFT_ALIGNMENT);
+        secWrap.add(lblSec, BorderLayout.WEST);
+        side.add(secWrap);
+
+        // Sub-item: Lịch sử Nhập / Xuất Kho (dưới Kho hàng)
+        pnlSubKhoHang = new JPanel(new BorderLayout());
+        pnlSubKhoHang.setOpaque(false);
+        pnlSubKhoHang.setBorder(new EmptyBorder(1, 12, 1, 12));
+        pnlSubKhoHang.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        pnlSubKhoHang.setAlignmentX(Component.LEFT_ALIGNMENT);
+        btnSubLichSu = new SubNavButton("Lịch sử Nhập / Xuất Kho");
+        btnSubLichSu.addActionListener(e -> chon("Lịch sử Nhập / Xuất Kho"));
+        pnlSubKhoHang.add(btnSubLichSu, BorderLayout.CENTER);
+        pnlSubKhoHang.setVisible(false);
+
+        // Các mục menu chính
         for (String[] m : MENU) {
             NavButton b = new NavButton(m[0], m[1]);
             b.addActionListener(e -> chon(m[0]));
@@ -95,6 +124,10 @@ public class MainFrame extends JFrame {
             wrap.setAlignmentX(Component.LEFT_ALIGNMENT);
             wrap.add(b);
             side.add(wrap);
+
+            if (m[0].equals("Kho hàng")) {
+                side.add(pnlSubKhoHang);
+            }
         }
 
         side.add(Box.createVerticalGlue());
@@ -172,7 +205,25 @@ public class MainFrame extends JFrame {
 
     public void chon(String key) {
         cards.show(content, key);
-        navs.forEach((k, b) -> b.setSelected(k.equals(key)));
+        boolean isLichSu = "Lịch sử Nhập / Xuất Kho".equals(key);
+        boolean isKho = "Kho hàng".equals(key);
+
+        navs.forEach((k, b) -> {
+            boolean active = k.equals(key);
+            b.setSelected(active);
+            if ("Kho hàng".equals(k)) {
+                b.setParentActive(isLichSu);
+                b.setShowDot(isLichSu);
+            } else {
+                b.setParentActive(false);
+                b.setShowDot(false);
+            }
+        });
+
+        if (pnlSubKhoHang != null) {
+            pnlSubKhoHang.setVisible(isKho || isLichSu);
+            btnSubLichSu.setActive(isLichSu);
+        }
     }
 
     public void dangXuat() {
@@ -196,6 +247,8 @@ public class MainFrame extends JFrame {
     private static class NavButton extends JToggleButton {
         private final String iconName;
         private boolean hovering;
+        private boolean parentActive;
+        private boolean showDot;
 
         NavButton(String text, String iconName) {
             super(text);
@@ -215,19 +268,98 @@ public class MainFrame extends JFrame {
             });
         }
 
+        void setParentActive(boolean pa) {
+            this.parentActive = pa;
+            repaint();
+        }
+
+        void setShowDot(boolean dot) {
+            this.showDot = dot;
+            repaint();
+        }
+
         @Override protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-            if (isSelected() || hovering) {
-                g2.setColor(isSelected() ? Theme.SIDEBAR_ACTIVE : Theme.SIDEBAR_HOVER);
+
+            boolean active = isSelected() || parentActive;
+            Color iconColor = Color.WHITE;
+            Color textColor = Color.WHITE;
+
+            if (parentActive) {
+                // Khi trang con được chọn: nền trắng xám sáng, icon và chữ xanh đậm
+                g2.setColor(new Color(0xDEE7EC));
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+                iconColor = new Color(0x28566E);
+                textColor = new Color(0x28566E);
+            } else if (isSelected()) {
+                g2.setColor(Theme.SIDEBAR_ACTIVE);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
+            } else if (hovering) {
+                g2.setColor(Theme.SIDEBAR_HOVER);
                 g2.fillRoundRect(0, 0, getWidth(), getHeight(), 10, 10);
             }
-            Icons.draw(g2, iconName, 14, (getHeight() - 20) / 2.0, 20, Color.WHITE, false);
-            g2.setFont(getFont());
-            g2.setColor(getForeground());
+
+            Icons.draw(g2, iconName, 14, (getHeight() - 20) / 2.0, 20, iconColor, false);
+            g2.setFont(active ? Theme.font(Font.BOLD, 14) : getFont());
+            g2.setColor(textColor);
             FontMetrics fm = g2.getFontMetrics();
             g2.drawString(getText(), 46, (getHeight() - fm.getHeight()) / 2 + fm.getAscent());
+
+            // Chấm tròn nhỏ bên phải khi có trang con đang mở
+            if (showDot) {
+                g2.setColor(new Color(0x28566E));
+                g2.fillOval(getWidth() - 22, (getHeight() - 6) / 2, 6, 6);
+            }
+
+            g2.dispose();
+        }
+    }
+
+    /** Nút menu con thụt lề dưới mục cha: thanh dọc chỉ báo + chữ. */
+    private static class SubNavButton extends JButton {
+        private boolean active;
+        private boolean hovering;
+
+        SubNavButton(String text) {
+            super(text);
+            setFont(Theme.font(Font.PLAIN, 12));
+            setForeground(Color.WHITE);
+            setContentAreaFilled(false);
+            setBorderPainted(false);
+            setFocusPainted(false);
+            setOpaque(false);
+            setHorizontalAlignment(SwingConstants.LEFT);
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            setPreferredSize(new Dimension(100, 32));
+            addMouseListener(new MouseAdapter() {
+                @Override public void mouseEntered(MouseEvent e) { hovering = true; repaint(); }
+                @Override public void mouseExited(MouseEvent e) { hovering = false; repaint(); }
+            });
+        }
+
+        void setActive(boolean a) { this.active = a; repaint(); }
+
+        @Override protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+
+            if (hovering) {
+                g2.setColor(Theme.SIDEBAR_HOVER);
+                g2.fillRoundRect(0, 0, getWidth(), getHeight(), 8, 8);
+            }
+
+            // Thanh chỉ báo dọc trắng bên trái
+            g2.setColor(Color.WHITE);
+            g2.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+            g2.drawLine(18, (getHeight() - 14) / 2, 18, (getHeight() + 14) / 2);
+
+            g2.setFont(active ? Theme.font(Font.BOLD, 12) : getFont());
+            g2.setColor(active ? Color.WHITE : new Color(255, 255, 255, 210));
+            FontMetrics fm = g2.getFontMetrics();
+            g2.drawString(getText(), 28, (getHeight() - fm.getHeight()) / 2 + fm.getAscent());
             g2.dispose();
         }
     }
