@@ -23,7 +23,13 @@ public final class Theme {
     public static final Color TEXT           = new Color(0x1F2A33);
     public static final Color MUTED          = new Color(0x6B7A86);
     public static final Color GREEN          = new Color(0x2E9E4F);
+    public static final Color GREEN_BG       = new Color(0xDEF5E5);
+    public static final Color ORANGE         = new Color(0xD97706);
+    public static final Color ORANGE_BG      = new Color(0xFEF3E6);
     public static final Color RED            = new Color(0xD64545);
+    public static final Color BADGE_GRAY_BG  = new Color(0xEEF2F5);
+    public static final Color AVATAR_BG      = new Color(0xDCE4EA);
+    public static final Color ACTION_ICON    = new Color(0x8C9BA5);
 
     public static final String FONT = "Segoe UI";
 

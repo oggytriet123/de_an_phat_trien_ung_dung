@@ -128,6 +128,37 @@ public final class Icons {
                     g.draw(new Line2D.Double(12 + 5 * c, 12 + 5 * s, 12 + 7 * c, 12 + 7 * s));
                 }
             }
+            case "eye" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(2, 12);
+                p.curveTo(6, 6.5, 18, 6.5, 22, 12);
+                p.curveTo(18, 17.5, 6, 17.5, 2, 12);
+                p.closePath();
+                g.draw(p);
+                g.draw(new Ellipse2D.Double(9.5, 9.5, 5, 5));
+            }
+            case "edit" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(4, 20);
+                p.lineTo(8.5, 19.5);
+                p.lineTo(19, 9);
+                p.lineTo(15, 5);
+                p.lineTo(4.5, 15.5);
+                p.closePath();
+                g.draw(p);
+                g.draw(new Line2D.Double(13.5, 6.5, 17.5, 10.5));
+            }
+            case "more" -> {
+                g.fill(new Ellipse2D.Double(4, 10.5, 3, 3));
+                g.fill(new Ellipse2D.Double(10.5, 10.5, 3, 3));
+                g.fill(new Ellipse2D.Double(17, 10.5, 3, 3));
+            }
+            case "scissors" -> {
+                g.draw(new Ellipse2D.Double(4, 14, 5.5, 5.5));
+                g.draw(new Ellipse2D.Double(14.5, 14, 5.5, 5.5));
+                g.draw(new Line2D.Double(7.5, 14.5, 16.5, 4));
+                g.draw(new Line2D.Double(16.5, 14.5, 7.5, 4));
+            }
             default -> { }
 
 
