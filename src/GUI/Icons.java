@@ -128,6 +128,96 @@ public final class Icons {
                     g.draw(new Line2D.Double(12 + 5 * c, 12 + 5 * s, 12 + 7 * c, 12 + 7 * s));
                 }
             }
+            case "eye" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(2, 12);
+                p.curveTo(6, 6.5, 18, 6.5, 22, 12);
+                p.curveTo(18, 17.5, 6, 17.5, 2, 12);
+                p.closePath();
+                g.draw(p);
+                g.draw(new Ellipse2D.Double(9.5, 9.5, 5, 5));
+                g.fill(new Ellipse2D.Double(11, 11, 2, 2));
+            }
+            case "edit" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(4, 20);
+                p.lineTo(8.5, 19.5);
+                p.lineTo(19, 9);
+                p.lineTo(15, 5);
+                p.lineTo(4.5, 15.5);
+                p.closePath();
+                g.draw(p);
+                g.draw(new Line2D.Double(13.5, 6.5, 17.5, 10.5));
+            }
+            case "more" -> {
+                g.fill(new Ellipse2D.Double(4, 10.5, 3, 3));
+                g.fill(new Ellipse2D.Double(10.5, 10.5, 3, 3));
+                g.fill(new Ellipse2D.Double(17, 10.5, 3, 3));
+            }
+            case "scissors" -> {
+                g.draw(new Ellipse2D.Double(4, 14, 5.5, 5.5));
+                g.draw(new Ellipse2D.Double(14.5, 14, 5.5, 5.5));
+                g.draw(new Line2D.Double(7.5, 14.5, 16.5, 4));
+                g.draw(new Line2D.Double(16.5, 14.5, 7.5, 4));
+            }
+            case "close" -> {
+                g.draw(new Line2D.Double(6.5, 6.5, 17.5, 17.5));
+                g.draw(new Line2D.Double(17.5, 6.5, 6.5, 17.5));
+            }
+            case "camera" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(5, 8.5); p.lineTo(8, 8.5); p.lineTo(9.5, 6.5); p.lineTo(14.5, 6.5); p.lineTo(16, 8.5); p.lineTo(19, 8.5);
+                p.curveTo(20, 8.5, 20.5, 9, 20.5, 10);
+                p.lineTo(20.5, 17.5);
+                p.curveTo(20.5, 18.5, 20, 19, 19, 19);
+                p.lineTo(5, 19);
+                p.curveTo(4, 19, 3.5, 18.5, 3.5, 17.5);
+                p.lineTo(3.5, 10);
+                p.curveTo(3.5, 9, 4, 8.5, 5, 8.5);
+                p.closePath();
+                g.draw(p);
+                g.draw(new Ellipse2D.Double(9, 10.5, 6, 6));
+            }
+            case "chevron-down" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(6.5, 9.5);
+                p.lineTo(12, 15);
+                p.lineTo(17.5, 9.5);
+                g.draw(p);
+            }
+            case "warning" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(12, 4);
+                p.lineTo(21, 19.5);
+                p.lineTo(3, 19.5);
+                p.closePath();
+                g.draw(p);
+                g.draw(new Line2D.Double(12, 9.5, 12, 14));
+                g.fill(new Ellipse2D.Double(11, 16, 2, 2));
+            }
+            case "plus" -> {
+                g.draw(new Line2D.Double(12, 6, 12, 18));
+                g.draw(new Line2D.Double(6, 12, 18, 12));
+            }
+            case "minus" -> {
+                g.draw(new Line2D.Double(6, 12, 18, 12));
+            }
+            case "excel" -> {
+                g.draw(new RoundRectangle2D.Double(4, 3.5, 16, 17, 2.5, 2.5));
+                g.draw(new Line2D.Double(4, 9, 20, 9));
+                g.draw(new Line2D.Double(10, 9, 10, 20.5));
+                g.draw(new Line2D.Double(4, 15, 20, 15));
+            }
+            case "chart" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(4, 18);
+                p.lineTo(9, 13);
+                p.lineTo(14, 16);
+                p.lineTo(20, 8);
+                g.draw(p);
+                g.draw(new Line2D.Double(16, 8, 20, 8));
+                g.draw(new Line2D.Double(20, 8, 20, 12));
+            }
             default -> { }
 
 
