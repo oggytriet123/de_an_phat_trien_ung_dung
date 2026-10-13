@@ -33,6 +33,8 @@ public class LichSuNhapXuatPanel extends JPanel {
     private List<PhieuKho> filtered = new ArrayList<>();
     private String loaiLoc = "Tất cả";
     private int trang = 1;
+    private java.time.LocalDate tuNgay = java.time.LocalDate.of(2026, 3, 1);
+    private java.time.LocalDate denNgay = java.time.LocalDate.of(2026, 3, 4);
 
     private final PageModel model = new PageModel();
     private final JTable table = new JTable(model);
@@ -164,8 +166,13 @@ public class LichSuNhapXuatPanel extends JPanel {
         boxDate.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         boxDate.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
-                JOptionPane.showMessageDialog(LichSuNhapXuatPanel.this,
-                        "Khoảng thời gian: 01/03/2026 đến 04/03/2026", "Bộ lọc thời gian", JOptionPane.INFORMATION_MESSAGE);
+                CalendarPicker.showDateRangePicker(boxDate, tuNgay, denNgay, (start, end) -> {
+                    tuNgay = start;
+                    denNgay = end;
+                    lblDateVal.setText(tuNgay.format(CalendarPicker.DATE_FMT) + "  —  " + denNgay.format(CalendarPicker.DATE_FMT));
+                    trang = 1;
+                    refresh();
+                });
             }
         });
 
@@ -285,6 +292,14 @@ public class LichSuNhapXuatPanel extends JPanel {
                 String hay = norm(pk.getMaPhieu()) + "|" + norm(pk.getNguoiThucHien()) + "|" + norm(pk.getDoiTac());
                 if (!hay.contains(kw)) continue;
             }
+
+            if (tuNgay != null && denNgay != null) {
+                try {
+                    java.time.LocalDate d = java.time.LocalDate.parse(pk.getNgayLap(), CalendarPicker.DATE_FMT);
+                    if (d.isBefore(tuNgay) || d.isAfter(denNgay)) continue;
+                } catch (Exception ignored) { }
+            }
+
             list.add(pk);
         }
         filtered = list;

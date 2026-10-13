@@ -661,13 +661,33 @@ public class KhoHangPanel extends JPanel {
         // 1.3 Ngày lập phiếu
         JTextField tfNgay = new JTextField("04/10/2026");
         setupField(tfNgay);
+        tfNgay.setEditable(false);
+        tfNgay.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
         JLabel icCal = new JLabel(Icons.of("calendar", 16, Theme.MUTED));
         icCal.setBorder(new EmptyBorder(0, 0, 0, 10));
+        icCal.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
         JPanel boxNgay = new RoundedPanel(10, Color.WHITE, Theme.BORDER);
         boxNgay.setLayout(new BorderLayout());
         boxNgay.setPreferredSize(new Dimension(150, 38));
         boxNgay.add(tfNgay, BorderLayout.CENTER);
         boxNgay.add(icCal, BorderLayout.EAST);
+        boxNgay.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+
+        MouseAdapter maNgay = new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent e) {
+                java.time.LocalDate curr = java.time.LocalDate.now();
+                try {
+                    curr = java.time.LocalDate.parse(tfNgay.getText().trim(), CalendarPicker.DATE_FMT);
+                } catch (Exception ignored) { }
+                CalendarPicker.showDatePicker(boxNgay, curr, d -> tfNgay.setText(d.format(CalendarPicker.DATE_FMT)));
+            }
+        };
+        boxNgay.addMouseListener(maNgay);
+        tfNgay.addMouseListener(maNgay);
+        icCal.addMouseListener(maNgay);
+
         JPanel groupNgay = createFieldGroup("Ngày lập phiếu", boxNgay);
         groupNgay.setPreferredSize(new Dimension(150, 62));
 
