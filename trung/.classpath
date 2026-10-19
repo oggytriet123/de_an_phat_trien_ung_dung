@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="src" path="de_an_phat_trien_ung_dung/src"/>
+	<classpathentry kind="lib" path="de_an_phat_trien_ung_dung/lib/mssql-jdbc-13.2.1.jre11.jar"/>
+	<classpathentry kind="output" path="de_an_phat_trien_ung_dung/bin"/>
+</classpath>
