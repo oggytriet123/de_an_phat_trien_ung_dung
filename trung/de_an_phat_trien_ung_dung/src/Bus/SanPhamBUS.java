@@ -50,8 +50,20 @@ public class SanPhamBUS {
         ds.add(new SanPham(sku, ten, dm, gia, dv));
     }
 
+    /** Sản phẩm (không phải dịch vụ) nhưng xếp trong nhóm dịch vụ, ví dụ sữa tắm trong nhóm spa. */
+    private void addSp(String sku, String ten, String dm, long gia) {
+        ds.add(new SanPham(sku, ten, dm, gia, false));
+    }
+
     private void napDuLieuMau() {
+        // 6 mục đầu giống thứ tự trên thiết kế
         add("RC-002", "Royal Canin 2kg", "Thức ăn", 350_000);
+        add("CAT-014", "Thức ăn hạt cho mèo", "Thức ăn", 185_000);
+        addSp("SPA-008", "Sữa tắm thú cưng", "Dịch vụ spa", 120_000);
+        add("VET-001", "Khám tổng quát", "Dịch vụ khám", 250_000);
+        add("SPA-002", "Cắt tỉa lông", "Dịch vụ spa", 300_000);
+        add("MED-010", "Vitamin thú cưng", "Thuốc", 95_000);
+
         add("PG-015", "Pedigree trưởng thành 1,5kg", "Thức ăn", 185_000);
         add("WK-012", "Whiskas cá thu 1,2kg", "Thức ăn", 120_000);
         add("SH-030", "SmartHeart Gold 3kg", "Thức ăn", 290_000);
@@ -59,18 +71,14 @@ public class SanPhamBUS {
         add("TY-001", "Bóng cao su có chuông", "Đồ chơi", 45_000);
         add("TY-002", "Xương gặm cho chó", "Đồ chơi", 60_000);
         add("TY-003", "Cần câu mèo lông vũ", "Đồ chơi", 55_000);
-        add("TY-004", "Chuột bông catnip", "Đồ chơi", 35_000);
-        add("TH-DR1", "Thuốc xổ giun Drontal", "Thuốc", 95_000);
-        add("TH-FL1", "Xịt trị ve rận Frontline", "Thuốc", 280_000);
-        add("TH-NP1", "Gel vitamin tổng hợp", "Thuốc", 150_000);
-        add("SV-KH1", "Khám tổng quát", "Dịch vụ khám", 150_000);
-        add("SV-KH2", "Tiêm phòng 5 bệnh", "Dịch vụ khám", 250_000);
-        add("SV-KH3", "Siêu âm", "Dịch vụ khám", 200_000);
-        add("SV-SPA1", "Dịch vụ spa", "Dịch vụ spa", 400_000);
-        add("SV-SPA2", "Cắt tỉa lông", "Dịch vụ spa", 250_000);
-        add("SV-SPA3", "Vệ sinh tai - cắt móng", "Dịch vụ spa", 80_000);
-        add("SV-LC1", "Lưu chuồng nhỏ (ngày)", "Lưu chuồng", 100_000);
-        add("SV-LC2", "Lưu chuồng lớn (ngày)", "Lưu chuồng", 150_000);
-        add("SV-LC3", "Lưu chuồng VIP (ngày)", "Lưu chuồng", 250_000);
+        add("MED-011", "Thuốc xổ giun Drontal", "Thuốc", 95_000);
+        add("MED-012", "Xịt trị ve rận Frontline", "Thuốc", 280_000);
+        add("VET-002", "Tiêm phòng 5 bệnh", "Dịch vụ khám", 250_000);
+        add("VET-003", "Siêu âm", "Dịch vụ khám", 200_000);
+        add("SPA-001", "Tắm sấy thú cưng", "Dịch vụ spa", 200_000);
+        add("SPA-003", "Vệ sinh tai - cắt móng", "Dịch vụ spa", 80_000);
+        add("LC-001", "Lưu chuồng nhỏ (ngày)", "Lưu chuồng", 100_000);
+        add("LC-002", "Lưu chuồng lớn (ngày)", "Lưu chuồng", 150_000);
+        add("LC-003", "Lưu chuồng VIP (ngày)", "Lưu chuồng", 250_000);
     }
 }

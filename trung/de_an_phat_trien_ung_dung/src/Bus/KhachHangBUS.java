@@ -28,6 +28,14 @@ public class KhachHangBUS {
         return false;
     }
 
+    /** Tìm khách theo số điện thoại (so khớp theo chữ số); null nếu chưa có. */
+    public KhachHang timTheoSdt(String sdt) {
+        String s = chiSo(sdt);
+        if (s.length() < 9) return null;
+        for (KhachHang k : ds) if (chiSo(k.getSoDienThoai()).equals(s)) return k;
+        return null;
+    }
+
     public KhachHang them(String hoTen, String sdt, String hangThe, String thuCung) {
         int max = 0;
         for (KhachHang k : ds) max = Math.max(max, Integer.parseInt(k.getMaKH().substring(2)));
