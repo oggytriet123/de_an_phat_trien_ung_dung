@@ -32,7 +32,8 @@ public class HoSoThuCungBUS {
     /** Tìm theo tên thú cưng, mã hồ sơ, tên chủ hoặc số điện thoại chủ. Từ khóa rỗng = tất cả. */
     public List<HoSoThuCung> tim(String tuKhoa) {
         String kw = ChuoiUtil.chuanHoa(tuKhoa == null ? "" : tuKhoa.trim());
-        String kwSo = ChuoiUtil.chiSo(kw);
+        // chỉ so khớp số điện thoại khi từ khóa toàn là chữ số (tránh "hs003" khớp nhầm SĐT chứa 003)
+        String kwSo = kw.replaceAll("[\\s.+-]", "").matches("\\d+") ? ChuoiUtil.chiSo(kw) : "";
         List<HoSoThuCung> kq = new ArrayList<>();
         for (HoSoThuCung h : layDanhSach()) {
             if (kw.isEmpty()) { kq.add(h); continue; }
