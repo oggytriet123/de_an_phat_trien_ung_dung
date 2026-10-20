@@ -35,6 +35,7 @@ public class MainFrame extends JFrame {
     private ThuCungPanel pnlThuCung;
     private KhachHangPanel pnlKhachHang;
     private HeThongPanel pnlHeThong;
+    private ThongKePanel pnlThongKe;
 
     public MainFrame(TaiKhoan taiKhoan) {
         super("PetCare POS");
@@ -52,6 +53,7 @@ public class MainFrame extends JFrame {
         pnlKhachHang = new KhachHangPanel();
         pnlKhoHang = new KhoHangPanel();
         pnlLichSuKho = new LichSuNhapXuatPanel();
+        pnlThongKe = new ThongKePanel();
 
         content.add(pnlHeThong, "Hệ Thống");
         content.add(pnlThuCung, "Thú cưng");
@@ -59,7 +61,7 @@ public class MainFrame extends JFrame {
         content.add(pnlKhoHang, "Kho hàng");
         content.add(pnlLichSuKho, "Lịch sử Nhập / Xuất Kho");
         content.add(new ModulePlaceholderPanel("Tìm Kiếm", "Tra cứu thông tin hồ sơ và sản phẩm", "search"), "Tìm Kiếm");
-        content.add(new ModulePlaceholderPanel("Thống Kê", "Báo cáo doanh thu, khám chữa và tồn kho", "bar-chart"), "Thống Kê");
+        content.add(pnlThongKe, "Thống Kê");
 
         JPanel root = new JPanel(new BorderLayout());
         root.add(buildHeader(), BorderLayout.NORTH);
@@ -251,6 +253,10 @@ public class MainFrame extends JFrame {
         }
 
         navs.forEach((k, b) -> b.setSelected(k.equals(parentMenu)));
+
+        if ("Thống Kê".equals(key) && pnlThongKe != null) {
+            pnlThongKe.refresh();
+        }
     }
 
     public void dangXuat() {
