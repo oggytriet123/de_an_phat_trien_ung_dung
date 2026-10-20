@@ -19,6 +19,38 @@ public final class Icons {
         };
     }
 
+    /** Màu mặc định của từng icon khi dùng trong menu (đa sắc như thiết kế mẫu). */
+    public static Color colorOf(String name) {
+        if (name == null) return new Color(0x546E7A);
+        switch (name) {
+            case "settings": return new Color(0x546E7A);
+            case "list": return new Color(0x2196F3);
+            case "sync": return new Color(0x9C27B0);
+            case "search": return new Color(0x1E88E5);
+            case "bar-chart": return new Color(0x00ACC1);
+            case "home": return new Color(0xE53935);
+            case "person": return new Color(0x1F3A5F);
+            case "help": return new Color(0x1E88E5);
+            case "logout": return new Color(0x3F6FB5);
+            case "close": return new Color(0xE53935);
+            case "invoice": return new Color(0x37474F);
+            case "customers": return new Color(0x2E86C1);
+            case "service": return new Color(0xE57373);
+            case "tag": return new Color(0xE53935);
+            case "paw":
+            case "logo": return new Color(0x8D6E63);
+            case "cage":
+            case "calendar": return new Color(0xF5A623);
+            case "pie": return new Color(0x26A69A);
+            default: return new Color(0x546E7A);
+        }
+    }
+
+    /** Icon màu mặc định. */
+    public static Icon colored(String name, int size) {
+        return of(name, size, colorOf(name));
+    }
+
     public static void draw(Graphics2D g0, String name, double x, double y, double size, Color color, boolean filled) {
         Graphics2D g = (Graphics2D) g0.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -127,6 +159,76 @@ public final class Icons {
                     double c = Math.cos(a), s = Math.sin(a);
                     g.draw(new Line2D.Double(12 + 5 * c, 12 + 5 * s, 12 + 7 * c, 12 + 7 * s));
                 }
+            }
+            case "list" -> {
+                for (int i = 0; i < 4; i++) {
+                    double yy = 5 + i * 5;
+                    g.draw(new Line2D.Double(3.5, yy, 5, yy));
+                    g.draw(new Line2D.Double(8, yy, 20.5, yy));
+                }
+            }
+            case "home" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(3, 11.5); p.lineTo(12, 3.5); p.lineTo(21, 11.5);
+                g.draw(p);
+                Path2D q = new Path2D.Double();
+                q.moveTo(5.5, 10); q.lineTo(5.5, 20.5); q.lineTo(18.5, 20.5); q.lineTo(18.5, 10);
+                g.draw(q);
+                g.draw(new Rectangle2D.Double(10, 14, 4, 6.5));
+            }
+            case "help" -> {
+                g.fill(new Ellipse2D.Double(2.5, 2.5, 19, 19));
+                g.setColor(Color.WHITE);
+                g.setFont(new Font(Theme.FONT, Font.BOLD, 16));
+                g.drawString("?", 8.3f, 17.5f);
+            }
+            case "logout" -> {
+                g.fill(new Ellipse2D.Double(2.5, 2.5, 19, 19));
+                g.setColor(Color.WHITE);
+                g.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(new Line2D.Double(17, 12, 7, 12));
+                g.draw(new Line2D.Double(7, 12, 11, 8));
+                g.draw(new Line2D.Double(7, 12, 11, 16));
+            }
+            case "close" -> {
+                g.fill(new RoundRectangle2D.Double(2.5, 2.5, 19, 19, 5, 5));
+                g.setColor(Color.WHITE);
+                g.setStroke(new BasicStroke(2.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(new Line2D.Double(8, 8, 16, 16));
+                g.draw(new Line2D.Double(16, 8, 8, 16));
+            }
+            case "invoice" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(5, 3); p.lineTo(19, 3); p.lineTo(19, 21); p.lineTo(16.5, 19); p.lineTo(14, 21);
+                p.lineTo(11.5, 19); p.lineTo(9, 21); p.lineTo(7, 19); p.lineTo(5, 21); p.closePath();
+                g.draw(p);
+                g.draw(new Line2D.Double(8.5, 8, 15.5, 8));
+                g.draw(new Line2D.Double(8.5, 12, 15.5, 12));
+            }
+            case "service" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(12, 20.5); p.curveTo(4, 15, 2.5, 11, 2.5, 8.5);
+                p.curveTo(2.5, 5.5, 5, 4, 7.2, 4); p.curveTo(9.5, 4, 11, 5.5, 12, 7);
+                p.curveTo(13, 5.5, 14.5, 4, 16.8, 4); p.curveTo(19, 4, 21.5, 5.5, 21.5, 8.5);
+                p.curveTo(21.5, 11, 20, 15, 12, 20.5);
+                g.draw(p);
+            }
+            case "tag" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(3, 12); p.lineTo(12, 3); p.lineTo(21, 3); p.lineTo(21, 12); p.lineTo(12, 21); p.closePath();
+                g.draw(p);
+                g.fill(new Ellipse2D.Double(15, 6, 3, 3));
+            }
+            case "cage" -> {
+                g.draw(new RoundRectangle2D.Double(3.5, 5, 17, 15, 3, 3));
+                for (int i = 1; i <= 3; i++) g.draw(new Line2D.Double(3.5 + i * 4.25, 5, 3.5 + i * 4.25, 20));
+                g.draw(new Line2D.Double(7, 5, 12, 2.5));
+                g.draw(new Line2D.Double(17, 5, 12, 2.5));
+            }
+            case "pie" -> {
+                g.draw(new Ellipse2D.Double(3.5, 3.5, 17, 17));
+                g.draw(new Line2D.Double(12, 12, 12, 3.5));
+                g.draw(new Line2D.Double(12, 12, 19, 16));
             }
             default -> { }
 

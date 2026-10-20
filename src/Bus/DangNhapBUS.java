@@ -6,6 +6,7 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 
 import DAO.TaiKhoanDAO;
+import Entity.ChucNang;
 import Entity.TaiKhoan;
 
 public class DangNhapBUS {
@@ -22,19 +23,27 @@ public class DangNhapBUS {
     public TaiKhoan dangNhap(String maHoacSdt, String matKhau) {
         try {
             TaiKhoan tk = dao.timTheoDangNhap(maHoacSdt, bamSha256(matKhau));
-            if (tk != null) return tk;
+            return tk; // sai mật khẩu/không có tài khoản -> null, KHÔNG rơi xuống tài khoản mẫu
         } catch (SQLException e) {
             System.err.println("[DangNhapBUS] Không truy vấn được CSDL: " + e.getMessage());
         }
+        // Chỉ dùng tài khoản mẫu khi không kết nối được CSDL
         return CHO_PHEP_TAI_KHOAN_MAU ? taiKhoanMau(maHoacSdt, matKhau) : null;
+    }
+
+    /** Tài khoản mẫu (chạy thử, không có trong CSDL). */
+    public static boolean laTaiKhoanMau(TaiKhoan tk) {
+        return tk != null && (tk.getMaTaiKhoan().equals("QL001") || tk.getMaTaiKhoan().equals("NV01"));
     }
 
     private TaiKhoan taiKhoanMau(String id, String matKhau) {
         if (!"123456".equals(matKhau)) return null;
         if (id.equalsIgnoreCase("admin") || id.equalsIgnoreCase("QL001") || id.equals("0901234567"))
-            return new TaiKhoan("QL001", "0901234567", "Hữu Thịnh", "Quản lý cửa hàng");
+            return new TaiKhoan("QL001", "admin", "Hữu Thịnh", "Quản lý", ChucNang.macDinh("Quản lý"),
+                    "0901234567", java.time.LocalDate.of(1995, 5, 20), "thinh@petstation.vn");
         if (id.equalsIgnoreCase("nv01") || id.equals("0902345678"))
-            return new TaiKhoan("NV01", "0902345678", "Thu Trang", "Nhân viên");
+            return new TaiKhoan("NV01", "nv01", "Thu Trang", "Bán hàng", ChucNang.macDinh("Bán hàng"),
+                    "0902345678", java.time.LocalDate.of(1998, 11, 3), "trang@petstation.vn");
         return null;
     }
 
