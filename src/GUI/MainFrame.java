@@ -8,17 +8,21 @@ import java.util.Map;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
+import Bus.HoaDonBUS;
+import Bus.KhachHangBUS;
+import Bus.MaGiamGiaBUS;
+import Bus.SanPhamBUS;
 import Entity.ChucNang;
 import Entity.TaiKhoan;
 
 /** Khung chính: thanh menu ngang có combobox (menu xổ xuống) + vùng nội dung (CardLayout). */
 public class MainFrame extends JFrame {
-    // Màu thanh menu (màu xanh 0xA8CFF0 kéo dài toàn bộ thanh header)
-    private static final Color BAR_BG = new Color(0xA8CFF0);
-    private static final Color BAR_ACTIVE = new Color(0x82B7E4);
-    private static final Color BAR_HOVER = new Color(0x97C9F2);
-    private static final Color BAR_TEXT = new Color(0x153147);
-    private static final Color POPUP_HOVER = new Color(0xA8CFF0);
+    // Màu thanh menu — dùng màu SIDEBAR của Trung_prj (xanh xám đậm) giống thanh bên trái Trung_prj
+    private static final Color BAR_BG     = Theme.SIDEBAR;
+    private static final Color BAR_ACTIVE = Theme.SIDEBAR_ACTIVE;
+    private static final Color BAR_HOVER  = Theme.SIDEBAR_HOVER;
+    private static final Color BAR_TEXT   = Color.WHITE;
+    private static final Color POPUP_HOVER = new Color(255, 255, 255, 30);
 
     /** Một mục menu: có thể là lệnh, đường kẻ ngăn cách hoặc menu con. */
     private static class Item {
@@ -53,9 +57,10 @@ public class MainFrame extends JFrame {
             Item.leaf("Danh Mục Bệnh", "list", "Danh mục bệnh và hướng điều trị", ChucNang.DANH_MUC_BENH),
             Item.leaf("Khuyến Mãi", "tag", "Chương trình khuyến mãi và ưu đãi", ChucNang.KHUYEN_MAI)),
         new Item("Xử Lý", "sync", null, null,
-            Item.leaf("Lồng Chuồng", "cage", "Quản lý lồng, chuồng gửi thú cưng", ChucNang.CHUONG),
-            Item.leaf("Đặt Lịch Hẹn", "calendar", "Đặt lịch spa, khám, tiêm phòng", ChucNang.LICH_HEN),
-            Item.leaf("Lập Hoá Đơn", "invoice", "Lập hoá đơn bán hàng và dịch vụ", ChucNang.HOA_DON)),
+            Item.leaf("Lồng Chuồng",   "cage",     "Quản lý lồng, chuồng gửi thú cưng",                ChucNang.CHUONG),
+            Item.leaf("Đặt Lịch Hẹn",  "calendar", "Đặt lịch spa, khám, tiêm phòng",                   ChucNang.LICH_HEN),
+            Item.leaf("Lập Hoá Đơn",   "invoice",  "Lập hoá đơn bán hàng và dịch vụ",                  ChucNang.HOA_DON),
+            Item.leaf("Lịch Sử HĐ",    "calendar", "Xem lại các hoá đơn đã thanh toán",                 ChucNang.HOA_DON)),
         new Item("Tìm Kiếm", "search", null, null,
             Item.leaf("Tìm Nhân Viên", "person", "Tra cứu nhân viên", ChucNang.TIM_KIEM),
             Item.leaf("Tìm Khách Hàng", "customers", "Tra cứu khách hàng", ChucNang.TIM_KIEM),
@@ -99,6 +104,16 @@ public class MainFrame extends JFrame {
     private final Map<String, NavButton> navs = new LinkedHashMap<>();
     private final java.util.Set<String> pages = new java.util.HashSet<>();
     private NavButton openNav; // menu đang xổ xuống
+
+    // Shared BUS dùng chung cho màn hình hóa đơn
+    private final KhachHangBUS khachHangBus = new KhachHangBUS();
+    private final SanPhamBUS sanPhamBus     = new SanPhamBUS();
+    private final HoaDonBUS hoaDonBus       = new HoaDonBUS(khachHangBus);
+    private final MaGiamGiaBUS maGiamGiaBus = new MaGiamGiaBUS();
+
+    // Trang Xử Lý (Lập hoá đơn) và Lịch sử hoá đơn — khởi tạo lười để tái sử dụng
+    private XuLyPanel xuLyPanel;
+    private LichSuHoaDonPanel lichSuPanel;
 
     public MainFrame(TaiKhoan taiKhoan) {
         super("PetCare POS");
@@ -144,7 +159,7 @@ public class MainFrame extends JFrame {
         brand.setOpaque(false);
         brand.setBorder(new EmptyBorder(10, 20, 10, 10));
         brand.setAlignmentY(Component.CENTER_ALIGNMENT);
-        JLabel logo = new JLabel(Icons.of("logo", 24, Theme.SIDEBAR));
+        JLabel logo = new JLabel(Icons.of("logo", 24, Color.WHITE));
         JLabel name = new JLabel("Pet Station");
         name.setFont(Theme.font(Font.BOLD, 18));
         name.setForeground(BAR_TEXT);
@@ -201,7 +216,7 @@ public class MainFrame extends JFrame {
             mi.setIcon(Icons.colored(it.icon, 20));
             mi.setIconTextGap(14);
             mi.setFont(Theme.font(Font.PLAIN, 14));
-            mi.setForeground(BAR_TEXT);
+            mi.setForeground(Theme.TEXT);
             mi.setOpaque(true);
             mi.setBackground(new Color(0xFAFAFA));
             mi.setBorder(new EmptyBorder(8, 18, 8, 22));
@@ -249,12 +264,30 @@ public class MainFrame extends JFrame {
                 p = new DichVuPanel();
             } else if (it.label.equals("Lồng Chuồng")) {
                 p = new LongChuongPanel();
+            } else if (it.label.equals("Lập Hoá Đơn")) {
+                if (xuLyPanel == null) {
+                    xuLyPanel = new XuLyPanel(hoaDonBus, sanPhamBus, maGiamGiaBus, khachHangBus);
+                }
+                xuLyPanel.hienQuanLy();
+                p = xuLyPanel;
+            } else if (it.label.equals("Lịch Sử HĐ") || (tab.equals("Danh Mục") && it.label.equals("Hoá Đơn"))) {
+                if (lichSuPanel == null) {
+                    lichSuPanel = new LichSuHoaDonPanel(hoaDonBus);
+                }
+                lichSuPanel.lamMoi();
+                p = lichSuPanel;
             } else {
                 String title = tab.equals("Thống Kê") || tab.equals("Danh Mục") || tab.equals("Xử Lý") || tab.equals("Tìm Kiếm")
                         ? (tab.equals("Thống Kê") ? "Thống Kê " + it.label : it.label) : it.label;
                 p = new ModulePlaceholderPanel(title, it.desc == null ? "" : it.desc, it.icon);
             }
             content.add(p, key);
+        } else {
+            if (it.label.equals("Lập Hoá Đơn") && xuLyPanel != null) {
+                xuLyPanel.hienQuanLy();
+            } else if ((it.label.equals("Lịch Sử HĐ") || (tab.equals("Danh Mục") && it.label.equals("Hoá Đơn"))) && lichSuPanel != null) {
+                lichSuPanel.lamMoi();
+            }
         }
         cards.show(content, key);
         navs.forEach((k, b) -> b.setSelected(k.equals(tab)));
@@ -273,9 +306,9 @@ public class MainFrame extends JFrame {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
                 g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
-                g2.setColor(BAR_ACTIVE);
+                g2.setColor(new Color(0xEEF3F6));
                 g2.fillOval(0, 0, 32, 32);
-                g2.setColor(BAR_TEXT);
+                g2.setColor(Theme.TEXT);
                 g2.setFont(Theme.font(Font.BOLD, 12));
                 FontMetrics fm = g2.getFontMetrics();
                 String s = initials(taiKhoan.getHoTen());
@@ -289,10 +322,10 @@ public class MainFrame extends JFrame {
         text.setLayout(new BoxLayout(text, BoxLayout.Y_AXIS));
         JLabel n = new JLabel(taiKhoan.getHoTen());
         n.setFont(Theme.font(Font.BOLD, 12));
-        n.setForeground(BAR_TEXT);
+        n.setForeground(Color.WHITE);
         JLabel r = new JLabel(taiKhoan.getVaiTro());
         r.setFont(Theme.font(Font.PLAIN, 10));
-        r.setForeground(new Color(0x345672));
+        r.setForeground(new Color(255, 255, 255, 200));
         text.add(Box.createVerticalGlue());
         text.add(n);
         text.add(r);
@@ -351,7 +384,7 @@ public class MainFrame extends JFrame {
             super(item.label);
             this.item = item;
             this.popup = buildPopup(item, item.label);
-            setFont(Theme.font(Font.BOLD, 17));
+            setFont(Theme.font(Font.PLAIN, 14));
             setForeground(BAR_TEXT);
             setContentAreaFilled(false);
             setBorderPainted(false);
@@ -360,7 +393,7 @@ public class MainFrame extends JFrame {
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
             FontMetrics fm = getFontMetrics(getFont());
-            int width = 22 + 28 + 12 + fm.stringWidth(getText()) + 22;
+            int width = 12 + 20 + 8 + fm.stringWidth(getText()) + 18;
             setPreferredSize(new Dimension(width, 56));
 
             popup.addPopupMenuListener(new javax.swing.event.PopupMenuListener() {
@@ -393,14 +426,15 @@ public class MainFrame extends JFrame {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             if (popup.isVisible() || isSelected() || hovering) {
-                g2.setColor(popup.isVisible() || isSelected() ? BAR_ACTIVE : BAR_HOVER);
-                g2.fillRect(0, 0, getWidth(), getHeight());
+                Color bg = popup.isVisible() || isSelected() ? new Color(255,255,255,60) : new Color(255,255,255,30);
+                g2.setColor(bg);
+                g2.fillRoundRect(2, 2, getWidth()-4, getHeight()-4, 8, 8);
             }
-            Icons.draw(g2, item.icon, 22, (getHeight() - 28) / 2.0, 28, Icons.colorOf(item.icon), false);
+            Icons.draw(g2, item.icon, 12, (getHeight() - 20) / 2.0, 20, Color.WHITE, false);
             g2.setFont(getFont());
             g2.setColor(getForeground());
             FontMetrics fm = g2.getFontMetrics();
-            g2.drawString(getText(), 22 + 28 + 12, (getHeight() - fm.getHeight()) / 2 + fm.getAscent());
+            g2.drawString(getText(), 12 + 20 + 8, (getHeight() - fm.getHeight()) / 2 + fm.getAscent());
             g2.dispose();
         }
     }
