@@ -64,6 +64,8 @@ public class ThongKePanel extends JPanel {
     private final JLabel lblFooter = new JLabel();
     private final JPanel pnlPages = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
     private List<Object[]> allTableData = new ArrayList<>();
+    private List<Object[]> filteredTableData = new ArrayList<>();
+    private PlaceholderField txtSearchTable;
 
     private static final DecimalFormat NUM_FMT;
     static {
@@ -277,13 +279,27 @@ public class ThongKePanel extends JPanel {
         card.setLayout(new BorderLayout());
 
         // Header bảng
-        JPanel topPnl = new JPanel(new BorderLayout());
+        JPanel topPnl = new JPanel(new BorderLayout(12, 0));
         topPnl.setOpaque(false);
         topPnl.setBorder(new EmptyBorder(14, 18, 10, 18));
         JLabel lblTableTitle = new JLabel("Bảng kê chi tiết");
         lblTableTitle.setFont(Theme.font(Font.BOLD, 14));
         lblTableTitle.setForeground(Theme.TEXT);
         topPnl.add(lblTableTitle, BorderLayout.WEST);
+
+        // Hộp tìm kiếm nhanh
+        JPanel rightTools = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        rightTools.setOpaque(false);
+        txtSearchTable = new PlaceholderField("Tìm kiếm trong bảng...");
+        txtSearchTable.setFont(Theme.font(Font.PLAIN, 12));
+        txtSearchTable.setPreferredSize(new Dimension(230, 32));
+        txtSearchTable.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            @Override public void insertUpdate(javax.swing.event.DocumentEvent e) { applyTableFilter(); }
+            @Override public void removeUpdate(javax.swing.event.DocumentEvent e) { applyTableFilter(); }
+            @Override public void changedUpdate(javax.swing.event.DocumentEvent e) { applyTableFilter(); }
+        });
+        rightTools.add(txtSearchTable);
+        topPnl.add(rightTools, BorderLayout.EAST);
         card.add(topPnl, BorderLayout.NORTH);
 
         // Bảng JTable
@@ -321,6 +337,17 @@ public class ThongKePanel extends JPanel {
         return card;
     }
 
+    public void chonTab(String tabName) {
+        for (String t : TABS) {
+            if (t.equalsIgnoreCase(tabName) || tabName.toLowerCase().contains(t.toLowerCase().substring(0, 4))) {
+                this.currentTab = t;
+                this.trang = 1;
+                refresh();
+                break;
+            }
+        }
+    }
+
     // ---------------- REFRESH DATA & CẬP NHẬT GIAO DIỆN ----------------
     public void refresh() {
         // Cập nhật style nút Tab
@@ -343,7 +370,7 @@ public class ThongKePanel extends JPanel {
             case "Khách hàng & Thú cưng" -> refreshTabKhachHang();
         }
 
-        updateTablePage();
+        applyTableFilter();
         revalidate();
         repaint();
     }
@@ -512,19 +539,41 @@ public class ThongKePanel extends JPanel {
         tableModel.setColumns(cols);
     }
 
+    private void applyTableFilter() {
+        String kw = (txtSearchTable != null && txtSearchTable.getText() != null)
+                ? txtSearchTable.getText().trim().toLowerCase() : "";
+        filteredTableData.clear();
+        for (Object[] row : allTableData) {
+            if (kw.isEmpty()) {
+                filteredTableData.add(row);
+            } else {
+                boolean match = false;
+                for (Object cell : row) {
+                    if (cell != null && cell.toString().toLowerCase().contains(kw)) {
+                        match = true;
+                        break;
+                    }
+                }
+                if (match) filteredTableData.add(row);
+            }
+        }
+        trang = 1;
+        updateTablePage();
+    }
+
     private void updateTablePage() {
-        int totalRows = allTableData.size();
+        int totalRows = filteredTableData.size();
         int pages = Math.max(1, (int) Math.ceil(totalRows / (double) PAGE_SIZE));
         trang = Math.min(Math.max(trang, 1), pages);
 
         int from = (trang - 1) * PAGE_SIZE;
         int to = Math.min(from + PAGE_SIZE, totalRows);
 
-        List<Object[]> pageRows = totalRows > 0 ? allTableData.subList(from, to) : Collections.emptyList();
+        List<Object[]> pageRows = totalRows > 0 ? filteredTableData.subList(from, to) : Collections.emptyList();
         tableModel.setRows(pageRows);
 
         lblFooter.setText(totalRows == 0
-                ? "Không có dữ liệu trong khoảng thời gian đã chọn"
+                ? "Không tìm thấy dữ liệu phù hợp"
                 : "Hiển thị " + (to - from) + " trong tổng số " + totalRows + " dòng dữ liệu");
 
         buildPager(pages);
@@ -582,7 +631,8 @@ public class ThongKePanel extends JPanel {
 
     // ---------------- 6. Xuất File Excel / CSV UTF-8 với BOM ----------------
     private void xuatExcel() {
-        if (allTableData.isEmpty()) {
+        List<Object[]> dataToExport = !filteredTableData.isEmpty() ? filteredTableData : allTableData;
+        if (dataToExport.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Không có dữ liệu để xuất file!", "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -608,7 +658,7 @@ public class ThongKePanel extends JPanel {
                 writer.write("\r\n");
 
                 // Rows
-                for (Object[] row : allTableData) {
+                for (Object[] row : dataToExport) {
                     for (int i = 0; i < row.length; i++) {
                         String s = row[i] == null ? "" : String.valueOf(row[i]).replace("\"", "\"\"");
                         writer.write("\"" + s + "\"");
@@ -618,7 +668,7 @@ public class ThongKePanel extends JPanel {
                 }
 
                 JOptionPane.showMessageDialog(this,
-                        "Đã xuất thành công " + allTableData.size() + " dòng dữ liệu ra file:\n" + f.getAbsolutePath(),
+                        "Đã xuất thành công " + dataToExport.size() + " dòng dữ liệu ra file:\n" + f.getAbsolutePath(),
                         "Xuất Báo Cáo", JOptionPane.INFORMATION_MESSAGE);
             } catch (Exception ex) {
                 JOptionPane.showMessageDialog(this, "Lỗi khi lưu file: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
