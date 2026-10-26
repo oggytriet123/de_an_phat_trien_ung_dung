@@ -43,6 +43,30 @@ public class ThuCungBUS {
         return dao.layThongKe();
     }
 
+    public int getTongSoThuCung() {
+        try {
+            return layThongKe().tongThuCung;
+        } catch (Exception e) {
+            return cache.size();
+        }
+    }
+
+    public int getSoDangLuuTru() {
+        int cnt = 0;
+        for (ThuCung tc : layDanhSach()) {
+            if ("Đang lưu trú".equalsIgnoreCase(tc.getTrangThai())) cnt++;
+        }
+        return cnt;
+    }
+
+    public int getSoCanTheoDoi() {
+        try {
+            return layThongKe().soCanhBao;
+        } catch (Exception e) {
+            return 0;
+        }
+    }
+
     /**
      * Lấy danh sách khách hàng để chọn chủ nuôi.
      */
