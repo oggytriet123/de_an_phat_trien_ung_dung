@@ -36,10 +36,15 @@ public class ThongKeBUS {
     }
 
     public LocalDate parseDate(String dateStr) {
+        if (dateStr == null || dateStr.trim().isEmpty()) return null;
         try {
-            return LocalDate.parse(dateStr, DATE_FMT);
+            return LocalDate.parse(dateStr.trim(), DATE_FMT);
         } catch (Exception e) {
-            return null;
+            try {
+                return LocalDate.parse(dateStr.trim(), DateTimeFormatter.ISO_LOCAL_DATE);
+            } catch (Exception ex) {
+                return null;
+            }
         }
     }
 
@@ -53,7 +58,7 @@ public class ThongKeBUS {
             if (d == null) continue;
             if (tuNgay != null && d.isBefore(tuNgay)) continue;
             if (denNgay != null && d.isAfter(denNgay)) continue;
-            if (loaiPhieu != null && !loaiPhieu.isEmpty() && !"Tất cả".equals(loaiPhieu) && !loaiPhieu.equals(pk.getLoaiPhieu())) {
+            if (loaiPhieu != null && !loaiPhieu.trim().isEmpty() && !"Tất cả".equalsIgnoreCase(loaiPhieu.trim()) && !loaiPhieu.trim().equalsIgnoreCase(pk.getLoaiPhieu().trim())) {
                 continue;
             }
             res.add(pk);
@@ -101,6 +106,13 @@ public class ThongKeBUS {
             count++;
         }
         return count;
+    }
+
+    /** Giá trị trung bình của mỗi phiếu xuất bán hoàn tất */
+    public long tinhGiaTriTrungBinhDonXuat(LocalDate tuNgay, LocalDate denNgay) {
+        int soPhieu = demSoPhieu(tuNgay, denNgay, "Xuất bán");
+        if (soPhieu == 0) return 0;
+        return tinhTongDoanhThu(tuNgay, denNgay) / soPhieu;
     }
 
     /**
@@ -157,6 +169,15 @@ public class ThongKeBUS {
         long tong = 0;
         for (SanPham sp : khoHangBUS.layDanhSach()) {
             tong += (long) sp.getSoLuongTon() * sp.getDonGia();
+        }
+        return tong;
+    }
+
+    /** Tổng số lượng đơn vị sản phẩm tồn kho (unit count) */
+    public int getTongSoLuongSanPhamTon() {
+        int tong = 0;
+        for (SanPham sp : khoHangBUS.layDanhSach()) {
+            tong += sp.getSoLuongTon();
         }
         return tong;
     }
@@ -265,6 +286,16 @@ public class ThongKeBUS {
     public List<KhachHang> layTopKhachHangChiTieu(int limit) {
         List<KhachHang> list = new ArrayList<>(khachHangBUS.layDanhSach());
         list.sort((a, b) -> Long.compare(b.getTongChiTieu(), a.getTongChiTieu()));
+        if (list.size() > limit) {
+            return list.subList(0, limit);
+        }
+        return list;
+    }
+
+    /** Top khách hàng có điểm tích luỹ cao nhất */
+    public List<KhachHang> layTopKhachHangDiem(int limit) {
+        List<KhachHang> list = new ArrayList<>(khachHangBUS.layDanhSach());
+        list.sort((a, b) -> Integer.compare(b.getDiemTichLuy(), a.getDiemTichLuy()));
         if (list.size() > limit) {
             return list.subList(0, limit);
         }

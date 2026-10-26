@@ -8,6 +8,10 @@ import java.util.Map;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 
+import Bus.HoaDonBUS;
+import Bus.KhachHangBUS;
+import Bus.MaGiamGiaBUS;
+import Bus.SanPhamBUS;
 import Entity.TaiKhoan;
 
 /** Khung chính: thanh điều hướng bên trái + vùng nội dung (CardLayout). */
@@ -21,10 +25,20 @@ public class MainFrame extends JFrame {
         {"Thống Kê", "bar-chart", "Báo cáo thống kê"},
     };
 
+    /** Các mục xổ xuống dưới "Xử Lý". */
+    private static final String MUC_QUAN_LY = "Quản lý hóa đơn";
+    private static final String MUC_TAO = "Tạo hóa đơn";
+    private static final String MUC_LICH_SU = "Lịch sử hóa đơn";
+    private static final String[] MENU_XU_LY = {MUC_QUAN_LY, MUC_TAO, MUC_LICH_SU};
+    private static final String KEY_XU_LY = "Xử Lý";
+
     private final TaiKhoan taiKhoan;
     private final CardLayout cards = new CardLayout();
     private final JPanel content = new JPanel(cards);
     private final Map<String, NavButton> navs = new LinkedHashMap<>();
+    private final Map<String, JPanel> pages = new LinkedHashMap<>();
+    private XuLyPanel xuLy;
+    private String hienTai = "";
 
     public MainFrame(TaiKhoan taiKhoan) {
         super("PetCare POS");
@@ -36,12 +50,16 @@ public class MainFrame extends JFrame {
         });
 
         content.setBackground(Theme.BG);
+        // Dùng chung giữa "Xử Lý" (20 ô hóa đơn) và "Lịch sử hóa đơn"
+        SanPhamBUS sanPhamBus = new SanPhamBUS();
+        HoaDonBUS hoaDonBus = new HoaDonBUS(sanPhamBus);
         for (String[] m : MENU) {
             JPanel p;
             if (m[0].equals("Hệ Thống")) {
                 p = new HeThongPanel(taiKhoan, this);
             } else if (m[0].equals("Xử Lý")) {
-                p = new BanHangPanel();
+                xuLy = new XuLyPanel(hoaDonBus, sanPhamBus, new MaGiamGiaBUS(), new KhachHangBUS());
+                p = xuLy;
             } else if (m[0].equals("Danh Mục")) {
                 p = new HoSoThuCungPanel();
             } else if (m[0].equals("Khách hàng")) {
@@ -49,8 +67,13 @@ public class MainFrame extends JFrame {
             } else {
                 p = new ModulePlaceholderPanel(m[0], m[2], m[1]);
             }
+            pages.put(m[0], p);
             content.add(p, m[0]);
         }
+        // Trang lịch sử không có nút riêng trên thanh menu: mở từ menu xổ xuống của "Xử Lý"
+        LichSuHoaDonPanel lichSu = new LichSuHoaDonPanel(hoaDonBus);
+        pages.put(MUC_LICH_SU, lichSu);
+        content.add(lichSu, MUC_LICH_SU);
 
         JPanel root = new JPanel(new BorderLayout());
         root.add(buildHeader(), BorderLayout.NORTH);
@@ -59,7 +82,7 @@ public class MainFrame extends JFrame {
 
         chon("Hệ Thống"); // màn hình đã hoàn thiện; đổi thành "Tổng quan" nếu muốn mở trang đầu
         setSize(1280, 800);
-        setMinimumSize(new Dimension(1050, 680));
+        setMinimumSize(new Dimension(1180, 700));
         setLocationRelativeTo(null);
     }
 
@@ -85,8 +108,17 @@ public class MainFrame extends JFrame {
 
         // Menu
         for (String[] m : MENU) {
-            NavButton b = new NavButton(m[0], m[1]);
-            b.addActionListener(e -> chon(m[0]));
+            boolean xoXuong = m[0].equals(KEY_XU_LY);
+            NavButton b = new NavButton(m[0], m[1], xoXuong);
+            if (xoXuong) {
+                JPopupMenu menu = NavMenu.tao(MENU_XU_LY, this::chonMucXuLy);
+                b.addActionListener(e -> {
+                    b.setSelected(navCua(hienTai).equals(m[0]));   // mở menu không tự đổi mục đang chọn
+                    menu.show(b, 0, b.getHeight() + 6);
+                });
+            } else {
+                b.addActionListener(e -> chon(m[0]));
+            }
             navs.put(m[0], b);
             JPanel wrap = new JPanel(new BorderLayout());
             wrap.setOpaque(false);
@@ -161,8 +193,24 @@ public class MainFrame extends JFrame {
     }
 
     private void chon(String key) {
+        hienTai = key;
         cards.show(content, key);
-        navs.forEach((k, b) -> b.setSelected(k.equals(key)));
+        if (pages.get(key) instanceof Refreshable r) r.lamMoi();
+        navs.forEach((k, b) -> b.setSelected(k.equals(navCua(key))));
+    }
+
+    /** Trang lịch sử hóa đơn thuộc nhóm "Xử Lý" nên vẫn sáng mục "Xử Lý" trên thanh menu. */
+    private static String navCua(String key) {
+        return key.equals(MUC_LICH_SU) ? KEY_XU_LY : key;
+    }
+
+    private void chonMucXuLy(String muc) {
+        switch (muc) {
+            case MUC_QUAN_LY -> { chon(KEY_XU_LY); xuLy.hienQuanLy(); }
+            case MUC_TAO -> { chon(KEY_XU_LY); xuLy.taoMoi(); }
+            case MUC_LICH_SU -> chon(MUC_LICH_SU);
+            default -> { }
+        }
     }
 
     public void dangXuat() {
@@ -185,11 +233,13 @@ public class MainFrame extends JFrame {
     /** Nút menu bên trái: icon + chữ, nền sáng khi chọn / rê chuột. */
     private static class NavButton extends JToggleButton {
         private final String iconName;
+        private final boolean xoXuong;
         private boolean hovering;
 
-        NavButton(String text, String iconName) {
+        NavButton(String text, String iconName, boolean xoXuong) {
             super(text);
             this.iconName = iconName;
+            this.xoXuong = xoXuong;
             setFont(Theme.font(Font.PLAIN, 14));
             setForeground(Color.WHITE);
             setContentAreaFilled(false);
@@ -200,7 +250,7 @@ public class MainFrame extends JFrame {
             
             // Calculate width dynamically
             FontMetrics fm = getFontMetrics(getFont());
-            int width = 12 + 20 + 8 + fm.stringWidth(getText()) + 12; // padding + icon + gap + text + padding
+            int width = 12 + 20 + 8 + fm.stringWidth(getText()) + 12 + (xoXuong ? 16 : 0); // padding + icon + gap + text + padding (+ mũi tên)
             setPreferredSize(new Dimension(width, 34));
             
             addMouseListener(new MouseAdapter() {
@@ -222,6 +272,12 @@ public class MainFrame extends JFrame {
             g2.setColor(getForeground());
             FontMetrics fm = g2.getFontMetrics();
             g2.drawString(getText(), 12 + 20 + 8, (getHeight() - fm.getHeight()) / 2 + fm.getAscent());
+            if (xoXuong) {   // mũi tên ▾ báo hiệu đây là menu xổ xuống
+                int cx = getWidth() - 16, cy = getHeight() / 2;
+                g2.setStroke(new BasicStroke(1.6f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g2.drawLine(cx - 4, cy - 2, cx, cy + 2);
+                g2.drawLine(cx, cy + 2, cx + 4, cy - 2);
+            }
             g2.dispose();
         }
     }

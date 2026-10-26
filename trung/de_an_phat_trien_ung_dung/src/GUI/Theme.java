@@ -25,6 +25,21 @@ public final class Theme {
     public static final Color GREEN          = new Color(0x2E9E4F);
     public static final Color RED            = new Color(0xD64545);
 
+    // Màu của nhóm màn hình hóa đơn (nút chính xanh dương, Lưu xanh lá, Hủy đỏ)
+    public static final Color PRIMARY        = new Color(0x2A5CB8);
+    public static final Color PRIMARY_HOVER  = new Color(0x224C9A);
+    public static final Color PRIMARY_SOFT   = new Color(0xE9F0FC);
+    public static final Color PRIMARY_LINE   = new Color(0x9DB9E8);
+    public static final Color SUCCESS        = new Color(0x1F8A4F);
+    public static final Color SUCCESS_HOVER  = new Color(0x18703F);
+    public static final Color DANGER         = new Color(0xC93B3B);
+    public static final Color DANGER_HOVER   = new Color(0xAD2F2F);
+    public static final Color AMBER_BG       = new Color(0xFFF8E8);
+    public static final Color AMBER_BORDER   = new Color(0xF0C060);
+    public static final Color AMBER_PILL     = new Color(0xFDEBC4);
+    public static final Color AMBER_TEXT     = new Color(0xB7791F);
+    public static final Color FIELD_BG       = new Color(0xF3F6F8);
+
     public static final String FONT = "Segoe UI";
 
     public static Font font(int style, int size) {

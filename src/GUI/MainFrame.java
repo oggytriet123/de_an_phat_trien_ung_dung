@@ -96,13 +96,15 @@ public class MainFrame extends JFrame {
 
         // 5 nút menu chính
         for (String[] m : MENU) {
-            boolean hasDropdown = "Danh Mục".equals(m[0]) || "Xử Lý".equals(m[0]);
+            boolean hasDropdown = "Danh Mục".equals(m[0]) || "Xử Lý".equals(m[0]) || "Thống Kê".equals(m[0]);
             NavButton b = new NavButton(m[0], m[1], hasDropdown);
             b.addActionListener(e -> {
                 if ("Danh Mục".equals(m[0])) {
                     showDanhMucMenu(b);
                 } else if ("Xử Lý".equals(m[0])) {
                     showXuLyMenu(b);
+                } else if ("Thống Kê".equals(m[0])) {
+                    showThongKeMenu(b);
                 } else {
                     chon(m[0]);
                 }
@@ -156,6 +158,37 @@ public class MainFrame extends JFrame {
 
         menu.add(itLichSu);
         menu.add(itLapPhieu);
+        menu.show(invoker, 0, invoker.getHeight() + 2);
+    }
+
+    private void showThongKeMenu(Component invoker) {
+        JPopupMenu menu = new JPopupMenu();
+        menu.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER, 1),
+                BorderFactory.createEmptyBorder(6, 4, 6, 4)));
+        menu.setBackground(Color.WHITE);
+
+        JMenuItem itTongQuan = createMenuItem("Tổng quan Thống kê", "bar-chart", () -> {
+            chon("Thống Kê");
+        });
+        JMenuItem itDoanhThu = createMenuItem("Doanh thu & Dòng tiền", "card", () -> {
+            chon("Thống Kê");
+            if (pnlThongKe != null) pnlThongKe.chonTab("Doanh thu & Dòng tiền");
+        });
+        JMenuItem itTonKho = createMenuItem("Tồn kho & Mặt hàng", "box", () -> {
+            chon("Thống Kê");
+            if (pnlThongKe != null) pnlThongKe.chonTab("Tồn kho & Mặt hàng");
+        });
+        JMenuItem itKhachHang = createMenuItem("Khách hàng & Thú cưng", "customers", () -> {
+            chon("Thống Kê");
+            if (pnlThongKe != null) pnlThongKe.chonTab("Khách hàng & Thú cưng");
+        });
+
+        menu.add(itTongQuan);
+        menu.addSeparator();
+        menu.add(itDoanhThu);
+        menu.add(itTonKho);
+        menu.add(itKhachHang);
         menu.show(invoker, 0, invoker.getHeight() + 2);
     }
 
