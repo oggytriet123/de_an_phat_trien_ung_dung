@@ -464,27 +464,17 @@ public class NhanVienPanel extends JPanel {
 
     // ----------------- 6. XEM CHI TIẾT NHÂN VIÊN -----------------
     private void moDialogChiTiet(NhanVien nv) {
-        JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), "Hồ sơ: " + nv.getHoTen() + " (" + nv.getMaNV() + ")", Dialog.ModalityType.APPLICATION_MODAL);
-        JPanel p = new JPanel(new GridLayout(6, 2, 8, 8));
-        p.setBorder(new EmptyBorder(20, 24, 20, 24));
-        p.setBackground(Color.WHITE);
-
-        p.add(new JLabel("Mã nhân viên:")); p.add(new JLabel("<b>" + nv.getMaNV() + "</b>"));
-        p.add(new JLabel("Tài khoản:")); p.add(new JLabel("@" + nv.getTenDangNhap()));
-        p.add(new JLabel("Chức vụ:")); p.add(new JLabel(nv.getTenQuyen() + (nv.getChuyenMon().isEmpty() ? "" : " (" + nv.getChuyenMon() + ")")));
-        p.add(new JLabel("Ca làm việc:")); p.add(new JLabel(nv.getCaLamViec() + " · Trạng thái: " + nv.getTrangThai()));
-        p.add(new JLabel("Liên hệ:")); p.add(new JLabel(nv.getSoDienThoai() + " · " + nv.getEmail()));
-        p.add(new JLabel("Ngày sinh:")); p.add(new JLabel(nv.getNgaySinh() != null ? nv.getNgaySinh().format(DATE_FMT) : "Chưa cập nhật"));
-
-        dlg.setLayout(new BorderLayout());
-        dlg.add(p, BorderLayout.CENTER);
-        JButton btnDong = new JButton("Đóng");
-        btnDong.addActionListener(e -> dlg.dispose());
-        JPanel pnlDong = new JPanel(); pnlDong.setBackground(Color.WHITE); pnlDong.add(btnDong);
-        dlg.add(pnlDong, BorderLayout.SOUTH);
-        dlg.setSize(440, 300);
-        dlg.setLocationRelativeTo(this);
-        dlg.setVisible(true);
+        String chucVu = nv.getTenQuyen() + (nv.getChuyenMon().isEmpty() ? "" : " (" + nv.getChuyenMon() + ")");
+        Theme.hoSoDialog(SwingUtilities.getWindowAncestor(this),
+                nv.getHoTen(), nv.getMaNV() + "  •  @" + nv.getTenDangNhap(), nv.getTenQuyen(),
+                new String[][] {
+                    {"Chức vụ", chucVu},
+                    {"Ca làm việc", nv.getCaLamViec()},
+                    {"Trạng thái", nv.getTrangThai()},
+                    {"Số điện thoại", nv.getSoDienThoai()},
+                    {"Email", nv.getEmail()},
+                    {"Ngày sinh", nv.getNgaySinh() != null ? nv.getNgaySinh().format(DATE_FMT) : "Chưa cập nhật"}
+                }, false, 440);
     }
 
     // ----------------- 7. XÓA AN TOÀN -----------------

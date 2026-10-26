@@ -15,6 +15,10 @@ public class TaiKhoan {
     private String soDienThoai;
     private LocalDate ngaySinh;
     private String email;
+    // Thông tin công việc (chỉ xem, không sửa ở màn Tài Khoản)
+    private LocalDate ngayVaoLam;
+    private String caLamViec;
+    private String trangThai;
 
     public TaiKhoan(String maTaiKhoan, String tenDangNhap, String hoTen, String vaiTro, Set<String> chucNang,
                     String soDienThoai, LocalDate ngaySinh, String email) {
@@ -36,6 +40,15 @@ public class TaiKhoan {
     public String getSoDienThoai() { return soDienThoai; }
     public LocalDate getNgaySinh() { return ngaySinh; }
     public String getEmail() { return email; }
+    public LocalDate getNgayVaoLam() { return ngayVaoLam; }
+    public String getCaLamViec() { return caLamViec; }
+    public String getTrangThai() { return trangThai; }
+
+    public void setThongTinCongViec(LocalDate ngayVaoLam, String caLamViec, String trangThai) {
+        this.ngayVaoLam = ngayVaoLam;
+        this.caLamViec = caLamViec;
+        this.trangThai = trangThai;
+    }
 
     /** Cập nhật bản sao trong bộ nhớ sau khi đã lưu CSDL thành công. */
     public void capNhatLienHe(String soDienThoai, LocalDate ngaySinh, String email) {

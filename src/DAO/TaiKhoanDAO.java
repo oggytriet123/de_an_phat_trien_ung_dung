@@ -14,7 +14,8 @@ public class TaiKhoanDAO {
 
     /** Tìm tài khoản theo mã NV hoặc tên đăng nhập + mật khẩu đã băm SHA-256 (hex in hoa). */
     public TaiKhoan timTheoDangNhap(String maHoacSdt, String matKhauHash) throws SQLException {
-        String sql = "SELECT nv.maNV, nv.tenDangNhap, nv.hoTen, pq.tenQuyen, nv.soDienThoai, nv.ngaySinh, nv.email "
+        String sql = "SELECT nv.maNV, nv.tenDangNhap, nv.hoTen, pq.tenQuyen, nv.soDienThoai, nv.ngaySinh, nv.email, "
+                + "nv.ngayVaoLam, nv.caLamViec, nv.trangThai "
                 + "FROM NHANVIEN nv LEFT JOIN PHANQUYEN pq ON nv.maQuyen = pq.maQuyen "
                 + "WHERE (nv.maNV = ? OR nv.tenDangNhap = ?) AND nv.matKhau = ?";
         try (Connection con = ConnectDB.getConnection();
@@ -26,9 +27,12 @@ public class TaiKhoanDAO {
                 if (rs.next()) {
                     String maNV = rs.getString(1);
                     java.sql.Date ns = rs.getDate(6);
-                    return new TaiKhoan(maNV, rs.getString(2), rs.getString(3), rs.getString(4),
+                    java.sql.Date vl = rs.getDate(8);
+                    TaiKhoan tk = new TaiKhoan(maNV, rs.getString(2), rs.getString(3), rs.getString(4),
                             layChucNang(con, maNV), rs.getString(5), ns == null ? null : ns.toLocalDate(),
                             rs.getString(7));
+                    tk.setThongTinCongViec(vl == null ? null : vl.toLocalDate(), rs.getString(9), rs.getString(10));
+                    return tk;
                 }
             }
         }
@@ -61,6 +65,18 @@ public class TaiKhoanDAO {
             if (ngaySinh == null) ps.setNull(2, java.sql.Types.DATE); else ps.setDate(2, java.sql.Date.valueOf(ngaySinh));
             ps.setString(3, email);
             ps.setString(4, maNV);
+            return ps.executeUpdate();
+        }
+    }
+
+    /** Đổi mật khẩu khi mật khẩu cũ (đã băm) khớp. @return số dòng bị ảnh hưởng (0 = sai mật khẩu cũ) */
+    public int doiMatKhau(String maNV, String hashCu, String hashMoi) throws SQLException {
+        String sql = "UPDATE NHANVIEN SET matKhau = ? WHERE maNV = ? AND matKhau = ?";
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, hashMoi);
+            ps.setString(2, maNV);
+            ps.setString(3, hashCu);
             return ps.executeUpdate();
         }
     }

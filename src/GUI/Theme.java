@@ -1,5 +1,8 @@
 package GUI;
 
+import java.awt.*;
+import javax.swing.*;
+import javax.swing.border.*;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
@@ -65,6 +68,84 @@ public final class Theme {
     }
 
     public static synchronized String number(long v) { return NUM.format(v); }
+    /** Dialog "Hồ sơ" dùng chung: header (tên, phụ đề, nhãn) + các dòng nhãn/giá trị + nút Đóng. */
+    public static void hoSoDialog(Window owner, String name, String sub, String badgeText,
+                                  String[][] rows, boolean lastBold, int height) {
+        JDialog dlg = new JDialog(owner, "Hồ sơ", Dialog.ModalityType.APPLICATION_MODAL);
+
+        JLabel lblTen = new JLabel(name);
+        lblTen.setFont(font(Font.BOLD, 18));
+        lblTen.setForeground(TEXT);
+        JLabel lblSub = new JLabel(sub);
+        lblSub.setFont(font(Font.PLAIN, 12));
+        lblSub.setForeground(MUTED);
+        JPanel titles = new JPanel(new GridLayout(2, 1, 0, 2));
+        titles.setOpaque(false);
+        titles.add(lblTen); titles.add(lblSub);
+
+        JPanel header = new JPanel(new BorderLayout(12, 0));
+        header.setBackground(FIELD_BG);
+        header.setBorder(new CompoundBorder(new MatteBorder(0, 0, 1, 0, BORDER), new EmptyBorder(16, 24, 16, 24)));
+        header.add(titles, BorderLayout.CENTER);
+        if (badgeText != null && !badgeText.isBlank()) {
+            JLabel badge = new JLabel(badgeText, SwingConstants.CENTER);
+            badge.setFont(font(Font.BOLD, 12));
+            badge.setForeground(PRIMARY);
+            badge.setOpaque(true);
+            badge.setBackground(PRIMARY_SOFT);
+            badge.setBorder(new CompoundBorder(new LineBorder(PRIMARY_LINE, 1, true), new EmptyBorder(4, 12, 4, 12)));
+            JPanel wrap = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 6));
+            wrap.setOpaque(false);
+            wrap.add(badge);
+            header.add(wrap, BorderLayout.EAST);
+        }
+
+        JPanel body = new JPanel();
+        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
+        body.setBackground(Color.WHITE);
+        body.setBorder(new EmptyBorder(8, 24, 8, 24));
+        for (int i = 0; i < rows.length; i++) {
+            boolean strong = lastBold && i == rows.length - 1;
+            String val = rows[i][1] == null || rows[i][1].isBlank() ? "—" : rows[i][1];
+            JLabel l = new JLabel(rows[i][0]);
+            l.setFont(font(Font.PLAIN, 13));
+            l.setForeground(MUTED);
+            l.setVerticalAlignment(SwingConstants.TOP);
+            String esc = val.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;");
+            JLabel v = new JLabel("<html><div style='text-align:right;width:250px'>" + esc + "</div></html>");
+            v.setFont(font(strong ? Font.BOLD : Font.PLAIN, strong ? 15 : 13));
+            v.setForeground(TEXT);
+            JPanel row = new JPanel(new BorderLayout(16, 0));
+            row.setBackground(Color.WHITE);
+            row.setBorder(new CompoundBorder(new MatteBorder(0, 0, 1, 0, ROW_LINE), new EmptyBorder(11, 0, 11, 0)));
+            row.add(l, BorderLayout.WEST);
+            row.add(v, BorderLayout.EAST);
+            row.setMaximumSize(new Dimension(Integer.MAX_VALUE, row.getPreferredSize().height));
+            body.add(row);
+        }
+
+        RoundedButton btnDong = new RoundedButton("Đóng", ACCENT, ACCENT_HOVER, Color.WHITE, null, 10).pad(24, 9);
+        btnDong.addActionListener(e -> dlg.dispose());
+        JPanel pnlDong = new JPanel(new FlowLayout(FlowLayout.RIGHT, 24, 12));
+        pnlDong.setBackground(Color.WHITE);
+        pnlDong.add(btnDong);
+
+        dlg.setLayout(new BorderLayout());
+        dlg.add(header, BorderLayout.NORTH);
+        dlg.add(body, BorderLayout.CENTER);
+        dlg.add(pnlDong, BorderLayout.SOUTH);
+        dlg.getContentPane().setBackground(Color.WHITE);
+        dlg.setSize(480, height);
+        dlg.setResizable(false);
+        dlg.setLocationRelativeTo(owner);
+        dlg.setVisible(true);
+    }
+
+    public static javax.swing.JLabel boldLbl(String text) {
+        javax.swing.JLabel l = new javax.swing.JLabel(text);
+        l.setFont(l.getFont().deriveFont(Font.BOLD));
+        return l;
+    }
     public static String money(long v) { return number(v) + "₫"; }
 
     // =========================================================================

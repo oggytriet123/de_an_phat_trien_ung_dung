@@ -438,9 +438,9 @@ public class DichVuPanel extends JPanel {
         p.setBorder(new EmptyBorder(20, 24, 20, 24));
         p.setBackground(Color.WHITE);
 
-        p.add(new JLabel("Mã dịch vụ:")); p.add(new JLabel("<b>" + dv.getMaDV() + "</b>"));
+        p.add(new JLabel("Mã dịch vụ:")); p.add(Theme.boldLbl(dv.getMaDV()));
         p.add(new JLabel("Tên dịch vụ:")); p.add(new JLabel(dv.getTenDV()));
-        p.add(new JLabel("Đơn giá niêm yết:")); p.add(new JLabel("<b>" + Theme.money((long) dv.getGiaTien()) + "</b>"));
+        p.add(new JLabel("Đơn giá niêm yết:")); p.add(Theme.boldLbl(Theme.money((long) dv.getGiaTien())));
         p.add(new JLabel("Thời lượng & Đối tượng:")); p.add(new JLabel(dv.getThoiGianThucHien() + " phút · " + dv.getDoiTuong()));
         p.add(new JLabel("Mô tả / Quy trình:")); p.add(new JLabel("<html>" + (dv.getMoTa().isEmpty() ? "Theo quy trình chuẩn" : dv.getMoTa()) + "</html>"));
 

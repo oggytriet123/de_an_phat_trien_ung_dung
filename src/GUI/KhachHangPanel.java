@@ -589,7 +589,7 @@ public class KhachHangPanel extends JPanel {
         JPanel form = new JPanel(new GridLayout(4, 2, 10, 10));
         form.setBackground(Color.WHITE);
         form.setBorder(new EmptyBorder(20, 24, 10, 24));
-        form.add(new JLabel("Mã khách hàng:")); form.add(new JLabel("<b>" + kh.getMaKH() + "</b>"));
+        form.add(new JLabel("Mã khách hàng:")); form.add(boldLabel(kh.getMaKH()));
         form.add(new JLabel("Họ và tên (*):")); form.add(tfTen);
         form.add(new JLabel("Số điện thoại (*):")); form.add(tfSdt);
         form.add(new JLabel("Điểm tích lũy:")); form.add(spDiem);
@@ -632,6 +632,12 @@ public class KhachHangPanel extends JPanel {
         dlg.setVisible(true);
     }
 
+    private JLabel boldLabel(String text) {
+        JLabel l = new JLabel(text);
+        l.setFont(l.getFont().deriveFont(Font.BOLD));
+        return l;
+    }
+
     // ---------------- XÓA KHÁCH HÀNG ----------------
     private void xoaKhachHang(KhachHang kh) {
         int opt = JOptionPane.showConfirmDialog(this,
@@ -652,27 +658,14 @@ public class KhachHangPanel extends JPanel {
 
     // ---------------- XEM CHI TIẾT KHÁCH HÀNG ----------------
     private void xemChiTiet(KhachHang kh) {
-        JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), "Hồ sơ: " + kh.getHoTen() + " (" + kh.getMaKH() + ")", Dialog.ModalityType.APPLICATION_MODAL);
-        JPanel p = new JPanel(new GridLayout(6, 2, 8, 8));
-        p.setBorder(new EmptyBorder(20, 24, 20, 24));
-        p.setBackground(Color.WHITE);
-
-        p.add(new JLabel("Mã khách hàng:")); p.add(new JLabel("<b>" + kh.getMaKH() + "</b>"));
-        p.add(new JLabel("Họ và tên:")); p.add(new JLabel(kh.getHoTen()));
-        p.add(new JLabel("Số điện thoại:")); p.add(new JLabel(kh.getSoDienThoai()));
-        p.add(new JLabel("Hạng thẻ / Điểm:")); p.add(new JLabel("Thẻ " + kh.getHangThe() + " (" + Theme.number(kh.getDiemTichLuy()) + " điểm)"));
-        p.add(new JLabel("Thú cưng sở hữu:")); p.add(new JLabel(kh.getThuCung()));
-        p.add(new JLabel("Tổng chi tiêu:")); p.add(new JLabel("<b>" + Theme.money(kh.getTongChiTieu()) + "</b> (GD gần nhất: " + (kh.getGiaoDichGanNhat() == null ? "Chưa có" : kh.getGiaoDichGanNhat().format(DATE)) + ")"));
-
-        dlg.setLayout(new BorderLayout());
-        dlg.add(p, BorderLayout.CENTER);
-        JButton btnDong = new JButton("Đóng");
-        btnDong.addActionListener(e -> dlg.dispose());
-        JPanel pnlDong = new JPanel(); pnlDong.setBackground(Color.WHITE); pnlDong.add(btnDong);
-        dlg.add(pnlDong, BorderLayout.SOUTH);
-        dlg.setSize(450, 320);
-        dlg.setLocationRelativeTo(this);
-        dlg.setVisible(true);
+        Theme.hoSoDialog(SwingUtilities.getWindowAncestor(this),
+                kh.getHoTen(), kh.getMaKH() + "  •  " + kh.getSoDienThoai(), "Thẻ " + kh.getHangThe(),
+                new String[][] {
+                    {"Điểm tích lũy", Theme.number(kh.getDiemTichLuy()) + " điểm"},
+                    {"Thú cưng sở hữu", kh.getThuCung()},
+                    {"Giao dịch gần nhất", kh.getGiaoDichGanNhat() == null ? "Chưa có" : kh.getGiaoDichGanNhat().format(DATE)},
+                    {"Tổng chi tiêu", Theme.money(kh.getTongChiTieu())}
+                }, true, 370);
     }
 
     // ---------------- Xuất file CSV ----------------

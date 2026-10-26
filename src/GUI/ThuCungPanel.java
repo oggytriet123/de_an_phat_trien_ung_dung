@@ -474,27 +474,17 @@ public class ThuCungPanel extends JPanel {
 
     // ----------------- 6. XEM CHI TIẾT HỒ SƠ -----------------
     private void moDialogChiTiet(ThuCung tc) {
-        JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), "Hồ sơ: " + tc.getTen() + " (" + tc.getPetID() + ")", Dialog.ModalityType.APPLICATION_MODAL);
-        JPanel p = new JPanel(new GridLayout(6, 2, 8, 8));
-        p.setBorder(new EmptyBorder(20, 24, 20, 24));
-        p.setBackground(Color.WHITE);
-
-        p.add(new JLabel("Mã thú cưng:")); p.add(new JLabel("<b>" + tc.getPetID() + "</b>"));
-        p.add(new JLabel("Tên thú cưng:")); p.add(new JLabel(tc.getTen()));
-        p.add(new JLabel("Chủng loại:")); p.add(new JLabel(tc.getLoai() + " - " + (tc.getGiong().isEmpty() ? "Không rõ giống" : tc.getGiong())));
-        p.add(new JLabel("Thể trạng:")); p.add(new JLabel(tc.getGioiTinh() + " · " + tc.getTuoi() + " tuổi · " + (tc.getCanNang() > 0 ? (tc.getCanNang() + "kg") : "Chưa cân")));
-        p.add(new JLabel("Chủ nuôi:")); p.add(new JLabel(tc.getTenChuNuoi() + " (" + (tc.getSdtChuNuoi().isEmpty() ? "Không có SĐT" : tc.getSdtChuNuoi()) + ")"));
-        p.add(new JLabel("Cảnh báo/Lưu ý:")); p.add(new JLabel("<html>" + (tc.getTheCanhBao().isEmpty() ? "Khỏe mạnh bình thường" : tc.getTheCanhBao()) + "</html>"));
-
-        dlg.setLayout(new BorderLayout());
-        dlg.add(p, BorderLayout.CENTER);
-        JButton btnDong = new JButton("Đóng");
-        btnDong.addActionListener(e -> dlg.dispose());
-        JPanel pnlDong = new JPanel(); pnlDong.setBackground(Color.WHITE); pnlDong.add(btnDong);
-        dlg.add(pnlDong, BorderLayout.SOUTH);
-        dlg.setSize(420, 320);
-        dlg.setLocationRelativeTo(this);
-        dlg.setVisible(true);
+        String giong = tc.getGiong().isEmpty() ? "Không rõ giống" : tc.getGiong();
+        Theme.hoSoDialog(SwingUtilities.getWindowAncestor(this),
+                tc.getTen(), tc.getPetID() + "  •  " + tc.getLoai(), tc.getLoai(),
+                new String[][] {
+                    {"Giống", giong},
+                    {"Giới tính", tc.getGioiTinh()},
+                    {"Tuổi", tc.getTuoi() + " tuổi"},
+                    {"Cân nặng", tc.getCanNang() > 0 ? tc.getCanNang() + " kg" : "Chưa cân"},
+                    {"Chủ nuôi", tc.getTenChuNuoi() + (tc.getSdtChuNuoi().isEmpty() ? "" : " (" + tc.getSdtChuNuoi() + ")")},
+                    {"Cảnh báo / Lưu ý", tc.getTheCanhBao().isEmpty() ? "Khỏe mạnh bình thường" : tc.getTheCanhBao()}
+                }, false, 470);
     }
 
     // ----------------- 7. XÓA AN TOÀN -----------------

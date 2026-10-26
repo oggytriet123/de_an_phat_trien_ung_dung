@@ -39,15 +39,20 @@ public class DangNhapBUS {
     private TaiKhoan taiKhoanMau(String id, String matKhau) {
         if (!"123456".equals(matKhau)) return null;
         if (id.equalsIgnoreCase("admin") || id.equalsIgnoreCase("QL001") || id.equals("0901234567"))
-            return new TaiKhoan("QL001", "admin", "Hữu Thịnh", "Quản lý", ChucNang.macDinh("Quản lý"),
-                    "0901234567", java.time.LocalDate.of(1995, 5, 20), "thinh@petstation.vn");
+            return mau(new TaiKhoan("QL001", "admin", "Hữu Thịnh", "Quản lý", ChucNang.macDinh("Quản lý"),
+                    "0901234567", java.time.LocalDate.of(1995, 5, 20), "thinh@petstation.vn"));
         if (id.equalsIgnoreCase("nv01") || id.equals("0902345678"))
-            return new TaiKhoan("NV01", "nv01", "Thu Trang", "Bán hàng", ChucNang.macDinh("Bán hàng"),
-                    "0902345678", java.time.LocalDate.of(1998, 11, 3), "trang@petstation.vn");
+            return mau(new TaiKhoan("NV01", "nv01", "Thu Trang", "Bán hàng", ChucNang.macDinh("Bán hàng"),
+                    "0902345678", java.time.LocalDate.of(1998, 11, 3), "trang@petstation.vn"));
         return null;
     }
 
-    static String bamSha256(String s) {
+    private static TaiKhoan mau(TaiKhoan tk) {
+        tk.setThongTinCongViec(java.time.LocalDate.of(2024, 1, 15), "Toàn thời gian", "Đang làm việc");
+        return tk;
+    }
+
+    public static String bamSha256(String s) {
         try {
             byte[] h = MessageDigest.getInstance("SHA-256").digest(s.getBytes(StandardCharsets.UTF_8));
             StringBuilder sb = new StringBuilder();
