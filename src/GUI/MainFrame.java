@@ -15,10 +15,18 @@ public class MainFrame extends JFrame {
     private static final String[][] MENU = {
         // tên hiển thị, icon, mô tả
         {"Hệ Thống", "settings", "Quản lý phiên đăng nhập, mật khẩu và thông tin cá nhân"},
+<<<<<<< HEAD
         {"Danh Mục", "dashboard", "Quản lý các danh mục từ điển"},
         {"Xử Lý", "sync", "Xử lý nghiệp vụ"},
         {"Tìm Kiếm", "search", "Tra cứu thông tin"},
         {"Thống Kê", "bar-chart", "Báo cáo thống kê"},
+=======
+        {"Danh Mục", "dashboard", "Quản lý các danh mục từ điển (Thú cưng, Khách hàng, Kho hàng)"},
+        {"Quản Lý Lịch Hẹn", "calendar", "Hồ sơ, quản lý, đổi, xác nhận và hủy lịch hẹn"},
+        {"Xử Lý", "sync", "Xử lý nghiệp vụ (Lập phiếu nhập/xuất kho, lịch sử phiếu)"},
+        {"Tìm Kiếm", "search", "Tra cứu thông tin hồ sơ và sản phẩm"},
+        {"Thống Kê", "bar-chart", "Báo cáo thống kê hoạt động và tồn kho"},
+>>>>>>> stash
     };
 
     private final TaiKhoan taiKhoan;
@@ -26,6 +34,16 @@ public class MainFrame extends JFrame {
     private final JPanel content = new JPanel(cards);
     private final Map<String, NavButton> navs = new LinkedHashMap<>();
 
+<<<<<<< HEAD
+=======
+    private KhoHangPanel pnlKhoHang;
+    private LichSuNhapXuatPanel pnlLichSuKho;
+    private ThuCungPanel pnlThuCung;
+    private KhachHangPanel pnlKhachHang;
+    private HeThongPanel pnlHeThong;
+    private LichHenPanel pnlHoSoLichHen, pnlQuanLyLichHen, pnlDoiLichHen, pnlXacNhanLichHen, pnlHuyLichHen;
+
+>>>>>>> stash
     public MainFrame(TaiKhoan taiKhoan) {
         super("PetCare POS");
         this.taiKhoan = taiKhoan;
@@ -36,6 +54,7 @@ public class MainFrame extends JFrame {
         });
 
         content.setBackground(Theme.BG);
+<<<<<<< HEAD
         for (String[] m : MENU) {
             JPanel p;
             if (m[0].equals("Hệ Thống")) {
@@ -47,15 +66,47 @@ public class MainFrame extends JFrame {
             }
             content.add(p, m[0]);
         }
+=======
+
+        pnlHeThong = new HeThongPanel(taiKhoan, this);
+        pnlThuCung = new ThuCungPanel();
+        pnlKhachHang = new KhachHangPanel();
+        pnlKhoHang = new KhoHangPanel();
+        pnlLichSuKho = new LichSuNhapXuatPanel();
+        pnlHoSoLichHen = new LichHenPanel(LichHenPanel.Mode.HO_SO);
+        pnlQuanLyLichHen = new LichHenPanel(LichHenPanel.Mode.QUAN_LY);
+        pnlDoiLichHen = new LichHenPanel(LichHenPanel.Mode.DOI);
+        pnlXacNhanLichHen = new LichHenPanel(LichHenPanel.Mode.XAC_NHAN);
+        pnlHuyLichHen = new LichHenPanel(LichHenPanel.Mode.HUY);
+
+        content.add(pnlHeThong, "Hệ Thống");
+        content.add(pnlThuCung, "Thú cưng");
+        content.add(pnlKhachHang, "Khách hàng");
+        content.add(pnlKhoHang, "Kho hàng");
+        content.add(pnlLichSuKho, "Lịch sử Nhập / Xuất Kho");
+        content.add(pnlHoSoLichHen, LichHenPanel.Mode.HO_SO.title);
+        content.add(pnlQuanLyLichHen, LichHenPanel.Mode.QUAN_LY.title);
+        content.add(pnlDoiLichHen, LichHenPanel.Mode.DOI.title);
+        content.add(pnlXacNhanLichHen, LichHenPanel.Mode.XAC_NHAN.title);
+        content.add(pnlHuyLichHen, LichHenPanel.Mode.HUY.title);
+        content.add(new ModulePlaceholderPanel("Tìm Kiếm", "Tra cứu thông tin hồ sơ và sản phẩm", "search"), "Tìm Kiếm");
+        content.add(new ModulePlaceholderPanel("Thống Kê", "Báo cáo doanh thu, khám chữa và tồn kho", "bar-chart"), "Thống Kê");
+>>>>>>> stash
 
         JPanel root = new JPanel(new BorderLayout());
         root.add(buildHeader(), BorderLayout.NORTH);
         root.add(content, BorderLayout.CENTER);
         setContentPane(root);
 
+<<<<<<< HEAD
         chon("Hệ Thống"); // màn hình đã hoàn thiện; đổi thành "Tổng quan" nếu muốn mở trang đầu
         setSize(1280, 800);
         setMinimumSize(new Dimension(1050, 680));
+=======
+        chon("Lịch sử Nhập / Xuất Kho"); // Mở thẳng màn hình lịch sử kho vừa hoàn thiện
+        setSize(1320, 840);
+        setMinimumSize(new Dimension(1280, 720));
+>>>>>>> stash
         setLocationRelativeTo(null);
     }
 
@@ -81,12 +132,32 @@ public class MainFrame extends JFrame {
 
         // Menu
         for (String[] m : MENU) {
+<<<<<<< HEAD
             NavButton b = new NavButton(m[0], m[1]);
             b.addActionListener(e -> chon(m[0]));
+=======
+            boolean hasDropdown = "Danh Mục".equals(m[0]) || "Xử Lý".equals(m[0]) || LichHenPanel.PARENT_TITLE.equals(m[0]);
+            NavButton b = new NavButton(m[0], m[1], hasDropdown);
+            b.addActionListener(e -> {
+                if ("Danh Mục".equals(m[0])) {
+                    showDanhMucMenu(b);
+                } else if ("Xử Lý".equals(m[0])) {
+                    showXuLyMenu(b);
+                } else if (LichHenPanel.PARENT_TITLE.equals(m[0])) {
+                    showLichHenMenu(b);
+                } else {
+                    chon(m[0]);
+                }
+            });
+>>>>>>> stash
             navs.put(m[0], b);
             JPanel wrap = new JPanel(new BorderLayout());
             wrap.setOpaque(false);
+<<<<<<< HEAD
             wrap.setBorder(new EmptyBorder(8, 5, 8, 5));
+=======
+            wrap.setBorder(new EmptyBorder(8, 2, 8, 2));
+>>>>>>> stash
             wrap.setAlignmentY(Component.CENTER_ALIGNMENT);
             wrap.add(b);
             header.add(wrap);
@@ -96,6 +167,74 @@ public class MainFrame extends JFrame {
         return header;
     }
 
+<<<<<<< HEAD
+=======
+    private void showDanhMucMenu(Component invoker) {
+        JPopupMenu menu = new JPopupMenu();
+        menu.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER, 1),
+                BorderFactory.createEmptyBorder(6, 4, 6, 4)));
+        menu.setBackground(Color.WHITE);
+
+        JMenuItem itThuCung = createMenuItem("Quản lý Thú cưng", "paw", () -> chon("Thú cưng"));
+        JMenuItem itKhachHang = createMenuItem("Quản lý Khách hàng", "customers", () -> chon("Khách hàng"));
+        JMenuItem itKhoHang = createMenuItem("Quản lý Kho hàng", "box", () -> chon("Kho hàng"));
+
+        menu.add(itThuCung);
+        menu.add(itKhachHang);
+        menu.add(itKhoHang);
+        menu.show(invoker, 0, invoker.getHeight() + 2);
+    }
+
+    private void showLichHenMenu(Component invoker) {
+        JPopupMenu menu = new JPopupMenu();
+        menu.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER, 1),
+                BorderFactory.createEmptyBorder(6, 4, 6, 4)));
+        menu.setBackground(Color.WHITE);
+
+        menu.add(createMenuItem("Hồ sơ lịch hẹn", "card", () -> chon(LichHenPanel.Mode.HO_SO.title)));
+        menu.add(createMenuItem("Quản lý lịch hẹn", "calendar", () -> chon(LichHenPanel.Mode.QUAN_LY.title)));
+        menu.add(createMenuItem("Đổi lịch hẹn", "sync", () -> chon(LichHenPanel.Mode.DOI.title)));
+        menu.add(createMenuItem("Xác nhận lịch hẹn", "check", () -> chon(LichHenPanel.Mode.XAC_NHAN.title)));
+        menu.add(createMenuItem("Hủy lịch hẹn", "close", () -> chon(LichHenPanel.Mode.HUY.title)));
+        menu.show(invoker, 0, invoker.getHeight() + 2);
+    }
+
+    private void showXuLyMenu(Component invoker) {
+        JPopupMenu menu = new JPopupMenu();
+        menu.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER, 1),
+                BorderFactory.createEmptyBorder(6, 4, 6, 4)));
+        menu.setBackground(Color.WHITE);
+
+        JMenuItem itLichSu = createMenuItem("Lịch sử Nhập / Xuất Kho", "eye", () -> chon("Lịch sử Nhập / Xuất Kho"));
+        JMenuItem itLapPhieu = createMenuItem("Lập phiếu nhập kho", "plus", () -> {
+            chon("Kho hàng");
+            if (pnlKhoHang != null) {
+                pnlKhoHang.lapPhieuNhapKho(null);
+            }
+        });
+
+        menu.add(itLichSu);
+        menu.add(itLapPhieu);
+        menu.show(invoker, 0, invoker.getHeight() + 2);
+    }
+
+    private JMenuItem createMenuItem(String title, String iconName, Runnable action) {
+        JMenuItem item = new JMenuItem(title);
+        item.setFont(Theme.font(Font.PLAIN, 13));
+        item.setForeground(Theme.TEXT);
+        item.setIcon(Icons.of(iconName, 16, Theme.ACCENT));
+        item.setIconTextGap(10);
+        item.setBorder(BorderFactory.createEmptyBorder(8, 14, 8, 18));
+        item.setBackground(Color.WHITE);
+        item.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        item.addActionListener(e -> action.run());
+        return item;
+    }
+
+>>>>>>> stash
     private JComponent buildUserBox() {
         JPanel box = new JPanel(new BorderLayout(10, 0));
         box.setOpaque(false);
@@ -158,7 +297,29 @@ public class MainFrame extends JFrame {
 
     private void chon(String key) {
         cards.show(content, key);
+<<<<<<< HEAD
         navs.forEach((k, b) -> b.setSelected(k.equals(key)));
+=======
+
+        // Xác định nút menu cha cần sáng (active)
+        String parentMenu;
+        if ("Thú cưng".equals(key) || "Khách hàng".equals(key) || "Kho hàng".equals(key)) {
+            parentMenu = "Danh Mục";
+        } else if ("Lịch sử Nhập / Xuất Kho".equals(key)) {
+            parentMenu = "Xử Lý";
+        } else if (isLichHenKey(key)) {
+            parentMenu = LichHenPanel.PARENT_TITLE;
+        } else {
+            parentMenu = key;
+        }
+
+        navs.forEach((k, b) -> b.setSelected(k.equals(parentMenu)));
+>>>>>>> stash
+    }
+
+    private static boolean isLichHenKey(String key) {
+        for (LichHenPanel.Mode m : LichHenPanel.Mode.values()) if (m.title.equals(key)) return true;
+        return false;
     }
 
     public void dangXuat() {
