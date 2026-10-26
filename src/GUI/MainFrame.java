@@ -141,6 +141,7 @@ public class MainFrame extends JFrame {
         setSize(1280, 800);
         setMinimumSize(new Dimension(1050, 680));
         setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
     }
 
     private static void bindKey(JComponent c, String stroke, Runnable r) {
