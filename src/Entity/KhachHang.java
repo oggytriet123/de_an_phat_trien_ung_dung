@@ -1,6 +1,8 @@
 package Entity;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 public class KhachHang {
     private final String maKH;
@@ -11,6 +13,7 @@ public class KhachHang {
     private String thuCung;
     private LocalDate giaoDichGanNhat; // null nếu chưa có giao dịch
     private long tongChiTieu;
+    private List<ThuCung> danhSachThuCung = new ArrayList<>(); // chi tiết (petID, loài, cân nặng)
 
     public KhachHang(String maKH, String hoTen, String soDienThoai, String hangThe,
                      int diemTichLuy, String thuCung, LocalDate giaoDichGanNhat, long tongChiTieu) {
@@ -32,6 +35,7 @@ public class KhachHang {
     public String getThuCung() { return thuCung; }
     public LocalDate getGiaoDichGanNhat() { return giaoDichGanNhat; }
     public long getTongChiTieu() { return tongChiTieu; }
+    public List<ThuCung> getDanhSachThuCung() { return danhSachThuCung; }
 
     public void setHoTen(String hoTen) { this.hoTen = hoTen; }
     public void setSoDienThoai(String soDienThoai) { this.soDienThoai = soDienThoai; }
@@ -40,4 +44,5 @@ public class KhachHang {
     public void setThuCung(String thuCung) { this.thuCung = thuCung; }
     public void setGiaoDichGanNhat(LocalDate d) { this.giaoDichGanNhat = d; }
     public void setTongChiTieu(long tongChiTieu) { this.tongChiTieu = tongChiTieu; }
+    public void setDanhSachThuCung(List<ThuCung> ds) { this.danhSachThuCung = ds == null ? new ArrayList<>() : ds; }
 }

@@ -150,6 +150,6 @@ public class HeThongPanel extends JPanel {
     }
 
     private void showThongTin() {
-        JOptionPane.showMessageDialog(this, "Chức năng Thông tin cá nhân đang được phát triển.");
+        mainFrame.moTaiKhoan();
     }
 }

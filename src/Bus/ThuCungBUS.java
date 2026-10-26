@@ -1,128 +1,201 @@
 package Bus;
 
-import java.time.LocalDate;
+import java.sql.SQLException;
+import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
+import DAO.ThuCungDAO;
+import Entity.ThongKeThuCung;
 import Entity.ThuCung;
 
 /**
- * Nghiệp vụ quản lý thú cưng. Dùng dữ liệu mẫu trong bộ nhớ (450 thú cưng);
- * khi có ThuCungDAO chỉ cần thay phần khởi tạo / thao tác bằng DAO.
+ * Xử lý nghiệp vụ cho hồ sơ Thú cưng (Validation, Caching, Tìm kiếm, Thống kê).
  */
 public class ThuCungBUS {
-    private final List<ThuCung> ds = new ArrayList<>();
+    private final ThuCungDAO dao = new ThuCungDAO();
+    private final List<ThuCung> cache = new ArrayList<>();
 
     public ThuCungBUS() {
-        napDuLieuMau();
     }
 
-    public List<ThuCung> layDanhSach() {
-        return Collections.unmodifiableList(ds);
+    /**
+     * Tải lại toàn bộ dữ liệu từ CSDL vào bộ đệm RAM.
+     */
+    public synchronized void taiLai() throws SQLException {
+        cache.clear();
+        cache.addAll(dao.layTatCa());
     }
 
-    public int getTongSoThuCung() {
-        return ds.size();
+    /**
+     * Lấy danh sách thú cưng đang có trong bộ đệm.
+     */
+    public synchronized List<ThuCung> layDanhSach() {
+        return Collections.unmodifiableList(new ArrayList<>(cache));
     }
 
-    public int getSoDangLuuTru() {
-        int cnt = 0;
-        for (ThuCung tc : ds) if (tc.isDangLuuTru()) cnt++;
-        return cnt;
+    /**
+     * Lấy số liệu thống kê.
+     */
+    public ThongKeThuCung layThongKe() throws SQLException {
+        return dao.layThongKe();
     }
 
-    public int getSoCanTheoDoi() {
-        int cnt = 0;
-        for (ThuCung tc : ds) {
-            if ("Cần theo dõi".equals(tc.getSucKhoe()) || "Đang điều trị".equals(tc.getSucKhoe())) cnt++;
+    /**
+     * Lấy danh sách khách hàng để chọn chủ nuôi.
+     */
+    public List<ThuCungDAO.KhachHangOption> layDanhSachKhachHang() throws SQLException {
+        return dao.layDanhSachKhachHang();
+    }
+
+    /**
+     * Kiểm tra tính hợp lệ của dữ liệu trước khi lưu vào CSDL (Business Validation).
+     * @throws IllegalArgumentException nếu dữ liệu không thỏa mãn
+     */
+    public void kiemTraDuLieu(ThuCung tc) {
+        if (tc == null) {
+            throw new IllegalArgumentException("Dữ liệu thú cưng không được rỗng.");
         }
-        return cnt;
-    }
-
-    public ThuCung them(String ten, String giong, String loai, String tenChu, String sdtChu,
-                        double canNang, String sucKhoe, boolean dangLuuTru, String ghiChu) {
-        int max = 0;
-        for (ThuCung t : ds) {
-            try {
-                max = Math.max(max, Integer.parseInt(t.getMaTC().substring(2)));
-            } catch (Exception ignored) {}
+        if (tc.getTen() == null || tc.getTen().trim().isEmpty()) {
+            throw new IllegalArgumentException("Tên thú cưng không được để trống.");
         }
-        ThuCung tc = new ThuCung(String.format("TC%03d", max + 1), ten, giong, loai, tenChu,
-                dinhDangSdt(sdtChu), canNang, sucKhoe, dangLuuTru, LocalDate.now(), ghiChu);
-        ds.add(0, tc); // Thêm lên đầu danh sách
-        return tc;
+        if (tc.getTen().trim().length() > 100) {
+            throw new IllegalArgumentException("Tên thú cưng không vượt quá 100 ký tự.");
+        }
+        if (tc.getLoai() == null || tc.getLoai().trim().isEmpty()) {
+            throw new IllegalArgumentException("Vui lòng chọn hoặc nhập loài thú cưng.");
+        }
+        if (tc.getLoai().trim().length() > 50) {
+            throw new IllegalArgumentException("Tên loài không vượt quá 50 ký tự.");
+        }
+        if (tc.getGiong() != null && tc.getGiong().trim().length() > 100) {
+            throw new IllegalArgumentException("Tên giống loài không vượt quá 100 ký tự.");
+        }
+        if (tc.getTuoi() < 0 || tc.getTuoi() > 50) {
+            throw new IllegalArgumentException("Tuổi thú cưng phải trong khoảng từ 0 đến 50.");
+        }
+        if (tc.getCanNang() < 0 || tc.getCanNang() > 150) {
+            throw new IllegalArgumentException("Cân nặng phải trong khoảng từ 0 đến 150 kg.");
+        }
+        if (tc.getTheCanhBao() != null && tc.getTheCanhBao().trim().length() > 200) {
+            throw new IllegalArgumentException("Nội dung thẻ cảnh báo / ghi chú không vượt quá 200 ký tự.");
+        }
     }
 
-    public boolean capNhat(ThuCung tc) {
-        for (int i = 0; i < ds.size(); i++) {
-            if (ds.get(i).getMaTC().equals(tc.getMaTC())) {
-                ds.set(i, tc);
-                return true;
+    /**
+     * Thêm mới thú cưng.
+     * @return mã thú cưng mới tạo
+     */
+    public String them(ThuCung tc) throws SQLException {
+        kiemTraDuLieu(tc);
+        String petID = dao.them(tc);
+        taiLai();
+        return petID;
+    }
+
+    /**
+     * Cập nhật thông tin thú cưng.
+     */
+    public boolean capNhat(ThuCung tc) throws SQLException {
+        if (tc.getPetID() == null || tc.getPetID().trim().isEmpty()) {
+            throw new IllegalArgumentException("Mã thú cưng không hợp lệ.");
+        }
+        kiemTraDuLieu(tc);
+        boolean ok = dao.capNhat(tc);
+        if (ok) {
+            taiLai();
+        }
+        return ok;
+    }
+
+    /**
+     * Xóa thú cưng.
+     */
+    public boolean xoa(String petID) throws SQLException {
+        if (petID == null || petID.trim().isEmpty()) {
+            throw new IllegalArgumentException("Mã thú cưng không hợp lệ.");
+        }
+        boolean ok = dao.xoa(petID);
+        if (ok) {
+            taiLai();
+        }
+        return ok;
+    }
+
+    /**
+     * Lọc danh sách thú cưng theo từ khóa và bộ lọc.
+     */
+    public List<ThuCung> timKiemVaLoc(String tuKhoa, String loaiLoc, String gioiTinhLoc, String trangThaiLoc) {
+        String kw = norm(tuKhoa != null ? tuKhoa.trim() : "");
+        String sdtKw = chiSo(tuKhoa);
+
+        List<ThuCung> ketQua = new ArrayList<>();
+        for (ThuCung t : cache) {
+            // Lọc theo Loài
+            if (loaiLoc != null && !loaiLoc.equals("Tất cả")) {
+                if (loaiLoc.equals("Khác")) {
+                    if (t.getLoai().equalsIgnoreCase("Chó") || t.getLoai().equalsIgnoreCase("Mèo") || t.getLoai().equalsIgnoreCase("Thỏ")) {
+                        continue;
+                    }
+                } else if (!t.getLoai().equalsIgnoreCase(loaiLoc)) {
+                    continue;
+                }
             }
+
+            // Lọc theo Giới tính
+            if (gioiTinhLoc != null && !gioiTinhLoc.equals("Tất cả")) {
+                if (!t.getGioiTinh().equalsIgnoreCase(gioiTinhLoc)) {
+                    continue;
+                }
+            }
+
+            // Lọc theo Trạng thái
+            if (trangThaiLoc != null && !trangThaiLoc.equals("Tất cả")) {
+                if (trangThaiLoc.equals("Cần chú ý / Theo dõi")) {
+                    boolean coCanhBao = (t.getTheCanhBao() != null && !t.getTheCanhBao().isEmpty())
+                            || !t.getTrangThai().equalsIgnoreCase("Khỏe mạnh");
+                    if (!coCanhBao) continue;
+                } else if (!t.getTrangThai().equalsIgnoreCase(trangThaiLoc)) {
+                    continue;
+                }
+            }
+
+            // Lọc theo từ khóa tìm kiếm (Tên thú cưng, Mã PET, Giống, Tên chủ, SĐT chủ)
+            if (!kw.isEmpty()) {
+                String searchHay = norm(t.getTen()) + " "
+                        + norm(t.getPetID()) + " "
+                        + norm(t.getGiong()) + " "
+                        + norm(t.getTenChuNuoi()) + " "
+                        + norm(t.getTheCanhBao());
+
+                boolean matchText = searchHay.contains(kw);
+                boolean matchPhone = (!sdtKw.isEmpty() && chiSo(t.getSdtChuNuoi()).contains(sdtKw));
+
+                if (!matchText && !matchPhone) {
+                    continue;
+                }
+            }
+
+            ketQua.add(t);
         }
-        return false;
+        return ketQua;
     }
 
-    public boolean xoa(String maTC) {
-        return ds.removeIf(tc -> tc.getMaTC().equals(maTC));
+    /**
+     * Chuẩn hóa chuỗi tiếng Việt không dấu, chữ thường để tìm kiếm linh hoạt.
+     */
+    public static String norm(String s) {
+        if (s == null) return "";
+        String n = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}", "");
+        return n.replace('đ', 'd').replace('Đ', 'D').toLowerCase(Locale.ROOT);
     }
 
+    /**
+     * Trích xuất các ký tự số (dùng cho số điện thoại).
+     */
     public static String chiSo(String s) {
         return s == null ? "" : s.replaceAll("\\D", "");
-    }
-
-    public static String dinhDangSdt(String s) {
-        String d = chiSo(s);
-        return d.length() == 10 ? d.substring(0, 4) + " " + d.substring(4, 7) + " " + d.substring(7) : d;
-    }
-
-    private void add(String ten, String giong, String loai, String tenChu, String sdtChu,
-                     double canNang, String sucKhoe, boolean dangLuuTru, String ghiChu) {
-        ds.add(new ThuCung(String.format("TC%03d", ds.size() + 1), ten, giong, loai, tenChu,
-                sdtChu, canNang, sucKhoe, dangLuuTru, LocalDate.now().minusDays(ds.size()), ghiChu));
-    }
-
-    private void napDuLieuMau() {
-        // 7 dòng đầu tiên hiển thị trên trang 1 khớp chính xác ảnh thiết kế tham chiếu
-        add("Mochi", "Poodle", "Chó", "Nguyễn Minh Anh", "0901 234 456", 4.2, "Khỏe mạnh", false, "");
-        add("Bông", "Anh lông ngắn", "Mèo", "Nguyễn Minh Anh", "0901 234 456", 3.8, "Khỏe mạnh", false, "");
-        add("Lu", "Golden Retriever", "Chó", "Trần Quốc Bảo", "0978 456 789", 25.5, "Cần theo dõi", false, "Theo dõi dị ứng");
-        add("Kem", "Munchkin", "Mèo", "Lê Thị Cẩm Tú", "0933 222 111", 3.2, "Khỏe mạnh", false, "");
-        add("Milo", "Corgi", "Chó", "Phạm Gia Hân", "0912 345 678", 10.4, "Đang điều trị", false, "Điều trị viêm da");
-        add("Rex", "Husky", "Chó", "Võ Hoàng Long", "0988 000 666", 22.0, "Khỏe mạnh", false, "");
-        add("Nâu", "Mèo ta", "Mèo", "Đặng Thu Hà", "0905 777 333", 4.0, "Khỏe mạnh", false, "");
-
-        // Thêm 3 dòng cần theo dõi / điều trị để tổng số "Cần theo dõi sức khỏe" đúng bằng 5
-        add("Đậu", "Phốc sóc", "Chó", "Lê Thị Cẩm Tú", "0933 222 111", 2.6, "Cần theo dõi", false, "Theo dõi tiêu hóa");
-        add("Sữa", "Xiêm", "Mèo", "Hoàng Văn Tuấn", "0909 333 444", 3.5, "Đang điều trị", false, "Điều trị mắt");
-        add("Bơ", "Shiba Inu", "Chó", "Ngô Đức Thắng", "0944 333 555", 9.8, "Cần theo dõi", false, "Cần kiểm tra cân nặng");
-
-        // Các tên mẫu để sinh tổng cộng đúng 450 thú cưng (65 trang x 7)
-        String[] tenCho = {"Lucky", "Bông Lan", "Kiki", "Choco", "Max", "Bắp", "Cacao", "Gấu", "Tôm", "Sam"};
-        String[] giongCho = {"Poodle", "Corgi", "Pug", "Chihuahua", "Bulldog", "Samoyed", "Husky", "Golden"};
-        String[] tenMeo = {"Miu", "Mimi", "Mun", "Xoài", "Bơ", "Sushi", "Simba", "Mây", "Bánh Bao", "Neko"};
-        String[] giongMeo = {"Anh lông ngắn", "Anh lông dài", "Mèo Ba Tư", "Mèo ta", "Munchkin", "Scottish Fold"};
-        String[] chu = {"Trần Mai Anh", "Lê Hoàng Nam", "Nguyễn Văn Đức", "Vũ Phương Linh", "Bùi Quốc Huy",
-                        "Phan Ngọc Trâm", "Đỗ Hải Đăng", "Hồ Minh Châu", "Dương Tấn Phát", "Lý Gia Hân"};
-
-        // Sinh thêm cho đủ 450 thú cưng, trong đó phân bổ 28 bé đang lưu trú
-        int luuTruConLai = 28;
-        while (ds.size() < 450) {
-            int i = ds.size();
-            boolean isDog = (i % 2 == 0);
-            String t = isDog ? tenCho[i % tenCho.length] : tenMeo[i % tenMeo.length];
-            String g = isDog ? giongCho[i % giongCho.length] : giongMeo[i % giongMeo.length];
-            String loai = isDog ? "Chó" : "Mèo";
-            String c = chu[i % chu.length];
-            String sdt = String.format("09%02d %03d %03d", (i * 7) % 90 + 10, (i * 37) % 900 + 100, (i * 53) % 900 + 100);
-            double w = isDog ? Math.round((3.0 + (i % 25) * 1.1) * 10.0) / 10.0 : Math.round((2.5 + (i % 6) * 0.5) * 10.0) / 10.0;
-            boolean lt = false;
-            if (luuTruConLai > 0 && i % 15 == 0) {
-                lt = true;
-                luuTruConLai--;
-            }
-            add(t + (i > 27 ? " #" + i : ""), g, loai, c, sdt, w, "Khỏe mạnh", lt, "");
-        }
     }
 }
