@@ -20,6 +20,8 @@ public class MainFrame extends JFrame {
         // tên hiển thị, icon, mô tả
         {"Hệ Thống", "settings", "Quản lý phiên đăng nhập, mật khẩu và thông tin cá nhân"},
         {"Danh Mục", "dashboard", "Quản lý các danh mục từ điển (Thú cưng, Khách hàng, Kho hàng)"},
+        {"Quản Lý Lịch Hẹn", "calendar", "Hồ sơ, quản lý, đổi, xác nhận và hủy lịch hẹn"},
+        {"Điều Trị & Đơn Thuốc", "medical", "Kê đơn thuốc, quản lý đơn thuốc và thiết lập phác đồ điều trị"},
         {"Xử Lý", "sync", "Xử lý nghiệp vụ (Lập phiếu nhập/xuất kho, lịch sử phiếu)"},
         {"Tìm Kiếm", "search", "Tra cứu thông tin hồ sơ và sản phẩm"},
         {"Thống Kê", "bar-chart", "Báo cáo thống kê hoạt động và tồn kho"},
@@ -35,6 +37,9 @@ public class MainFrame extends JFrame {
     private ThuCungPanel pnlThuCung;
     private KhachHangPanel pnlKhachHang;
     private HeThongPanel pnlHeThong;
+    private LichHenPanel pnlHoSoLichHen, pnlQuanLyLichHen, pnlDoiLichHen, pnlXacNhanLichHen, pnlHuyLichHen;
+    private DonThuocPanel pnlDonThuoc;
+    private PhacDoPanel pnlPhacDo;
 
     public MainFrame(TaiKhoan taiKhoan) {
         super("PetCare POS");
@@ -52,12 +57,28 @@ public class MainFrame extends JFrame {
         pnlKhachHang = new KhachHangPanel();
         pnlKhoHang = new KhoHangPanel();
         pnlLichSuKho = new LichSuNhapXuatPanel();
+        pnlHoSoLichHen = new LichHenPanel(LichHenPanel.Mode.HO_SO);
+        pnlQuanLyLichHen = new LichHenPanel(LichHenPanel.Mode.QUAN_LY);
+        pnlDoiLichHen = new LichHenPanel(LichHenPanel.Mode.DOI);
+        pnlXacNhanLichHen = new LichHenPanel(LichHenPanel.Mode.XAC_NHAN);
+        pnlHuyLichHen = new LichHenPanel(LichHenPanel.Mode.HUY);
+        Bus.DonThuocBUS sharedDonThuocBus = new Bus.DonThuocBUS();
+        Bus.PhacDoBUS sharedPhacDoBus = new Bus.PhacDoBUS();
+        pnlDonThuoc = new DonThuocPanel(sharedDonThuocBus, pnlThuCung.getBus(), pnlKhoHang.getBus(), sharedPhacDoBus);
+        pnlPhacDo = new PhacDoPanel(sharedPhacDoBus, pnlThuCung.getBus(), sharedDonThuocBus);
 
         content.add(pnlHeThong, "Hệ Thống");
         content.add(pnlThuCung, "Thú cưng");
         content.add(pnlKhachHang, "Khách hàng");
         content.add(pnlKhoHang, "Kho hàng");
         content.add(pnlLichSuKho, "Lịch sử Nhập / Xuất Kho");
+        content.add(pnlHoSoLichHen, LichHenPanel.Mode.HO_SO.title);
+        content.add(pnlQuanLyLichHen, LichHenPanel.Mode.QUAN_LY.title);
+        content.add(pnlDoiLichHen, LichHenPanel.Mode.DOI.title);
+        content.add(pnlXacNhanLichHen, LichHenPanel.Mode.XAC_NHAN.title);
+        content.add(pnlHuyLichHen, LichHenPanel.Mode.HUY.title);
+        content.add(pnlDonThuoc, "Quản lý Đơn thuốc");
+        content.add(pnlPhacDo, "Phác đồ Điều trị");
         content.add(new ModulePlaceholderPanel("Tìm Kiếm", "Tra cứu thông tin hồ sơ và sản phẩm", "search"), "Tìm Kiếm");
         content.add(new ModulePlaceholderPanel("Thống Kê", "Báo cáo doanh thu, khám chữa và tồn kho", "bar-chart"), "Thống Kê");
 
@@ -66,9 +87,9 @@ public class MainFrame extends JFrame {
         root.add(content, BorderLayout.CENTER);
         setContentPane(root);
 
-        chon("Lịch sử Nhập / Xuất Kho"); // Mở thẳng màn hình lịch sử kho vừa hoàn thiện
+        chon("Quản lý Đơn thuốc"); // Mở chức năng Quản lý Đơn thuốc
         setSize(1320, 840);
-        setMinimumSize(new Dimension(1100, 720));
+        setMinimumSize(new Dimension(1280, 720));
         setLocationRelativeTo(null);
     }
 
@@ -92,15 +113,21 @@ public class MainFrame extends JFrame {
         header.add(brand);
         header.add(Box.createHorizontalStrut(10));
 
-        // 5 nút menu chính
+        // Các nút menu chính
         for (String[] m : MENU) {
-            boolean hasDropdown = "Danh Mục".equals(m[0]) || "Xử Lý".equals(m[0]);
+            boolean hasDropdown = "Danh Mục".equals(m[0]) || "Xử Lý".equals(m[0])
+                    || LichHenPanel.PARENT_TITLE.equals(m[0])
+                    || "Điều Trị & Đơn Thuốc".equals(m[0]);
             NavButton b = new NavButton(m[0], m[1], hasDropdown);
             b.addActionListener(e -> {
                 if ("Danh Mục".equals(m[0])) {
                     showDanhMucMenu(b);
                 } else if ("Xử Lý".equals(m[0])) {
                     showXuLyMenu(b);
+                } else if (LichHenPanel.PARENT_TITLE.equals(m[0])) {
+                    showLichHenMenu(b);
+                } else if ("Điều Trị & Đơn Thuốc".equals(m[0])) {
+                    showDieuTriMenu(b);
                 } else {
                     chon(m[0]);
                 }
@@ -109,7 +136,7 @@ public class MainFrame extends JFrame {
 
             JPanel wrap = new JPanel(new BorderLayout());
             wrap.setOpaque(false);
-            wrap.setBorder(new EmptyBorder(8, 4, 8, 4));
+            wrap.setBorder(new EmptyBorder(8, 2, 8, 2));
             wrap.setAlignmentY(Component.CENTER_ALIGNMENT);
             wrap.add(b);
             header.add(wrap);
@@ -137,6 +164,36 @@ public class MainFrame extends JFrame {
         menu.show(invoker, 0, invoker.getHeight() + 2);
     }
 
+    private void showDieuTriMenu(Component invoker) {
+        JPopupMenu menu = new JPopupMenu();
+        menu.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER, 1),
+                BorderFactory.createEmptyBorder(6, 4, 6, 4)));
+        menu.setBackground(Color.WHITE);
+
+        JMenuItem itDonThuoc = createMenuItem("Quản lý Đơn thuốc", "prescription", () -> chon("Quản lý Đơn thuốc"));
+        JMenuItem itPhacDo = createMenuItem("Phác đồ Điều trị", "protocol", () -> chon("Phác đồ Điều trị"));
+
+        menu.add(itDonThuoc);
+        menu.add(itPhacDo);
+        menu.show(invoker, 0, invoker.getHeight() + 2);
+    }
+
+    private void showLichHenMenu(Component invoker) {
+        JPopupMenu menu = new JPopupMenu();
+        menu.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.BORDER, 1),
+                BorderFactory.createEmptyBorder(6, 4, 6, 4)));
+        menu.setBackground(Color.WHITE);
+
+        menu.add(createMenuItem("Hồ sơ lịch hẹn", "card", () -> chon(LichHenPanel.Mode.HO_SO.title)));
+        menu.add(createMenuItem("Quản lý lịch hẹn", "calendar", () -> chon(LichHenPanel.Mode.QUAN_LY.title)));
+        menu.add(createMenuItem("Đổi lịch hẹn", "sync", () -> chon(LichHenPanel.Mode.DOI.title)));
+        menu.add(createMenuItem("Xác nhận lịch hẹn", "check", () -> chon(LichHenPanel.Mode.XAC_NHAN.title)));
+        menu.add(createMenuItem("Hủy lịch hẹn", "close", () -> chon(LichHenPanel.Mode.HUY.title)));
+        menu.show(invoker, 0, invoker.getHeight() + 2);
+    }
+
     private void showXuLyMenu(Component invoker) {
         JPopupMenu menu = new JPopupMenu();
         menu.setBorder(BorderFactory.createCompoundBorder(
@@ -151,9 +208,14 @@ public class MainFrame extends JFrame {
                 pnlKhoHang.lapPhieuNhapKho(null);
             }
         });
+        JMenuItem itDonThuoc = createMenuItem("Quản lý Đơn thuốc", "prescription", () -> chon("Quản lý Đơn thuốc"));
+        JMenuItem itPhacDo = createMenuItem("Phác đồ Điều trị", "protocol", () -> chon("Phác đồ Điều trị"));
 
         menu.add(itLichSu);
         menu.add(itLapPhieu);
+        menu.addSeparator();
+        menu.add(itDonThuoc);
+        menu.add(itPhacDo);
         menu.show(invoker, 0, invoker.getHeight() + 2);
     }
 
@@ -246,11 +308,34 @@ public class MainFrame extends JFrame {
             parentMenu = "Danh Mục";
         } else if ("Lịch sử Nhập / Xuất Kho".equals(key)) {
             parentMenu = "Xử Lý";
+        } else if (isLichHenKey(key)) {
+            parentMenu = LichHenPanel.PARENT_TITLE;
+        } else if ("Quản lý Đơn thuốc".equals(key) || "Phác đồ Điều trị".equals(key)) {
+            parentMenu = "Điều Trị & Đơn Thuốc";
         } else {
             parentMenu = key;
         }
 
         navs.forEach((k, b) -> b.setSelected(k.equals(parentMenu)));
+    }
+
+    public void moKeDonChoThuCung(Entity.ThuCung tc) {
+        chon("Quản lý Đơn thuốc");
+        if (pnlDonThuoc != null) {
+            pnlDonThuoc.keDonChoThuCung(tc);
+        }
+    }
+
+    public void moPhacDoChoThuCung(Entity.ThuCung tc) {
+        chon("Phác đồ Điều trị");
+        if (pnlPhacDo != null) {
+            pnlPhacDo.taoPhacDoChoThuCung(tc);
+        }
+    }
+
+    private static boolean isLichHenKey(String key) {
+        for (LichHenPanel.Mode m : LichHenPanel.Mode.values()) if (m.title.equals(key)) return true;
+        return false;
     }
 
     public void dangXuat() {

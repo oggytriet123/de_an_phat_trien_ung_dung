@@ -38,6 +38,7 @@ public class ThuCungPanel extends JPanel {
     private static final String[] SORTS = {"Mới nhất", "Tên A-Z", "Cân nặng cao nhất", "Cân nặng thấp nhất"};
 
     private final ThuCungBUS bus = new ThuCungBUS();
+    public ThuCungBUS getBus() { return bus; }
     private List<ThuCung> filtered = new ArrayList<>();
     private String boLocHienTai = "Tất cả";
     private String sapXep = SORTS[0];
@@ -946,8 +947,31 @@ public class ThuCungPanel extends JPanel {
             }
         });
 
+        JMenuItem itKeDon = new JMenuItem("Kê đơn thuốc");
+        itKeDon.setFont(Theme.font(Font.PLAIN, 13));
+        itKeDon.setIcon(Icons.of("prescription", 16, Theme.ACCENT));
+        itKeDon.addActionListener(e -> {
+            Window w = SwingUtilities.getWindowAncestor(this);
+            if (w instanceof MainFrame mf) {
+                mf.moKeDonChoThuCung(tc);
+            }
+        });
+
+        JMenuItem itPhacDo = new JMenuItem("Lập phác đồ điều trị");
+        itPhacDo.setFont(Theme.font(Font.PLAIN, 13));
+        itPhacDo.setIcon(Icons.of("protocol", 16, Theme.ACCENT));
+        itPhacDo.addActionListener(e -> {
+            Window w = SwingUtilities.getWindowAncestor(this);
+            if (w instanceof MainFrame mf) {
+                mf.moPhacDoChoThuCung(tc);
+            }
+        });
+
         m.add(itXem);
         m.add(itSua);
+        m.addSeparator();
+        m.add(itKeDon);
+        m.add(itPhacDo);
         m.addSeparator();
         m.add(itXoa);
         m.show(invoker, x, y);
