@@ -170,7 +170,7 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
         table.getColumnModel().getColumn(0).setCellRenderer(new TextCell(true, SwingConstants.LEFT, HoaDon::getMaHD));
         table.getColumnModel().getColumn(1).setCellRenderer(new TextCell(false, SwingConstants.LEFT, HoaDon::getTenKH));
         table.getColumnModel().getColumn(2).setCellRenderer(new TextCell(false, SwingConstants.LEFT,
-                h -> h.getMaKH().isEmpty() ? "—" : h.getMaKH()));
+                h -> h.getMaKH().isEmpty() ? "-" : h.getMaKH()));
         table.getColumnModel().getColumn(3).setCellRenderer(new TextCell(false, SwingConstants.LEFT, HoaDon::getSdt));
         table.getColumnModel().getColumn(4).setCellRenderer(new TextCell(false, SwingConstants.LEFT,
                 h -> NGAY_GIO.format(h.getNgayThanhToan())));
@@ -268,11 +268,27 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
             lblFooter.setText(" ");
         } else {
             tableCards.show(tableArea, "table");
-            lblFooter.setText("Hiển thị " + (from + 1) + "–" + to + " trong " + filtered.size() + " hóa đơn");
+            lblFooter.setText("Hiển thị " + (from + 1) + "-" + to + " trong " + filtered.size() + " hóa đơn");
         }
         buildPager(filtered.isEmpty() ? 0 : pages);
         revalidate();
         repaint();
+    }
+
+    private static List<Integer> pageList(int totalPages, int current) {
+        List<Integer> list = new ArrayList<>();
+        if (totalPages <= 7) {
+            for (int i = 1; i <= totalPages; i++) list.add(i);
+        } else {
+            list.add(1);
+            if (current > 4) list.add(-1);
+            int start = Math.max(2, current - 1);
+            int end = Math.min(totalPages - 1, current + 1);
+            for (int i = start; i <= end; i++) list.add(i);
+            if (current < totalPages - 3) list.add(-1);
+            list.add(totalPages);
+        }
+        return list;
     }
 
     private void buildPager(int pages) {
@@ -294,26 +310,6 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
         }
         pnlPages.revalidate();
         pnlPages.repaint();
-    }
-
-    /** Ví dụ: 1 2 3 ... 10. Giữ trang đầu, trang cuối và các trang quanh trang hiện tại; -1 là dấu "...". */
-    private static List<Integer> pageList(int pages, int cur) {
-        List<Integer> r = new ArrayList<>();
-        if (pages <= 0) return r;
-        java.util.TreeSet<Integer> s = new java.util.TreeSet<>();
-        s.add(1);
-        s.add(pages);
-        for (int p = cur - 1; p <= cur + 1; p++) if (p >= 1 && p <= pages) s.add(p);
-        if (cur <= 3) for (int p = 1; p <= Math.min(3, pages); p++) s.add(p);
-        if (cur >= pages - 2) for (int p = Math.max(1, pages - 2); p <= pages; p++) s.add(p);
-        int prev = 0;
-        for (int p : s) {
-            if (prev != 0 && p - prev == 2) r.add(prev + 1);
-            else if (prev != 0 && p - prev > 2) r.add(-1);
-            r.add(p);
-            prev = p;
-        }
-        return r;
     }
 
     // ---------------- Model + renderer ----------------
