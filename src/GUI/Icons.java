@@ -218,6 +218,62 @@ public final class Icons {
                 g.draw(new Line2D.Double(16, 8, 20, 8));
                 g.draw(new Line2D.Double(20, 8, 20, 12));
             }
+            case "check" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(5, 12.5);
+                p.lineTo(10, 17.5);
+                p.lineTo(19, 7);
+                g.draw(p);
+            }
+            case "trash" -> {
+                g.draw(new Line2D.Double(4, 7, 20, 7));
+                g.draw(new Line2D.Double(9, 7, 9, 4.5));
+                g.draw(new Line2D.Double(9, 4.5, 15, 4.5));
+                g.draw(new Line2D.Double(15, 4.5, 15, 7));
+                Path2D p = new Path2D.Double();
+                p.moveTo(6, 7);
+                p.lineTo(7, 20);
+                p.lineTo(17, 20);
+                p.lineTo(18, 7);
+                g.draw(p);
+                g.draw(new Line2D.Double(10, 11, 10, 16));
+                g.draw(new Line2D.Double(14, 11, 14, 16));
+            }
+            case "medical" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(9, 3); p.lineTo(15, 3); p.lineTo(15, 9); p.lineTo(21, 9);
+                p.lineTo(21, 15); p.lineTo(15, 15); p.lineTo(15, 21); p.lineTo(9, 21);
+                p.lineTo(9, 15); p.lineTo(3, 15); p.lineTo(3, 9); p.lineTo(9, 9);
+                p.closePath();
+                if (filled) g.fill(p); else g.draw(p);
+            }
+            case "prescription", "pill" -> {
+                g.draw(new RoundRectangle2D.Double(4, 3, 16, 18, 3, 3));
+                g.draw(new Line2D.Double(8, 7, 16, 7));
+                g.draw(new Line2D.Double(12, 11, 12, 17));
+                g.draw(new Line2D.Double(9, 14, 15, 14));
+            }
+            case "protocol" -> {
+                g.draw(new RoundRectangle2D.Double(4, 5, 16, 16, 3, 3));
+                g.draw(new RoundRectangle2D.Double(9, 2.5, 6, 4, 1.5, 1.5));
+                g.draw(new Line2D.Double(7, 10, 8.5, 11.5));
+                g.draw(new Line2D.Double(8.5, 11.5, 11, 9));
+                g.draw(new Line2D.Double(13, 10.5, 17, 10.5));
+                g.draw(new Line2D.Double(7, 15, 8.5, 16.5));
+                g.draw(new Line2D.Double(8.5, 16.5, 11, 14));
+                g.draw(new Line2D.Double(13, 15.5, 17, 15.5));
+            }
+            case "print" -> {
+                g.draw(new RoundRectangle2D.Double(4, 8, 16, 9, 2, 2));
+                g.draw(new Line2D.Double(7, 8, 7, 3));
+                g.draw(new Line2D.Double(7, 3, 17, 3));
+                g.draw(new Line2D.Double(17, 3, 17, 8));
+                g.draw(new Line2D.Double(7, 14, 17, 14));
+                g.draw(new Line2D.Double(7, 14, 7, 21));
+                g.draw(new Line2D.Double(17, 14, 17, 21));
+                g.draw(new Line2D.Double(7, 21, 17, 21));
+                g.draw(new Line2D.Double(7, 17.5, 17, 17.5));
+            }
             default -> { }
 
 
