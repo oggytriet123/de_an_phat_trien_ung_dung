@@ -37,6 +37,7 @@ public class KhoHangPanel extends JPanel {
     private static final String[] SORTS = {"Tồn kho thấp nhất", "Tồn kho cao nhất", "Giá cao nhất", "Giá thấp nhất", "Tên A-Z"};
 
     private final KhoHangBUS bus = new KhoHangBUS();
+    public KhoHangBUS getBus() { return bus; }
     private List<SanPham> filtered = new ArrayList<>();
     private String danhMucLoc = "Tất cả";
     private String sapXep = SORTS[0];
@@ -76,6 +77,7 @@ public class KhoHangPanel extends JPanel {
         add(top, BorderLayout.NORTH);
         add(buildTableCard(), BorderLayout.CENTER);
 
+        bus.addListener(this::refresh);
         refresh();
     }
 
