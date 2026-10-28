@@ -1,92 +1,5 @@
 package GUI;
 
-<<<<<<< HEAD
-import javax.swing.*;
-import java.awt.*;
-import javax.swing.border.EmptyBorder;
-
-public class LichHenPanel extends JPanel {
-    public LichHenPanel() {
-        // Cài đặt nền chuẩn theo UI Style Guide
-        setBackground(Color.decode("#F4F7F9"));
-        setLayout(new BorderLayout(24, 24));
-        setBorder(new EmptyBorder(24, 24, 24, 24));
-
-        // 1. TOP BAR (Tiêu đề và Nút thao tác)
-        JPanel topBar = new JPanel(new BorderLayout());
-        topBar.setOpaque(false);
-        
-        JLabel title = new JLabel("Lịch hẹn & Phân bổ dịch vụ");
-        title.setFont(new Font("Arial", Font.BOLD, 24));
-        title.setForeground(Color.decode("#263238"));
-        
-        JButton btnAdd = new JButton("+ Tạo lịch hẹn");
-        btnAdd.setBackground(Color.decode("#607D8B"));
-        btnAdd.setForeground(Color.WHITE);
-        btnAdd.setFocusPainted(false);
-        btnAdd.setFont(new Font("Arial", Font.BOLD, 14));
-        
-        topBar.add(title, BorderLayout.WEST);
-        topBar.add(btnAdd, BorderLayout.EAST);
-
-        // 2. MAIN CONTENT (Chứa Lưới lịch và Sơ đồ lồng)
-        JPanel centerContent = new JPanel();
-        centerContent.setLayout(new BoxLayout(centerContent, BoxLayout.Y_AXIS));
-        centerContent.setOpaque(false);
-
-        // MODULE 1: TIME-GRID (Ma trận lịch hẹn)
-        JPanel timeGrid = new JPanel(new BorderLayout());
-        timeGrid.setBackground(Color.WHITE);
-        timeGrid.setPreferredSize(new Dimension(1000, 400));
-        timeGrid.setBorder(BorderFactory.createLineBorder(Color.decode("#CFD8DC")));
-        
-        JLabel gridLabel = new JLabel("Khu vực Lưới Lịch Hẹn (Time-Grid) - Sẽ tích hợp kéo thả (Drag & Drop) tại đây", SwingConstants.CENTER);
-        gridLabel.setForeground(Color.decode("#78909C"));
-        timeGrid.add(gridLabel, BorderLayout.CENTER);
-
-        // MODULE 2: PET HOTEL (Sơ đồ lồng lưu trú)
-        JPanel petHotel = new JPanel(new FlowLayout(FlowLayout.LEFT, 16, 16));
-        petHotel.setBackground(Color.WHITE);
-        petHotel.setBorder(BorderFactory.createTitledBorder(
-            BorderFactory.createLineBorder(Color.decode("#CFD8DC")), 
-            "Sơ đồ lưu trú (Pet Hotel)"
-        ));
-        
-        // Tạo các lồng mẫu theo trạng thái
-        JPanel cage1 = createCage("VIP 02 - Trống", "#F4F7F9", "#78909C", false);
-        JPanel cage2 = createCage("Mochi (Dị ứng)", "#FFFFFF", "#E53935", true);
-        
-        petHotel.add(cage1);
-        petHotel.add(cage2);
-
-        // Lắp ráp các khối
-        centerContent.add(timeGrid);
-        centerContent.add(Box.createRigidArea(new Dimension(0, 24)));
-        centerContent.add(petHotel);
-
-        add(topBar, BorderLayout.NORTH);
-        add(centerContent, BorderLayout.CENTER);
-    }
-
-    // Hàm tiện ích tạo khối Lồng thú cưng
-    private JPanel createCage(String text, String bgColor, String fgColor, boolean hasAlert) {
-        JPanel cage = new JPanel(new BorderLayout());
-        cage.setPreferredSize(new Dimension(150, 120));
-        cage.setBackground(Color.decode(bgColor));
-        
-        if (hasAlert) {
-            cage.setBorder(BorderFactory.createLineBorder(Color.decode(fgColor), 2));
-        } else {
-            cage.setBorder(BorderFactory.createLineBorder(Color.decode("#CFD8DC"), 1));
-        }
-        
-        JLabel label = new JLabel(text, SwingConstants.CENTER);
-        label.setForeground(Color.decode(fgColor));
-        label.setFont(new Font("Arial", Font.BOLD, 14));
-        cage.add(label, BorderLayout.CENTER);
-        
-        return cage;
-=======
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -116,7 +29,7 @@ import GUI.LichHenData.LichHen;
  * Mục "Quản Lý Lịch Hẹn": 5 màn hình dùng chung một khung giao diện (bám theo màn Lịch sử Nhập / Xuất Kho):
  * Hồ sơ lịch hẹn, Quản lý lịch hẹn, Đổi lịch hẹn, Xác nhận lịch hẹn, Hủy lịch hẹn.
  */
-public class LichHenPanel extends JPanel {
+public class LichHenPanel extends JPanel implements Refreshable {
 
     public enum Mode {
         HO_SO("Hồ sơ lịch hẹn", "Tra cứu toàn bộ hồ sơ lịch hẹn của khách hàng và thú cưng"),
@@ -181,6 +94,8 @@ public class LichHenPanel extends JPanel {
         refresh();
     }
 
+    @Override public void lamMoi() { refresh(); }
+
     private void configure() {
         switch (mode) {
             case HO_SO -> {
@@ -203,7 +118,7 @@ public class LichHenPanel extends JPanel {
             }
             case HUY -> {
                 filters = new String[] {"Tất cả", LichHenData.CHO_XAC_NHAN, LichHenData.DA_XAC_NHAN, LichHenData.DA_DOI};
-                acts = new String[] {"eye", "close"};
+                acts = new String[] {"eye", "x"};
             }
         }
     }
@@ -215,7 +130,7 @@ public class LichHenPanel extends JPanel {
             case "trash" -> "Xóa";
             case "calendar" -> "Đổi lịch";
             case "check" -> "Xác nhận";
-            case "close" -> "Hủy lịch hẹn";
+            case "x" -> "Hủy lịch hẹn";
             default -> null;
         };
     }
@@ -242,7 +157,7 @@ public class LichHenPanel extends JPanel {
             parent.addMouseListener(new MouseAdapter() {
                 @Override public void mouseClicked(MouseEvent e) {
                     Window w = SwingUtilities.getWindowAncestor(LichHenPanel.this);
-                    if (w instanceof MainFrame mf) mf.chon(Mode.QUAN_LY.title);
+                    if (w instanceof MainFrame mf) mf.moQuanLyLichHen();
                 }
                 @Override public void mouseEntered(MouseEvent e) { parent.setForeground(Theme.TEXT); }
                 @Override public void mouseExited(MouseEvent e) { parent.setForeground(Theme.MUTED); }
@@ -439,7 +354,7 @@ public class LichHenPanel extends JPanel {
                     case "trash" -> xoaLich(l);
                     case "calendar" -> doiLich(l);
                     case "check" -> xacNhan(l);
-                    case "close" -> huyLich(l);
+                    case "x" -> huyLich(l);
                     default -> { }
                 }
             }
@@ -1183,7 +1098,7 @@ public class LichHenPanel extends JPanel {
                 Color c = switch (a) {
                     case "edit", "calendar" -> Theme.ACCENT;
                     case "check" -> Theme.GREEN;
-                    case "trash", "close" -> Theme.RED;
+                    case "trash", "x" -> Theme.RED;
                     default -> Theme.ACTION_ICON;
                 };
                 Icons.draw(g2, a, x, y, ICON, c, false);
@@ -1191,6 +1106,5 @@ public class LichHenPanel extends JPanel {
             }
             g2.dispose();
         }
->>>>>>> stash
     }
 }
