@@ -19,6 +19,38 @@ public final class Icons {
         };
     }
 
+    /** Màu mặc định của từng icon khi dùng trong menu (đa sắc như thiết kế mẫu). */
+    public static Color colorOf(String name) {
+        if (name == null) return new Color(0x546E7A);
+        switch (name) {
+            case "settings": return new Color(0x546E7A);
+            case "list": return new Color(0x2196F3);
+            case "sync": return new Color(0x9C27B0);
+            case "search": return new Color(0x1E88E5);
+            case "bar-chart": return new Color(0x00ACC1);
+            case "home": return new Color(0xE53935);
+            case "person": return new Color(0x1F3A5F);
+            case "help": return new Color(0x1E88E5);
+            case "logout": return new Color(0x3F6FB5);
+            case "close": return new Color(0xE53935);
+            case "invoice": return new Color(0x37474F);
+            case "customers": return new Color(0x2E86C1);
+            case "service": return new Color(0xE57373);
+            case "tag": return new Color(0xE53935);
+            case "paw":
+            case "logo": return new Color(0x8D6E63);
+            case "cage":
+            case "calendar": return new Color(0xF5A623);
+            case "pie": return new Color(0x26A69A);
+            default: return new Color(0x546E7A);
+        }
+    }
+
+    /** Icon màu mặc định. */
+    public static Icon colored(String name, int size) {
+        return of(name, size, colorOf(name));
+    }
+
     public static void draw(Graphics2D g0, String name, double x, double y, double size, Color color, boolean filled) {
         Graphics2D g = (Graphics2D) g0.create();
         g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
@@ -128,95 +160,75 @@ public final class Icons {
                     g.draw(new Line2D.Double(12 + 5 * c, 12 + 5 * s, 12 + 7 * c, 12 + 7 * s));
                 }
             }
-            case "eye" -> {
+            case "list" -> {
+                for (int i = 0; i < 4; i++) {
+                    double yy = 5 + i * 5;
+                    g.draw(new Line2D.Double(3.5, yy, 5, yy));
+                    g.draw(new Line2D.Double(8, yy, 20.5, yy));
+                }
+            }
+            case "home" -> {
                 Path2D p = new Path2D.Double();
-                p.moveTo(2, 12);
-                p.curveTo(6, 6.5, 18, 6.5, 22, 12);
-                p.curveTo(18, 17.5, 6, 17.5, 2, 12);
-                p.closePath();
+                p.moveTo(3, 11.5); p.lineTo(12, 3.5); p.lineTo(21, 11.5);
                 g.draw(p);
-                g.draw(new Ellipse2D.Double(9.5, 9.5, 5, 5));
-                g.fill(new Ellipse2D.Double(11, 11, 2, 2));
+                Path2D q = new Path2D.Double();
+                q.moveTo(5.5, 10); q.lineTo(5.5, 20.5); q.lineTo(18.5, 20.5); q.lineTo(18.5, 10);
+                g.draw(q);
+                g.draw(new Rectangle2D.Double(10, 14, 4, 6.5));
             }
-            case "edit" -> {
-                Path2D p = new Path2D.Double();
-                p.moveTo(4, 20);
-                p.lineTo(8.5, 19.5);
-                p.lineTo(19, 9);
-                p.lineTo(15, 5);
-                p.lineTo(4.5, 15.5);
-                p.closePath();
-                g.draw(p);
-                g.draw(new Line2D.Double(13.5, 6.5, 17.5, 10.5));
+            case "help" -> {
+                g.fill(new Ellipse2D.Double(2.5, 2.5, 19, 19));
+                g.setColor(Color.WHITE);
+                g.setFont(new Font(Theme.FONT, Font.BOLD, 16));
+                g.drawString("?", 8.3f, 17.5f);
             }
-            case "more" -> {
-                g.fill(new Ellipse2D.Double(4, 10.5, 3, 3));
-                g.fill(new Ellipse2D.Double(10.5, 10.5, 3, 3));
-                g.fill(new Ellipse2D.Double(17, 10.5, 3, 3));
-            }
-            case "scissors" -> {
-                g.draw(new Ellipse2D.Double(4, 14, 5.5, 5.5));
-                g.draw(new Ellipse2D.Double(14.5, 14, 5.5, 5.5));
-                g.draw(new Line2D.Double(7.5, 14.5, 16.5, 4));
-                g.draw(new Line2D.Double(16.5, 14.5, 7.5, 4));
+            case "logout" -> {
+                g.fill(new Ellipse2D.Double(2.5, 2.5, 19, 19));
+                g.setColor(Color.WHITE);
+                g.setStroke(new BasicStroke(2.2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(new Line2D.Double(17, 12, 7, 12));
+                g.draw(new Line2D.Double(7, 12, 11, 8));
+                g.draw(new Line2D.Double(7, 12, 11, 16));
             }
             case "close" -> {
-                g.draw(new Line2D.Double(6.5, 6.5, 17.5, 17.5));
-                g.draw(new Line2D.Double(17.5, 6.5, 6.5, 17.5));
+                g.fill(new RoundRectangle2D.Double(2.5, 2.5, 19, 19, 5, 5));
+                g.setColor(Color.WHITE);
+                g.setStroke(new BasicStroke(2.4f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g.draw(new Line2D.Double(8, 8, 16, 16));
+                g.draw(new Line2D.Double(16, 8, 8, 16));
             }
-            case "camera" -> {
+            case "invoice" -> {
                 Path2D p = new Path2D.Double();
-                p.moveTo(5, 8.5); p.lineTo(8, 8.5); p.lineTo(9.5, 6.5); p.lineTo(14.5, 6.5); p.lineTo(16, 8.5); p.lineTo(19, 8.5);
-                p.curveTo(20, 8.5, 20.5, 9, 20.5, 10);
-                p.lineTo(20.5, 17.5);
-                p.curveTo(20.5, 18.5, 20, 19, 19, 19);
-                p.lineTo(5, 19);
-                p.curveTo(4, 19, 3.5, 18.5, 3.5, 17.5);
-                p.lineTo(3.5, 10);
-                p.curveTo(3.5, 9, 4, 8.5, 5, 8.5);
-                p.closePath();
+                p.moveTo(5, 3); p.lineTo(19, 3); p.lineTo(19, 21); p.lineTo(16.5, 19); p.lineTo(14, 21);
+                p.lineTo(11.5, 19); p.lineTo(9, 21); p.lineTo(7, 19); p.lineTo(5, 21); p.closePath();
                 g.draw(p);
-                g.draw(new Ellipse2D.Double(9, 10.5, 6, 6));
+                g.draw(new Line2D.Double(8.5, 8, 15.5, 8));
+                g.draw(new Line2D.Double(8.5, 12, 15.5, 12));
             }
-            case "chevron-down" -> {
+            case "service" -> {
                 Path2D p = new Path2D.Double();
-                p.moveTo(6.5, 9.5);
-                p.lineTo(12, 15);
-                p.lineTo(17.5, 9.5);
+                p.moveTo(12, 20.5); p.curveTo(4, 15, 2.5, 11, 2.5, 8.5);
+                p.curveTo(2.5, 5.5, 5, 4, 7.2, 4); p.curveTo(9.5, 4, 11, 5.5, 12, 7);
+                p.curveTo(13, 5.5, 14.5, 4, 16.8, 4); p.curveTo(19, 4, 21.5, 5.5, 21.5, 8.5);
+                p.curveTo(21.5, 11, 20, 15, 12, 20.5);
                 g.draw(p);
             }
-            case "warning" -> {
+            case "tag" -> {
                 Path2D p = new Path2D.Double();
-                p.moveTo(12, 4);
-                p.lineTo(21, 19.5);
-                p.lineTo(3, 19.5);
-                p.closePath();
+                p.moveTo(3, 12); p.lineTo(12, 3); p.lineTo(21, 3); p.lineTo(21, 12); p.lineTo(12, 21); p.closePath();
                 g.draw(p);
-                g.draw(new Line2D.Double(12, 9.5, 12, 14));
-                g.fill(new Ellipse2D.Double(11, 16, 2, 2));
+                g.fill(new Ellipse2D.Double(15, 6, 3, 3));
             }
-            case "plus" -> {
-                g.draw(new Line2D.Double(12, 6, 12, 18));
-                g.draw(new Line2D.Double(6, 12, 18, 12));
+            case "cage" -> {
+                g.draw(new RoundRectangle2D.Double(3.5, 5, 17, 15, 3, 3));
+                for (int i = 1; i <= 3; i++) g.draw(new Line2D.Double(3.5 + i * 4.25, 5, 3.5 + i * 4.25, 20));
+                g.draw(new Line2D.Double(7, 5, 12, 2.5));
+                g.draw(new Line2D.Double(17, 5, 12, 2.5));
             }
-            case "minus" -> {
-                g.draw(new Line2D.Double(6, 12, 18, 12));
-            }
-            case "excel" -> {
-                g.draw(new RoundRectangle2D.Double(4, 3.5, 16, 17, 2.5, 2.5));
-                g.draw(new Line2D.Double(4, 9, 20, 9));
-                g.draw(new Line2D.Double(10, 9, 10, 20.5));
-                g.draw(new Line2D.Double(4, 15, 20, 15));
-            }
-            case "chart" -> {
-                Path2D p = new Path2D.Double();
-                p.moveTo(4, 18);
-                p.lineTo(9, 13);
-                p.lineTo(14, 16);
-                p.lineTo(20, 8);
-                g.draw(p);
-                g.draw(new Line2D.Double(16, 8, 20, 8));
-                g.draw(new Line2D.Double(20, 8, 20, 12));
+            case "pie" -> {
+                g.draw(new Ellipse2D.Double(3.5, 3.5, 17, 17));
+                g.draw(new Line2D.Double(12, 12, 12, 3.5));
+                g.draw(new Line2D.Double(12, 12, 19, 16));
             }
             case "check" -> {
                 Path2D p = new Path2D.Double();

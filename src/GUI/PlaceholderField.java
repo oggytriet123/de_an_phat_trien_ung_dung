@@ -5,10 +5,16 @@ import javax.swing.JTextField;
 
 /** Ô nhập có chữ gợi ý mờ khi còn trống. */
 public class PlaceholderField extends JTextField {
-    private final String placeholder;
+    private String placeholder;
 
     public PlaceholderField(String placeholder) {
         this.placeholder = placeholder;
+    }
+
+    /** Đổi chữ gợi ý (ví dụ khi đổi loại giảm giá từ % sang số tiền). */
+    public void setPlaceholder(String text) {
+        this.placeholder = text;
+        repaint();
     }
 
     @Override
