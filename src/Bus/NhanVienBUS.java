@@ -31,6 +31,32 @@ public class NhanVienBUS {
         cache.addAll(dao.layTatCa());
     }
 
+    /** Danh sách mẫu để xem giao diện khi chưa kết nối được CSDL. */
+    public synchronized void napDuLieuMau() {
+        cache.clear();
+        String[][] d = {
+            {"NV001", "Hữu Thịnh", "huuthinh", "1", "Quản lý", "0901000001", "Toàn thời gian", "Đang làm việc", ""},
+            {"NV002", "Lê Mai Anh", "maianh", "2", "Bán hàng", "0901000002", "Ca sáng", "Đang làm việc", ""},
+            {"NV003", "Phạm Quốc Việt", "quocviet", "3", "Kho", "0901000003", "Ca chiều", "Đang làm việc", ""},
+            {"NV004", "Nguyễn Thanh Tùng", "thanhtung", "4", "Bác sĩ", "0901000004", "Toàn thời gian", "Đang làm việc", "Nội khoa"},
+            {"NV005", "Trần Kim Chi", "kimchi", "2", "Bán hàng", "0901000005", "Ca tối", "Đang làm việc", ""},
+            {"NV006", "Võ Minh Khang", "minhkhang", "4", "Bác sĩ", "0901000006", "Ca chiều", "Đang làm việc", "Ngoại khoa"},
+            {"NV007", "Đặng Ngọc Lan", "ngoclan", "3", "Kho", "0901000007", "Ca sáng", "Tạm nghỉ", ""},
+            {"NV008", "Hoàng Gia Huy", "giahuy", "4", "Bác sĩ", "0901000008", "Ca sáng", "Đang làm việc", "Da liễu"},
+            {"NV009", "Bùi Thanh Mai", "thanhmai", "2", "Bán hàng", "0901000009", "Ca chiều", "Đang làm việc", ""},
+            {"NV010", "Ngô Đức Thịnh", "ducthinh", "2", "Bán hàng", "0901000010", "Ca sáng", "Đã nghỉ việc", ""}
+        };
+        for (String[] r : d) {
+            NhanVien nv = new NhanVien();
+            nv.setMaNV(r[0]); nv.setHoTen(r[1]); nv.setTenDangNhap(r[2]);
+            nv.setMaQuyen(Integer.parseInt(r[3])); nv.setTenQuyen(r[4]);
+            nv.setSoDienThoai(r[5]); nv.setCaLamViec(r[6]); nv.setTrangThai(r[7]);
+            nv.setChuyenMon(r[8]); nv.setEmail(r[2] + "@petstation.vn");
+            nv.setNgayVaoLam(java.time.LocalDate.of(2024, 1, 15));
+            cache.add(nv);
+        }
+    }
+
     public synchronized List<NhanVien> layDanhSach() {
         return Collections.unmodifiableList(new ArrayList<>(cache));
     }

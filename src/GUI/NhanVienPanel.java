@@ -53,7 +53,7 @@ public class NhanVienPanel extends JPanel {
     private final StatCard cardKhoQL = new StatCard("Kho & Quản trị");
 
     // Bảng và tìm kiếm
-    private final String[] tieuDeCot = {"Mã NV", "Họ và tên", "Tên đăng nhập", "Vai trò", "Số điện thoại", "Email", "Ca làm", "Trạng thái"};
+    private final String[] tieuDeCot = {"Mã NV", "Họ và tên", "Tên đăng nhập", "Vai trò", "Số điện thoại", "Email", "Ca làm", "Trạng thái", "Ca hôm nay", "Trạng thái ca trực"};
     private final DefaultTableModel tableModel = new DefaultTableModel(tieuDeCot, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
@@ -84,6 +84,10 @@ public class NhanVienPanel extends JPanel {
 
         taiDuLieu();
         capNhatBang();
+
+        CaLamData.addListener(() -> SwingUtilities.invokeLater(this::capNhatBang));
+        // Làm mới trạng thái ca trực mỗi phút (đang trực / sắp vào ca / hết ca)
+        new javax.swing.Timer(60_000, e -> { if (isShowing()) capNhatBang(); }).start();
 
         addHierarchyListener(e -> {
             if (isShowing()) {
@@ -117,9 +121,11 @@ public class NhanVienPanel extends JPanel {
         RoundedButton btnXem = new RoundedButton("Xem chi tiết", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
         RoundedButton btnSua = new RoundedButton("Chỉnh sửa", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
         RoundedButton btnXoa = new RoundedButton("Xóa", Color.WHITE, new Color(0xFEE2E2), Theme.RED, Theme.BORDER, 10).pad(14, 9);
+        RoundedButton btnXepCa = new RoundedButton("Xếp ca làm", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
         RoundedButton btnThem = new RoundedButton("+ Thêm nhân viên", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(16, 9);
 
         btnExcel.addActionListener(e -> xuatExcel());
+        btnXepCa.addActionListener(e -> moXepCa());
         btnThem.addActionListener(e -> moDialogThemSua(null));
         btnXem.addActionListener(e -> {
             NhanVien nv = layNhanVienDangChon();
@@ -140,6 +146,7 @@ public class NhanVienPanel extends JPanel {
         JPanel pnlNut = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
         pnlNut.setOpaque(false);
         pnlNut.add(btnExcel);
+        pnlNut.add(btnXepCa);
         pnlNut.add(btnXem);
         pnlNut.add(btnSua);
         pnlNut.add(btnXoa);
@@ -170,7 +177,16 @@ public class NhanVienPanel extends JPanel {
             cardBanHang.set(Theme.number(tk.soBanHang), "Tư vấn & Bán hàng", Theme.MUTED);
             cardKhoQL.set(Theme.number(tk.soKho + tk.soQuanLy), tk.soQuanLy + " Quản lý · " + tk.soKho + " Thủ kho", new Color(0xD97706));
         } catch (SQLException e) {
-            cardTong.set("—", "Lỗi CSDL", Theme.MUTED);
+            // Chưa kết nối được CSDL: dùng danh sách mẫu để xem giao diện xếp ca
+            bus.napDuLieuMau();
+            List<NhanVien> ds = bus.layDanhSach();
+            long bs = ds.stream().filter(n -> n.getMaQuyen() == 4).count();
+            long bh = ds.stream().filter(n -> n.getMaQuyen() == 2).count();
+            long kq = ds.stream().filter(n -> n.getMaQuyen() == 1 || n.getMaQuyen() == 3).count();
+            cardTong.set(Theme.number(ds.size()), "Dữ liệu mẫu (chưa kết nối CSDL)", Theme.ORANGE);
+            cardBacSi.set(Theme.number((int) bs), "Phụ trách khám chữa bệnh", new Color(0x0284C7));
+            cardBanHang.set(Theme.number((int) bh), "Tư vấn & Bán hàng", Theme.MUTED);
+            cardKhoQL.set(Theme.number((int) kq), "Quản lý & Thủ kho", new Color(0xD97706));
         }
     }
 
@@ -246,6 +262,12 @@ public class NhanVienPanel extends JPanel {
         table.getColumnModel().getColumn(4).setCellRenderer(Theme.cellCenter());
         table.getColumnModel().getColumn(6).setCellRenderer(Theme.cellCenter());
         table.getColumnModel().getColumn(7).setCellRenderer(Theme.cellCenter());
+        table.getColumnModel().getColumn(8).setCellRenderer(Theme.cellCenter());
+        table.getColumnModel().getColumn(9).setCellRenderer(XepCaDialog.rendererTrangThai());
+        table.getColumnModel().getColumn(9).setPreferredWidth(140);
+        table.getColumnModel().getColumn(8).setPreferredWidth(90);
+        table.getColumnModel().getColumn(1).setPreferredWidth(150);
+        table.getColumnModel().getColumn(2).setPreferredWidth(130);
 
         table.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
@@ -302,7 +324,9 @@ public class NhanVienPanel extends JPanel {
                 nv.getSoDienThoai().isEmpty() ? "—" : nv.getSoDienThoai(),
                 nv.getEmail().isEmpty() ? "—" : nv.getEmail(),
                 nv.getCaLamViec(),
-                nv.getTrangThai()
+                nv.getTrangThai(),
+                CaLamData.moTaCaHomNay(nv),
+                CaLamData.trangThaiCaTruc(nv)
             });
         }
 
@@ -471,10 +495,23 @@ public class NhanVienPanel extends JPanel {
                     {"Chức vụ", chucVu},
                     {"Ca làm việc", nv.getCaLamViec()},
                     {"Trạng thái", nv.getTrangThai()},
+                    {"Ca trực hôm nay", CaLamData.moTaCaHomNay(nv) + " (" + CaLamData.khungGioHomNay(nv) + ") · " + CaLamData.trangThaiCaTruc(nv)},
                     {"Số điện thoại", nv.getSoDienThoai()},
                     {"Email", nv.getEmail()},
                     {"Ngày sinh", nv.getNgaySinh() != null ? nv.getNgaySinh().format(DATE_FMT) : "Chưa cập nhật"}
                 }, false, 440);
+    }
+
+    // ----------------- XẾP CA LÀM & TRẠNG THÁI CA TRỰC -----------------
+    private void moXepCa() {
+        if (dsHienThi.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "Chưa có nhân viên nào để xếp ca!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+        NhanVien chon = layNhanVienDangChon();
+        int idx = chon == null ? 0 : Math.max(0, dsHienThi.indexOf(chon));
+        new XepCaDialog(SwingUtilities.getWindowAncestor(this), new ArrayList<>(dsHienThi), idx).setVisible(true);
+        capNhatBang();
     }
 
     // ----------------- 7. XÓA AN TOÀN -----------------
@@ -504,11 +541,11 @@ public class NhanVienPanel extends JPanel {
         java.io.File file = fc.getSelectedFile();
         try (Writer w = new OutputStreamWriter(Files.newOutputStream(file.toPath()), StandardCharsets.UTF_8)) {
             w.write('\uFEFF');
-            w.write("Mã NV,Họ và tên,Tài khoản,Vai trò,Số điện thoại,Email,Ca làm,Trạng thái\r\n");
+            w.write("Mã NV,Họ và tên,Tài khoản,Vai trò,Số điện thoại,Email,Ca làm,Trạng thái,Ca hôm nay,Trạng thái ca trực\r\n");
             for (NhanVien nv : dsHienThi) {
-                w.write(String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\r\n",
+                w.write(String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%s\"\r\n",
                         nv.getMaNV(), nv.getHoTen(), nv.getTenDangNhap(), nv.getTenQuyen(),
-                        nv.getSoDienThoai(), nv.getEmail(), nv.getCaLamViec(), nv.getTrangThai()));
+                        nv.getSoDienThoai(), nv.getEmail(), nv.getCaLamViec(), nv.getTrangThai(), CaLamData.moTaCaHomNay(nv), CaLamData.trangThaiCaTruc(nv)));
             }
             JOptionPane.showMessageDialog(this, "Xuất file thành công: " + file.getAbsolutePath());
         } catch (IOException ex) {
