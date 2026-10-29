@@ -29,33 +29,33 @@ import Entity.ThongKeThuCung;
 import Entity.ThuCung;
 
 /**
- * Giao diß╗çn Quß║ún l├╜ Th├║ c╞░ng - Thiß║┐t kß║┐ trß╗▒c quan, dß╗à hiß╗âu cho ─æß╗ô ├ín Java Swing.
+ * Giao diện Quản lý Thú cưng - Thiết kế trực quan, dễ hiểu cho đồ án Java Swing.
  */
 public class ThuCungPanel extends JPanel {
     private static final int SO_DONG_MOI_TRANG = 7;
-    private static final String[] DS_LOAI = {"Tß║Ñt cß║ú", "Ch├│", "M├¿o", "Thß╗Å", "Kh├íc"};
-    private static final String[] DS_SAP_XEP = {"Mß╗¢i nhß║Ñt", "T├¬n A-Z", "C├ón nß║╖ng cao nhß║Ñt", "C├ón nß║╖ng thß║Ñp nhß║Ñt"};
+    private static final String[] DS_LOAI = {"Tất cả", "Chó", "Mèo", "Thỏ", "Khác"};
+    private static final String[] DS_SAP_XEP = {"Mới nhất", "Tên A-Z", "Cân nặng cao nhất", "Cân nặng thấp nhất"};
 
     private final ThuCungBUS bus = new ThuCungBUS();
     public ThuCungBUS getBus() { return bus; }
     private List<ThuCung> dsHienThi = new ArrayList<>();
-    private String loaiDangLoc = "Tß║Ñt cß║ú";
+    private String loaiDangLoc = "Tất cả";
     private String sapXepHienTai = DS_SAP_XEP[0];
     private int trangHienTai = 1;
 
-    // 4 thß║╗ thß╗æng k├¬ tr├¬n c├╣ng
-    private final StatCard cardTong = new StatCard("Tß╗òng sß╗æ th├║ c╞░ng");
-    private final StatCard cardCho = new StatCard("Sß╗æ l╞░ß╗úng Ch├│");
-    private final StatCard cardMeo = new StatCard("Sß╗æ l╞░ß╗úng M├¿o");
-    private final StatCard cardCanhBao = new StatCard("Cß║ºn theo d├╡i / Cß║únh b├ío");
+    // 4 thẻ thống kê trên cùng
+    private final StatCard cardTong = new StatCard("Tổng số thú cưng");
+    private final StatCard cardCho = new StatCard("Số lượng Chó");
+    private final StatCard cardMeo = new StatCard("Số lượng Mèo");
+    private final StatCard cardCanhBao = new StatCard("Cần theo dõi / Cảnh báo");
 
-    // Bß║úng v├á t├¼m kiß║┐m
-    private final String[] tieuDeCot = {"M├ú th├║ c╞░ng", "T├¬n th├║ c╞░ng", "Lo├ái", "Giß╗æng lo├ái", "Giß╗¢i t├¡nh", "Tuß╗òi", "C├ón nß║╖ng", "Chß╗º nu├┤i", "T├¼nh trß║íng"};
+    // Bảng và tìm kiếm
+    private final String[] tieuDeCot = {"Mã thú cưng", "Tên thú cưng", "Loài", "Giống loài", "Giới tính", "Tuổi", "Cân nặng", "Chủ nuôi", "Tình trạng"};
     private final DefaultTableModel tableModel = new DefaultTableModel(tieuDeCot, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
     private final JTable table = new JTable(tableModel);
-    private final PlaceholderField txtTim = new PlaceholderField("T├¼m theo t├¬n b├⌐, m├ú PET, giß╗æng, t├¬n chß╗º, sß╗æ ─æiß╗çn thoß║íi...");
+    private final PlaceholderField txtTim = new PlaceholderField("Tìm theo tên bé, mã PET, giống, tên chủ, số điện thoại...");
     private final List<RoundedButton> chipsLoai = new ArrayList<>();
     private final RoundedButton btnSort = new RoundedButton("", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10);
     private final JLabel lblTrangThai = new JLabel();
@@ -66,20 +66,20 @@ public class ThuCungPanel extends JPanel {
         setBackground(Theme.BG);
         setBorder(new EmptyBorder(24, 26, 24, 26));
 
-        // Khung tr├¬n: Ti├¬u ─æß╗ü + 4 thß║╗ thß╗æng k├¬
+        // Khung trên: Tiêu đề + 4 thẻ thống kê
         JPanel top = new JPanel(new BorderLayout(0, 16));
         top.setOpaque(false);
         top.add(taoPhanHeader(), BorderLayout.NORTH);
         top.add(taoPhanThongKe(), BorderLayout.CENTER);
         add(top, BorderLayout.NORTH);
 
-        // Khung giß╗»a: Bß║úng dß╗» liß╗çu + Thanh c├┤ng cß╗Ñ
+        // Khung giữa: Bảng dữ liệu + Thanh công cụ
         add(taoPhanBang(), BorderLayout.CENTER);
 
         taiDuLieu();
         capNhatBang();
 
-        // Tß╗▒ ─æß╗Öng load lß║íi khi mß╗ƒ lß║íi tab n├áy
+        // Tự động load lại khi mở lại tab này
         addHierarchyListener(e -> {
             if (isShowing()) {
                 taiDuLieu();
@@ -88,16 +88,16 @@ public class ThuCungPanel extends JPanel {
         });
     }
 
-    // ----------------- 1. HEADER & C├üC N├ÜT CHß╗¿C N─éNG -----------------
+    // ----------------- 1. HEADER & CÁC NÚT CHỨC NĂNG -----------------
     private JPanel taoPhanHeader() {
         JPanel head = new JPanel(new BorderLayout());
         head.setOpaque(false);
 
-        JLabel lblTieuDe = new JLabel("Quß║ún l├╜ Th├║ C╞░ng");
+        JLabel lblTieuDe = new JLabel("Quản lý Thú Cưng");
         lblTieuDe.setFont(Theme.font(Font.BOLD, 22));
         lblTieuDe.setForeground(Theme.TEXT);
 
-        JLabel lblPhuDe = new JLabel("Hß╗ô s╞í sß╗⌐c khß╗Åe, chß╗ºng loß║íi, thß╗â trß║íng v├á th├┤ng tin li├¬n hß╗ç chß╗º nu├┤i");
+        JLabel lblPhuDe = new JLabel("Hồ sơ sức khỏe, chủng loại, thể trạng và thông tin liên hệ chủ nuôi");
         lblPhuDe.setFont(Theme.font(Font.PLAIN, 13));
         lblPhuDe.setForeground(Theme.MUTED);
 
@@ -108,29 +108,53 @@ public class ThuCungPanel extends JPanel {
         pnlTitle.add(Box.createVerticalStrut(4));
         pnlTitle.add(lblPhuDe);
 
-        // N├║t chß╗⌐c n─âng: Xuß║Ñt Excel, Xem chi tiß║┐t, Sß╗¡a, X├│a, Th├¬m mß╗¢i
-        RoundedButton btnExcel = new RoundedButton("Xuß║Ñt Excel", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
-        RoundedButton btnXem = new RoundedButton("Xem chi tiß║┐t", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
-        RoundedButton btnSua = new RoundedButton("Chß╗ënh sß╗¡a", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
-        RoundedButton btnXoa = new RoundedButton("X├│a", Color.WHITE, new Color(0xFEE2E2), Theme.RED, Theme.BORDER, 10).pad(14, 9);
-        RoundedButton btnThem = new RoundedButton("+ Th├¬m th├║ c╞░ng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(16, 9);
+        // Nút chức năng: Xuất Excel, Xem chi tiết, Sửa, Xóa, Thêm mới
+        RoundedButton btnExcel = new RoundedButton("Xuất Excel", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        RoundedButton btnXem = new RoundedButton("Xem chi tiết", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        RoundedButton btnKeDon = new RoundedButton("Kê đơn", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        RoundedButton btnPhacDo = new RoundedButton("Phác đồ", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        RoundedButton btnSua = new RoundedButton("Chỉnh sửa", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        RoundedButton btnXoa = new RoundedButton("Xóa", Color.WHITE, new Color(0xFEE2E2), Theme.RED, Theme.BORDER, 10).pad(14, 9);
+        RoundedButton btnThem = new RoundedButton("+ Thêm thú cưng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(16, 9);
 
         btnExcel.addActionListener(e -> xuatExcel());
         btnThem.addActionListener(e -> moDialogThemSua(null));
         btnXem.addActionListener(e -> {
             ThuCung tc = layThuCungDangChon();
             if (tc != null) moDialogChiTiet(tc);
-            else JOptionPane.showMessageDialog(this, "Vui l├▓ng chß╗ìn mß╗Öt th├║ c╞░ng trong bß║úng!", "Th├┤ng b├ío", JOptionPane.WARNING_MESSAGE);
+            else JOptionPane.showMessageDialog(this, "Vui lòng chọn một thú cưng trong bảng!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+        });
+        btnKeDon.addActionListener(e -> {
+            ThuCung tc = layThuCungDangChon();
+            if (tc != null) {
+                Window w = SwingUtilities.getWindowAncestor(this);
+                if (w instanceof MainFrame mf) {
+                    mf.moKeDonChoThuCung(tc);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một thú cưng để kê đơn!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+        btnPhacDo.addActionListener(e -> {
+            ThuCung tc = layThuCungDangChon();
+            if (tc != null) {
+                Window w = SwingUtilities.getWindowAncestor(this);
+                if (w instanceof MainFrame mf) {
+                    mf.moPhacDoChoThuCung(tc);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một thú cưng để lập phác đồ!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            }
         });
         btnSua.addActionListener(e -> {
             ThuCung tc = layThuCungDangChon();
             if (tc != null) moDialogThemSua(tc);
-            else JOptionPane.showMessageDialog(this, "Vui l├▓ng chß╗ìn th├║ c╞░ng cß║ºn sß╗¡a!", "Th├┤ng b├ío", JOptionPane.WARNING_MESSAGE);
+            else JOptionPane.showMessageDialog(this, "Vui lòng chọn thú cưng cần sửa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
         });
         btnXoa.addActionListener(e -> {
             ThuCung tc = layThuCungDangChon();
             if (tc != null) xoaThuCung(tc);
-            else JOptionPane.showMessageDialog(this, "Vui l├▓ng chß╗ìn th├║ c╞░ng cß║ºn x├│a!", "Th├┤ng b├ío", JOptionPane.WARNING_MESSAGE);
+            else JOptionPane.showMessageDialog(this, "Vui lòng chọn thú cưng cần xóa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
         });
 
         JPanel pnlNut = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
@@ -148,7 +172,7 @@ public class ThuCungPanel extends JPanel {
         return head;
     }
 
-    // ----------------- 2. THß╗ÉNG K├è KPI (4 THß║║) -----------------
+    // ----------------- 2. THỐNG KÊ KPI (4 THẺ) -----------------
     private JPanel taoPhanThongKe() {
         JPanel row = new JPanel(new GridLayout(1, 4, 16, 0));
         row.setOpaque(false);
@@ -163,21 +187,21 @@ public class ThuCungPanel extends JPanel {
         try {
             bus.taiLai();
             ThongKeThuCung tk = bus.layThongKe();
-            cardTong.set(Theme.number(tk.tongThuCung), "+" + tk.soTiepNhanThang + " b├⌐ mß╗¢i th├íng n├áy", Theme.GREEN);
-            cardCho.set(Theme.number(tk.soCho), "Chiß║┐m " + (tk.tongThuCung > 0 ? (tk.soCho * 100 / tk.tongThuCung) : 0) + "% tß╗òng sß╗æ", Theme.MUTED);
-            cardMeo.set(Theme.number(tk.soMeo), "Chiß║┐m " + (tk.tongThuCung > 0 ? (tk.soMeo * 100 / tk.tongThuCung) : 0) + "% tß╗òng sß╗æ", Theme.MUTED);
-            cardCanhBao.set(Theme.number(tk.soCanhBao), tk.soCanhBao > 0 ? "C├│ dß╗ï ß╗⌐ng hoß║╖c ─æang theo d├╡i" : "Sß╗⌐c khß╗Åe ß╗òn ─æß╗ïnh", tk.soCanhBao > 0 ? new Color(0xD97706) : Theme.GREEN);
+            cardTong.set(Theme.number(tk.tongThuCung), "+" + tk.soTiepNhanThang + " bé mới tháng này", Theme.GREEN);
+            cardCho.set(Theme.number(tk.soCho), "Chiếm " + (tk.tongThuCung > 0 ? (tk.soCho * 100 / tk.tongThuCung) : 0) + "% tổng số", Theme.MUTED);
+            cardMeo.set(Theme.number(tk.soMeo), "Chiếm " + (tk.tongThuCung > 0 ? (tk.soMeo * 100 / tk.tongThuCung) : 0) + "% tổng số", Theme.MUTED);
+            cardCanhBao.set(Theme.number(tk.soCanhBao), tk.soCanhBao > 0 ? "Có dị ứng hoặc đang theo dõi" : "Sức khỏe ổn định", tk.soCanhBao > 0 ? new Color(0xD97706) : Theme.GREEN);
         } catch (SQLException e) {
-            cardTong.set("ΓÇö", "Lß╗ùi CSDL", Theme.MUTED);
+            cardTong.set("—", "Lỗi CSDL", Theme.MUTED);
         }
     }
 
-    // ----------------- 3. Bß║óNG Dß╗« LIß╗åU & THANH T├îM KIß║╛M -----------------
+    // ----------------- 3. BẢNG DỮ LIỆU & THANH TÌM KIẾM -----------------
     private JPanel taoPhanBang() {
         RoundedPanel card = new RoundedPanel(14, Theme.CARD, null);
         card.setLayout(new BorderLayout());
 
-        // Thanh c├┤ng cß╗Ñ: ├ö t├¼m kiß║┐m + Chip lß╗ìc lo├ái + N├║t sß║»p xß║┐p
+        // Thanh công cụ: Ô tìm kiếm + Chip lọc loài + Nút sắp xếp
         JPanel toolbar = new JPanel(new BorderLayout(10, 0));
         toolbar.setOpaque(false);
         toolbar.setBorder(new EmptyBorder(14, 16, 14, 16));
@@ -235,7 +259,7 @@ public class ThuCungPanel extends JPanel {
         toolbar.add(btnSort, BorderLayout.EAST);
         card.add(toolbar, BorderLayout.NORTH);
 
-        // Bß║úng JTable - kß║╗ khung l╞░ß╗¢i ─æß║╣p
+        // Bảng JTable - kẻ khung lưới đẹp
         JScrollPane scroll = new JScrollPane(table);
         Theme.styleTable(table, scroll);
 
@@ -247,7 +271,7 @@ public class ThuCungPanel extends JPanel {
         table.getColumnModel().getColumn(6).setCellRenderer(Theme.cellRight());
         table.getColumnModel().getColumn(8).setCellRenderer(Theme.cellCenter());
 
-        // Double click v├áo d├▓ng ─æß╗â mß╗ƒ chi tiß║┐t
+        // Double click vào dòng để mở chi tiết
         table.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
                 if (e.getClickCount() == 2) {
@@ -259,7 +283,7 @@ public class ThuCungPanel extends JPanel {
 
         card.add(scroll, BorderLayout.CENTER);
 
-        // Footer ph├ón trang
+        // Footer phân trang
         JPanel footer = new JPanel(new BorderLayout());
         footer.setOpaque(false);
         footer.setBorder(new CompoundBorder(new MatteBorder(1, 0, 0, 0, Theme.ROW_LINE), new EmptyBorder(12, 16, 12, 16)));
@@ -273,30 +297,30 @@ public class ThuCungPanel extends JPanel {
         return card;
     }
 
-    // ----------------- 4. Lß╗îC, Sß║«P Xß║╛P & ─Éß╗ö Dß╗« LIß╗åU V├ÇO Bß║óNG -----------------
+    // ----------------- 4. LỌC, SẮP XẾP & ĐỔ DỮ LIỆU VÀO BẢNG -----------------
     private void capNhatBang() {
-        // Lß║Ñy danh s├ích lß╗ìc tß╗½ BUS
-        List<ThuCung> list = bus.timKiemVaLoc(txtTim.getText(), loaiDangLoc, "Tß║Ñt cß║ú", "Tß║Ñt cß║ú");
+        // Lấy danh sách lọc từ BUS
+        List<ThuCung> list = bus.timKiemVaLoc(txtTim.getText(), loaiDangLoc, "Tất cả", "Tất cả");
 
-        // Sß║»p xß║┐p
-        if (sapXepHienTai.equals("T├¬n A-Z")) {
+        // Sắp xếp
+        if (sapXepHienTai.equals("Tên A-Z")) {
             Collator c = Collator.getInstance(new Locale("vi"));
             list.sort((a, b) -> c.compare(a.getTen(), b.getTen()));
-        } else if (sapXepHienTai.equals("C├ón nß║╖ng cao nhß║Ñt")) {
+        } else if (sapXepHienTai.equals("Cân nặng cao nhất")) {
             list.sort((a, b) -> Double.compare(b.getCanNang(), a.getCanNang()));
-        } else if (sapXepHienTai.equals("C├ón nß║╖ng thß║Ñp nhß║Ñt")) {
+        } else if (sapXepHienTai.equals("Cân nặng thấp nhất")) {
             list.sort((a, b) -> Double.compare(a.getCanNang(), b.getCanNang()));
         }
         dsHienThi = list;
 
-        // Ph├ón trang
+        // Phân trang
         int tongSoTrang = Math.max(1, (int) Math.ceil((double) dsHienThi.size() / SO_DONG_MOI_TRANG));
         trangHienTai = Math.min(Math.max(trangHienTai, 1), tongSoTrang);
 
         int tuDong = (trangHienTai - 1) * SO_DONG_MOI_TRANG;
         int denDong = Math.min(tuDong + SO_DONG_MOI_TRANG, dsHienThi.size());
 
-        // ─Éß╗ò dß╗» liß╗çu v├áo TableModel
+        // Đổ dữ liệu vào TableModel
         tableModel.setRowCount(0);
         for (int i = tuDong; i < denDong; i++) {
             ThuCung tc = dsHienThi.get(i);
@@ -308,18 +332,18 @@ public class ThuCungPanel extends JPanel {
                 tc.getPetID(),
                 tc.getTen(),
                 tc.getLoai(),
-                tc.getGiong().isEmpty() ? "ΓÇö" : tc.getGiong(),
+                tc.getGiong().isEmpty() ? "—" : tc.getGiong(),
                 tc.getGioiTinh(),
-                tc.getTuoi() + " tuß╗òi",
-                tc.getCanNang() > 0 ? (tc.getCanNang() + " kg") : "ΓÇö",
+                tc.getTuoi() + " tuổi",
+                tc.getCanNang() > 0 ? (tc.getCanNang() + " kg") : "—",
                 chuNuoi,
                 tc.getTrangThai()
             });
         }
 
-        lblTrangThai.setText(dsHienThi.isEmpty() ? "Kh├┤ng t├¼m thß║Ñy th├║ c╞░ng n├áo ph├╣ hß╗úp."
-                : "Hiß╗ân thß╗ï " + (tuDong + 1) + "ΓÇô" + denDong + " trong " + dsHienThi.size() + " th├║ c╞░ng");
-        btnSort.setText("Sß║»p xß║┐p: " + sapXepHienTai);
+        lblTrangThai.setText(dsHienThi.isEmpty() ? "Không tìm thấy thú cưng nào phù hợp."
+                : "Hiển thị " + (tuDong + 1) + "–" + denDong + " trong " + dsHienThi.size() + " thú cưng");
+        btnSort.setText("Sắp xếp: " + sapXepHienTai);
 
         for (RoundedButton b : chipsLoai) {
             boolean active = b.getText().equals(loaiDangLoc);
@@ -332,7 +356,7 @@ public class ThuCungPanel extends JPanel {
 
     private void veNutPhanTrang(int tongTrang) {
         pnlPhanTrang.removeAll();
-        JButton btnTruoc = taoNutTrang("ΓÇ╣", trangHienTai - 1, trangHienTai > 1, false);
+        JButton btnTruoc = taoNutTrang("‹", trangHienTai - 1, trangHienTai > 1, false);
         pnlPhanTrang.add(btnTruoc);
 
         for (int p = 1; p <= tongTrang; p++) {
@@ -341,7 +365,7 @@ public class ThuCungPanel extends JPanel {
             }
         }
 
-        JButton btnSau = taoNutTrang("ΓÇ║", trangHienTai + 1, trangHienTai < tongTrang, false);
+        JButton btnSau = taoNutTrang("›", trangHienTai + 1, trangHienTai < tongTrang, false);
         pnlPhanTrang.add(btnSau);
         pnlPhanTrang.revalidate();
         pnlPhanTrang.repaint();
@@ -363,25 +387,25 @@ public class ThuCungPanel extends JPanel {
         return (indexTrongDS < dsHienThi.size()) ? dsHienThi.get(indexTrongDS) : null;
     }
 
-    // ----------------- 5. DIALOG TH├èM / Sß╗¼A TH├Ü C╞»NG -----------------
+    // ----------------- 5. DIALOG THÊM / SỬA THÚ CƯNG -----------------
     private void moDialogThemSua(ThuCung tcHienTai) {
         boolean laSua = (tcHienTai != null);
-        JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), laSua ? "Chß╗ënh sß╗¡a th├┤ng tin b├⌐" : "Tiß║┐p nhß║¡n th├║ c╞░ng mß╗¢i", Dialog.ModalityType.APPLICATION_MODAL);
+        JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), laSua ? "Chỉnh sửa thông tin bé" : "Tiếp nhận thú cưng mới", Dialog.ModalityType.APPLICATION_MODAL);
 
         JTextField txtTen = taoTextField();
-        JComboBox<String> cboLoai = new JComboBox<>(new String[] {"Ch├│", "M├¿o", "Thß╗Å", "Chuß╗Öt Hamster", "Kh├íc"});
+        JComboBox<String> cboLoai = new JComboBox<>(new String[] {"Chó", "Mèo", "Thỏ", "Chuột Hamster", "Khác"});
         JTextField txtGiong = taoTextField();
-        JComboBox<String> cboGioiTinh = new JComboBox<>(new String[] {"─Éß╗▒c", "C├íi", "Kh├┤ng r├╡"});
+        JComboBox<String> cboGioiTinh = new JComboBox<>(new String[] {"Đực", "Cái", "Không rõ"});
         JSpinner spnTuoi = new JSpinner(new SpinnerNumberModel(1, 0, 50, 1));
         JTextField txtCanNang = taoTextField();
-        JComboBox<String> cboTrangThai = new JComboBox<>(new String[] {"Khß╗Åe mß║ính", "─Éang theo d├╡i", "Cß║ºn ch├║ ├╜", "─Éang ti├¬m ph├▓ng", "─Éang ─æiß╗üu trß╗ï"});
+        JComboBox<String> cboTrangThai = new JComboBox<>(new String[] {"Khỏe mạnh", "Đang theo dõi", "Cần chú ý", "Đang tiêm phòng", "Đang điều trị"});
         JTextArea txtCanhBao = new JTextArea(3, 20);
         txtCanhBao.setBorder(BorderFactory.createLineBorder(new Color(0xD5DCE1)));
 
-        // Chß╗ìn chß╗º nu├┤i tß╗½ Kh├ích h├áng
+        // Chọn chủ nuôi từ Khách hàng
         JComboBox<ThuCungDAO.KhachHangOption> cboChuNuoi = new JComboBox<>();
         try {
-            cboChuNuoi.addItem(new ThuCungDAO.KhachHangOption("", "-- Kh├ích v├úng lai (Ch╞░a ─æ─âng k├╜) --", "", ""));
+            cboChuNuoi.addItem(new ThuCungDAO.KhachHangOption("", "-- Khách vãng lai (Chưa đăng ký) --", "", ""));
             for (ThuCungDAO.KhachHangOption kh : bus.layDanhSachKhachHang()) cboChuNuoi.addItem(kh);
         } catch (SQLException ignored) {}
 
@@ -404,18 +428,18 @@ public class ThuCungPanel extends JPanel {
         form.setBorder(new EmptyBorder(16, 20, 16, 20));
         form.setBackground(Color.WHITE);
 
-        form.add(new JLabel("T├¬n th├║ c╞░ng (*):")); form.add(txtTen);
-        form.add(new JLabel("Lo├ái (*):")); form.add(cboLoai);
-        form.add(new JLabel("Giß╗æng lo├ái:")); form.add(txtGiong);
-        form.add(new JLabel("Giß╗¢i t├¡nh:")); form.add(cboGioiTinh);
-        form.add(new JLabel("Tuß╗òi:")); form.add(spnTuoi);
-        form.add(new JLabel("C├ón nß║╖ng (kg):")); form.add(txtCanNang);
-        form.add(new JLabel("Chß╗º nu├┤i sß╗ƒ hß╗»u:")); form.add(cboChuNuoi);
-        form.add(new JLabel("T├¼nh trß║íng sß╗⌐c khß╗Åe:")); form.add(cboTrangThai);
+        form.add(new JLabel("Tên thú cưng (*):")); form.add(txtTen);
+        form.add(new JLabel("Loài (*):")); form.add(cboLoai);
+        form.add(new JLabel("Giống loài:")); form.add(txtGiong);
+        form.add(new JLabel("Giới tính:")); form.add(cboGioiTinh);
+        form.add(new JLabel("Tuổi:")); form.add(spnTuoi);
+        form.add(new JLabel("Cân nặng (kg):")); form.add(txtCanNang);
+        form.add(new JLabel("Chủ nuôi sở hữu:")); form.add(cboChuNuoi);
+        form.add(new JLabel("Tình trạng sức khỏe:")); form.add(cboTrangThai);
 
         JPanel pnlGhiChu = new JPanel(new BorderLayout(0, 4));
         pnlGhiChu.setOpaque(false);
-        pnlGhiChu.add(new JLabel("Thß║╗ cß║únh b├ío / Ghi ch├║ dß╗ï ß╗⌐ng:"), BorderLayout.NORTH);
+        pnlGhiChu.add(new JLabel("Thẻ cảnh báo / Ghi chú dị ứng:"), BorderLayout.NORTH);
         pnlGhiChu.add(new JScrollPane(txtCanhBao), BorderLayout.CENTER);
 
         JPanel pnlCenter = new JPanel(new BorderLayout(0, 8));
@@ -424,18 +448,18 @@ public class ThuCungPanel extends JPanel {
         pnlCenter.add(pnlGhiChu, BorderLayout.CENTER);
         pnlCenter.setBorder(new EmptyBorder(0, 20, 10, 20));
 
-        RoundedButton btnLuu = new RoundedButton("L╞░u th├┤ng tin", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
-        RoundedButton btnHuy = new RoundedButton("Hß╗ºy", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(18, 8);
+        RoundedButton btnLuu = new RoundedButton("Lưu thông tin", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
+        RoundedButton btnHuy = new RoundedButton("Hủy", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(18, 8);
         btnHuy.addActionListener(e -> dlg.dispose());
 
         btnLuu.addActionListener(e -> {
             String ten = txtTen.getText().trim();
-            if (ten.isEmpty()) { JOptionPane.showMessageDialog(dlg, "Vui l├▓ng nhß║¡p t├¬n b├⌐!", "Lß╗ùi", JOptionPane.ERROR_MESSAGE); return; }
+            if (ten.isEmpty()) { JOptionPane.showMessageDialog(dlg, "Vui lòng nhập tên bé!", "Lỗi", JOptionPane.ERROR_MESSAGE); return; }
 
             double canNang = 0;
             if (!txtCanNang.getText().trim().isEmpty()) {
                 try { canNang = Double.parseDouble(txtCanNang.getText().trim().replace(',', '.')); }
-                catch (NumberFormatException ex) { JOptionPane.showMessageDialog(dlg, "C├ón nß║╖ng phß║úi l├á sß╗æ!", "Lß╗ùi", JOptionPane.ERROR_MESSAGE); return; }
+                catch (NumberFormatException ex) { JOptionPane.showMessageDialog(dlg, "Cân nặng phải là số!", "Lỗi", JOptionPane.ERROR_MESSAGE); return; }
             }
 
             ThuCungDAO.KhachHangOption khOpt = (ThuCungDAO.KhachHangOption) cboChuNuoi.getSelectedItem();
@@ -449,16 +473,16 @@ public class ThuCungPanel extends JPanel {
             try {
                 if (laSua) {
                     bus.capNhat(tc);
-                    JOptionPane.showMessageDialog(dlg, "Cß║¡p nhß║¡t th├ánh c├┤ng!");
+                    JOptionPane.showMessageDialog(dlg, "Cập nhật thành công!");
                 } else {
                     String maMoi = bus.them(tc);
-                    JOptionPane.showMessageDialog(dlg, "Tiß║┐p nhß║¡n th├ánh c├┤ng b├⌐ vß╗¢i m├ú: " + maMoi);
+                    JOptionPane.showMessageDialog(dlg, "Tiếp nhận thành công bé với mã: " + maMoi);
                 }
                 dlg.dispose();
                 taiDuLieu();
                 capNhatBang();
             } catch (Exception ex) {
-                JOptionPane.showMessageDialog(dlg, "Lß╗ùi: " + ex.getMessage(), "Lß╗ùi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(dlg, "Lỗi: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         });
 
@@ -475,39 +499,39 @@ public class ThuCungPanel extends JPanel {
         dlg.setVisible(true);
     }
 
-    // ----------------- 6. XEM CHI TIß║╛T Hß╗Æ S╞á -----------------
+    // ----------------- 6. XEM CHI TIẾT HỒ SƠ -----------------
     private void moDialogChiTiet(ThuCung tc) {
-        String giong = tc.getGiong().isEmpty() ? "Kh├┤ng r├╡ giß╗æng" : tc.getGiong();
+        String giong = tc.getGiong().isEmpty() ? "Không rõ giống" : tc.getGiong();
         Theme.hoSoDialog(SwingUtilities.getWindowAncestor(this),
-                tc.getTen(), tc.getPetID() + "  ΓÇó  " + tc.getLoai(), tc.getLoai(),
+                tc.getTen(), tc.getPetID() + "  •  " + tc.getLoai(), tc.getLoai(),
                 new String[][] {
-                    {"Giß╗æng", giong},
-                    {"Giß╗¢i t├¡nh", tc.getGioiTinh()},
-                    {"Tuß╗òi", tc.getTuoi() + " tuß╗òi"},
-                    {"C├ón nß║╖ng", tc.getCanNang() > 0 ? tc.getCanNang() + " kg" : "Ch╞░a c├ón"},
-                    {"Chß╗º nu├┤i", tc.getTenChuNuoi() + (tc.getSdtChuNuoi().isEmpty() ? "" : " (" + tc.getSdtChuNuoi() + ")")},
-                    {"Cß║únh b├ío / L╞░u ├╜", tc.getTheCanhBao().isEmpty() ? "Khß╗Åe mß║ính b├¼nh th╞░ß╗¥ng" : tc.getTheCanhBao()}
+                    {"Giống", giong},
+                    {"Giới tính", tc.getGioiTinh()},
+                    {"Tuổi", tc.getTuoi() + " tuổi"},
+                    {"Cân nặng", tc.getCanNang() > 0 ? tc.getCanNang() + " kg" : "Chưa cân"},
+                    {"Chủ nuôi", tc.getTenChuNuoi() + (tc.getSdtChuNuoi().isEmpty() ? "" : " (" + tc.getSdtChuNuoi() + ")")},
+                    {"Cảnh báo / Lưu ý", tc.getTheCanhBao().isEmpty() ? "Khỏe mạnh bình thường" : tc.getTheCanhBao()}
                 }, false, 470);
     }
 
-    // ----------------- 7. X├ôA AN TO├ÇN -----------------
+    // ----------------- 7. XÓA AN TOÀN -----------------
     private void xoaThuCung(ThuCung tc) {
         int opt = JOptionPane.showConfirmDialog(this,
-                "Bß║ín c├│ chß║»c chß║»n muß╗æn x├│a b├⌐ \"" + tc.getTen() + "\" (" + tc.getPetID() + ")?",
-                "X├íc nhß║¡n x├│a", JOptionPane.YES_NO_OPTION);
+                "Bạn có chắc chắn muốn xóa bé \"" + tc.getTen() + "\" (" + tc.getPetID() + ")?",
+                "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
         if (opt == JOptionPane.YES_OPTION) {
             try {
                 bus.xoa(tc.getPetID());
-                JOptionPane.showMessageDialog(this, "─É├ú x├│a th├ánh c├┤ng!");
+                JOptionPane.showMessageDialog(this, "Đã xóa thành công!");
                 taiDuLieu();
                 capNhatBang();
             } catch (SQLException ex) {
-                JOptionPane.showMessageDialog(this, "Kh├┤ng thß╗â x├│a: " + ex.getMessage(), "Cß║únh b├ío r├áng buß╗Öc", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Không thể xóa: " + ex.getMessage(), "Cảnh báo ràng buộc", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
 
-    // ----------------- 8. XUß║ñT FILE EXCEL (CSV UTF-8) -----------------
+    // ----------------- 8. XUẤT FILE EXCEL (CSV UTF-8) -----------------
     private void xuatExcel() {
         JFileChooser fc = new JFileChooser();
         fc.setSelectedFile(new java.io.File("DanhSachThuCung.csv"));
@@ -515,16 +539,16 @@ public class ThuCungPanel extends JPanel {
 
         java.io.File file = fc.getSelectedFile();
         try (Writer w = new OutputStreamWriter(Files.newOutputStream(file.toPath()), StandardCharsets.UTF_8)) {
-            w.write('\uFEFF'); // BOM tiß║┐ng Viß╗çt
-            w.write("M├ú,T├¬n,Lo├ái,Giß╗æng,Giß╗¢i t├¡nh,Tuß╗òi,C├ón nß║╖ng,Chß╗º nu├┤i,S─ÉT,T├¼nh trß║íng\r\n");
+            w.write('\uFEFF'); // BOM tiếng Việt
+            w.write("Mã,Tên,Loài,Giống,Giới tính,Tuổi,Cân nặng,Chủ nuôi,SĐT,Tình trạng\r\n");
             for (ThuCung t : dsHienThi) {
                 w.write(String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%d\",\"%.1f\",\"%s\",\"%s\",\"%s\"\r\n",
                         t.getPetID(), t.getTen(), t.getLoai(), t.getGiong(), t.getGioiTinh(), t.getTuoi(), t.getCanNang(),
                         t.getTenChuNuoi(), t.getSdtChuNuoi(), t.getTrangThai()));
             }
-            JOptionPane.showMessageDialog(this, "Xuß║Ñt file th├ánh c├┤ng: " + file.getAbsolutePath());
+            JOptionPane.showMessageDialog(this, "Xuất file thành công: " + file.getAbsolutePath());
         } catch (IOException ex) {
-            JOptionPane.showMessageDialog(this, "Lß╗ùi xuß║Ñt file: " + ex.getMessage(), "Lß╗ùi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Lỗi xuất file: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -535,9 +559,9 @@ public class ThuCungPanel extends JPanel {
         return tf;
     }
 
-    // Thß║╗ thß╗æng k├¬ nhß╗Å gß╗ìn
+    // Thẻ thống kê nhỏ gọn
     private static class StatCard extends RoundedPanel {
-        private final JLabel lblGiaTri = new JLabel("ΓÇö");
+        private final JLabel lblGiaTri = new JLabel("—");
         private final JLabel lblGhiChu = new JLabel(" ");
 
         StatCard(String tieuDe) {
