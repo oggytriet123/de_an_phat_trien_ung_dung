@@ -25,7 +25,7 @@ public class XuLyPanel extends JPanel implements Refreshable {
         super(null);
         setLayout(cards);
         this.bus = bus;
-        quanLy = new QuanLyHoaDonPanel(bus, this::moO, this::taoMoi);
+        quanLy = new QuanLyHoaDonPanel(bus, this::moO, this::xoaO, this::taoMoi);
         tao = new TaoHoaDonPanel(bus, spBus, mgBus, khBus, this::veQuanLy);
         add(quanLy, TRANG_O);
         add(tao, TRANG_TAO);
@@ -38,6 +38,20 @@ public class XuLyPanel extends JPanel implements Refreshable {
         tao.batDau(nhap);
         dangTao = true;
         cards.show(this, TRANG_TAO);
+    }
+
+    /** Dấu x trên ô: hỏi xác nhận rồi xóa hóa đơn đã lưu, giải phóng ô. */
+    private void xoaO(int viTri) {
+        HoaDon h = bus.layO(viTri);
+        if (h == null) return;
+        String o = String.format("%02d", viTri + 1);
+        HoaDonPopups.xacNhanXoa(quanLy, "Xóa hóa đơn " + h.getMaHD() + "?",
+                "Hóa đơn của " + h.getTenKH() + " (" + Theme.money(h.canThanhToan()) + ") đang nằm ở ô " + o + ".",
+                "Hóa đơn bị xóa khỏi ô và không thể khôi phục.", () -> {
+                    bus.xoa(viTri);
+                    quanLy.lamMoi();
+                    quanLy.thongBao("Đã xóa hóa đơn " + h.getMaHD() + " - Ô " + o + " đã trống");
+                });
     }
 
     /** Nút "+ Tạo hóa đơn mới": mở hóa đơn mới ở ô trống đầu tiên. */

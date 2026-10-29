@@ -55,6 +55,13 @@ final class HoaDonPopups {
         List<CodeCard> cards = new ArrayList<>();
         JPanel grid = new JPanel(new GridLayout(0, 2, 12, 10));
         grid.setOpaque(false);
+        if (ds.isEmpty()) {
+            JLabel trong = new JLabel("Chưa có mã giảm giá nào. Thêm mã tại Danh Mục > Quản lý dịch vụ.");
+            trong.setFont(Theme.font(Font.PLAIN, 12));
+            trong.setForeground(Theme.MUTED);
+            grid.setLayout(new BorderLayout());
+            grid.add(trong, BorderLayout.NORTH);
+        }
         for (MaGiamGia m : ds) {
             CodeCard cc = new CodeCard(m, bus.daHetHan(m));
             cc.addMouseListener(new MouseAdapter() {
@@ -113,7 +120,6 @@ final class HoaDonPopups {
         card.add(body, BorderLayout.CENTER);
 
         RoundedButton boQua = secondary("Bỏ qua", 110);
-        RoundedButton taoMa = secondary("+  Tạo mã mới", 150);
         RoundedButton apDung = primary("Áp dụng", 150);
         Runnable dong = () -> Overlay.dong(host);
         Runnable ap = () -> {
@@ -130,21 +136,7 @@ final class HoaDonPopups {
         boQua.addActionListener(e -> dong.run());
         apDung.addActionListener(e -> ap.run());
         tf.addActionListener(e -> ap.run());
-        String dangNhap = tf.getText();
-        taoMa.addActionListener(e -> taoMaGiamGia(host, bus,
-                m -> moMaGiamGia(host, m.getMa(), bus, onApply),        // tạo xong: mở lại danh sách, mã mới được chọn sẵn
-                () -> moMaGiamGia(host, dangNhap, bus, onApply)));
-
-        JPanel trai = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
-        trai.setOpaque(false);
-        trai.add(boQua);
-        trai.add(taoMa);
-        trai.setBorder(new EmptyBorder(0, -10, 0, 0));
-        JPanel south = new JPanel(new BorderLayout());
-        south.setOpaque(false);
-        south.add(trai, BorderLayout.WEST);
-        south.add(apDung, BorderLayout.EAST);
-        card.add(south, BorderLayout.SOUTH);
+        card.add(buttons(boQua, apDung), BorderLayout.SOUTH);
 
         Overlay.hien(host, card, dong);
         SwingUtilities.invokeLater(tf::requestFocusInWindow);
@@ -209,7 +201,7 @@ final class HoaDonPopups {
             DateTimeFormatter.ofPattern("d/M/uuuu").withResolverStyle(ResolverStyle.STRICT);
 
     /** Số tiền / phần trăm nhập vào; -1 nếu không phải số. */
-    private static long docSo(String s) {
+    static long docSo(String s) {
         String t = s == null ? "" : s.trim();
         if (!t.matches("\\d[\\d.,\\s]*")) return -1;
         String d = t.replaceAll("\\D", "");
@@ -333,7 +325,7 @@ final class HoaDonPopups {
     }
 
     /** Nhãn + ô nhập xếp dọc. */
-    private static JComponent nhom(String nhan, JComponent o) {
+    static JComponent nhom(String nhan, JComponent o) {
         JPanel p = new JPanel(new BorderLayout(0, 6));
         p.setOpaque(false);
         p.add(label(nhan), BorderLayout.NORTH);
@@ -342,146 +334,21 @@ final class HoaDonPopups {
     }
 
     // =====================================================================
-    // Tạo sản phẩm / dịch vụ (chọn loại hàng bằng nút, có thể tạo loại hàng mới)
+    // Tạo nhóm dịch vụ / loại hàng mới
     // =====================================================================
     /**
-     * @param macDinh        loại hàng được chọn sẵn (thường là loại đang lọc ở trang hóa đơn)
-     * @param khiCoLoaiMoi   gọi ngay sau khi một loại hàng mới được tạo (để trang hóa đơn thêm nút lọc)
-     * @param onCreated      gọi sau khi tạo xong sản phẩm / dịch vụ
-     */
-    static void taoSanPham(Component host, SanPhamBUS bus, String macDinh, Runnable khiCoLoaiMoi, Consumer<SanPham> onCreated) {
-        moTaoSanPham(host, bus, "", "", macDinh, khiCoLoaiMoi, onCreated);
-    }
-
-    private static void moTaoSanPham(Component host, SanPhamBUS bus, String tenCu, String giaCu, String macDinh,
-                                     Runnable khiCoLoaiMoi, Consumer<SanPham> onCreated) {
-        List<String> tatCa = bus.layDanhMuc();
-        List<String> loai = tatCa.subList(1, tatCa.size());               // bỏ "Tất cả"
-        String[] chon = {loai.contains(macDinh) ? macDinh : loai.get(0)};
-
-        PlaceholderField tfTen = new PlaceholderField("Ví dụ: Cắt móng, Cát vệ sinh cho mèo");
-        PlaceholderField tfGia = new PlaceholderField("Ví dụ: 150000");
-        tfTen.setText(tenCu);
-        tfGia.setText(giaCu);
-        GioiHanNhap.ap(tfTen, 60, null);
-        GioiHanNhap.ap(tfGia, 12, "[0-9.,]");
-        FieldBox bTen = new FieldBox(tfTen, Color.WHITE, 42);
-        FieldBox bGia = new FieldBox(tfGia, Color.WHITE, 42);
-        JLabel err = errorLabel();
-        JLabel sku = new JLabel(" ");
-        sku.setFont(Theme.font(Font.PLAIN, 12));
-        sku.setForeground(Theme.MUTED);
-
-        // ---- tất cả loại hàng hiện thành nút, bấm để chọn
-        WrapPanel chips = new WrapPanel(8, 8, 508);
-        List<Pill> pills = new ArrayList<>();
-        Runnable capNhat = () -> {
-            for (Pill p : pills) p.setSelected(p.getText().equals(chon[0]));
-            sku.setText("Mã tự động: " + bus.maTiepTheo(chon[0]) + (bus.laDichVu(chon[0]) ? "   ·   dịch vụ" : "   ·   sản phẩm"));
-        };
-        for (String ten : loai) {
-            Pill p = new Pill(ten);
-            p.addActionListener(e -> { chon[0] = ten; capNhat.run(); });
-            pills.add(p);
-            chips.add(p);
-        }
-        RoundedButton loaiMoi = new RoundedButton("+  Loại mới", Theme.PRIMARY_SOFT, new Color(0xDCE8FA),
-                Theme.PRIMARY, Theme.PRIMARY_LINE, 16);
-        loaiMoi.setFont(Theme.font(Font.BOLD, 12));
-        loaiMoi.setPreferredSize(new Dimension(104, 32));
-        chips.add(loaiMoi);
-        capNhat.run();
-
-        int caoChips = chips.getPreferredSize().height;
-        RoundedPanel card = card(580, 470 + caoChips, "Tạo sản phẩm / dịch vụ",
-                "Chọn loại hàng (hoặc tạo loại mới) rồi nhập tên và đơn giá.");
-
-        for (PlaceholderField f : new PlaceholderField[] {tfTen, tfGia}) {
-            f.getDocument().addDocumentListener(new DocumentListener() {
-                private void c() { err.setText(" "); bTen.setError(false); bGia.setError(false); }
-                @Override public void insertUpdate(DocumentEvent e) { c(); }
-                @Override public void removeUpdate(DocumentEvent e) { c(); }
-                @Override public void changedUpdate(DocumentEvent e) { }
-            });
-        }
-
-        JPanel body = new JPanel();
-        body.setOpaque(false);
-        body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
-        body.setBorder(new EmptyBorder(22, 0, 0, 0));
-        JComponent gTen = nhom("Tên sản phẩm / dịch vụ *", bTen);
-        JComponent gGia = nhom("Đơn giá (₫) *", bGia);
-        JLabel lLoai = label("Loại hàng *");
-        for (JComponent c : new JComponent[] {gTen, lLoai, chips, sku, gGia, err}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
-        gTen.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
-        gGia.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
-        body.add(gTen);
-        body.add(Box.createVerticalStrut(14));
-        body.add(lLoai);
-        body.add(Box.createVerticalStrut(8));
-        body.add(chips);
-        body.add(Box.createVerticalStrut(8));
-        body.add(sku);
-        body.add(Box.createVerticalStrut(14));
-        body.add(gGia);
-        body.add(Box.createVerticalStrut(6));
-        body.add(err);
-        card.add(body, BorderLayout.CENTER);
-
-        RoundedButton huy = secondary("Hủy", 130);
-        RoundedButton tao = primary("Tạo", 150);
-        Runnable dong = () -> Overlay.dong(host);
-        huy.addActionListener(e -> dong.run());
-        Runnable xong = () -> {
-            long gia = docSo(tfGia.getText());
-            if (gia < 0) {
-                err.setText(tfGia.getText().isBlank() ? "Vui lòng nhập đơn giá." : "Đơn giá phải là số.");
-                bGia.setError(true);
-                tfGia.requestFocusInWindow();
-                return;
-            }
-            try {
-                SanPham sp = bus.tao(tfTen.getText(), chon[0], gia);
-                Overlay.dong(host);
-                onCreated.accept(sp);
-            } catch (IllegalArgumentException ex) {
-                String msg = ex.getMessage();
-                err.setText(msg);
-                if (msg.contains("Đơn giá")) bGia.setError(true); else bTen.setError(true);
-            }
-        };
-        tao.addActionListener(e -> xong.run());
-        tfTen.addActionListener(e -> xong.run());
-        tfGia.addActionListener(e -> xong.run());
-
-        // tạo loại mới xong thì mở lại form này, giữ nguyên tên + giá đang nhập, chọn sẵn loại vừa tạo
-        loaiMoi.addActionListener(e -> {
-            String ten = tfTen.getText(), gia = tfGia.getText(), dangChon = chon[0];
-            taoDanhMuc(host, bus,
-                    moi -> {
-                        khiCoLoaiMoi.run();
-                        moTaoSanPham(host, bus, ten, gia, moi, khiCoLoaiMoi, onCreated);
-                    },
-                    () -> moTaoSanPham(host, bus, ten, gia, dangChon, khiCoLoaiMoi, onCreated));
-        });
-        card.add(buttons(huy, tao), BorderLayout.SOUTH);
-
-        Overlay.hien(host, card, dong);
-        SwingUtilities.invokeLater(tfTen::requestFocusInWindow);
-    }
-
-    // =====================================================================
-    // Tạo loại hàng mới
-    // =====================================================================
-    /**
-     * @param onCreated gọi với tên loại vừa tạo
+     * @param coDinh    TRUE: tạo nhóm dịch vụ; FALSE: tạo loại sản phẩm; null: cho chọn dịch vụ hay sản phẩm
+     * @param onCreated gọi với tên nhóm vừa tạo
      * @param onBack    gọi khi bấm "Quay lại" hoặc Esc
      */
-    static void taoDanhMuc(Component host, SanPhamBUS bus, Consumer<String> onCreated, Runnable onBack) {
-        RoundedPanel card = card(580, 450, "Tạo loại hàng mới",
-                "Loại mới xuất hiện ở bộ lọc trang hóa đơn và trong form tạo sản phẩm / dịch vụ.");
+    static void taoDanhMuc(Component host, SanPhamBUS bus, Boolean coDinh, Consumer<String> onCreated, Runnable onBack) {
+        boolean chon = coDinh == null;
+        String tieuDe = chon ? "Tạo loại hàng mới" : coDinh ? "Tạo nhóm dịch vụ mới" : "Tạo loại sản phẩm mới";
+        RoundedPanel card = card(580, chon ? 450 : 330, tieuDe,
+                "Nhóm mới xuất hiện ở bộ lọc trang hóa đơn và trong trang quản lý.");
 
-        PlaceholderField tfTen = new PlaceholderField("Ví dụ: Phụ kiện, Quần áo, Vệ sinh");
+        PlaceholderField tfTen = new PlaceholderField(coDinh != null && coDinh
+                ? "Ví dụ: Huấn luyện, Chụp ảnh thú cưng" : "Ví dụ: Phụ kiện, Quần áo, Vệ sinh");
         GioiHanNhap.ap(tfTen, 30, null);
         FieldBox bTen = new FieldBox(tfTen, Color.WHITE, 42);
         JLabel err = errorLabel();
@@ -489,9 +356,9 @@ final class HoaDonPopups {
         goiY.setFont(Theme.font(Font.PLAIN, 12));
         goiY.setForeground(Theme.MUTED);
 
-        boolean[] dichVu = {false};
-        MethodCard cSp = new MethodCard("Sản phẩm", true);
-        MethodCard cDv = new MethodCard("Dịch vụ", false);
+        boolean[] dichVu = {coDinh != null && coDinh};
+        MethodCard cSp = new MethodCard("Sản phẩm", !dichVu[0]);
+        MethodCard cDv = new MethodCard("Dịch vụ", dichVu[0]);
         Runnable capNhatGoiY = () -> {
             String ten = tfTen.getText().trim();
             goiY.setText(ten.isEmpty() ? " " : "Mã sẽ có dạng: " + bus.tienToChoLoaiMoi(ten) + "-001");
@@ -514,38 +381,40 @@ final class HoaDonPopups {
             @Override public void changedUpdate(DocumentEvent e) { }
         });
 
-        JPanel kieu = new JPanel(new GridLayout(1, 2, 12, 0));
-        kieu.setOpaque(false);
-        kieu.add(cSp);
-        kieu.add(cDv);
-        JLabel note = new JLabel("Dịch vụ hiển thị \"DV:\" và đơn giá tính theo lần; sản phẩm hiển thị \"SKU:\" và tính theo cái.");
-        note.setFont(Theme.font(Font.PLAIN, 11));
-        note.setForeground(Theme.MUTED);
-
         JPanel body = new JPanel();
         body.setOpaque(false);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setBorder(new EmptyBorder(22, 0, 0, 0));
-        JComponent gTen = nhom("Tên loại hàng *", bTen);
-        JLabel lKieu = label("Loại hàng này là");
-        for (JComponent c : new JComponent[] {gTen, goiY, lKieu, kieu, note, err}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
+        JComponent gTen = nhom(coDinh != null && coDinh ? "Tên nhóm dịch vụ *" : "Tên loại hàng *", bTen);
+        for (JComponent c : new JComponent[] {gTen, goiY, err}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
         gTen.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
-        kieu.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
         body.add(gTen);
         body.add(Box.createVerticalStrut(6));
         body.add(goiY);
-        body.add(Box.createVerticalStrut(14));
-        body.add(lKieu);
-        body.add(Box.createVerticalStrut(8));
-        body.add(kieu);
-        body.add(Box.createVerticalStrut(8));
-        body.add(note);
+        if (chon) {   // chỉ khi được phép chọn: hỏi đây là sản phẩm hay dịch vụ
+            JPanel kieu = new JPanel(new GridLayout(1, 2, 12, 0));
+            kieu.setOpaque(false);
+            kieu.add(cSp);
+            kieu.add(cDv);
+            JLabel note = new JLabel("Dịch vụ hiển thị \"DV:\" và tính theo lần; sản phẩm hiển thị \"SKU:\" và tính theo cái.");
+            note.setFont(Theme.font(Font.PLAIN, 11));
+            note.setForeground(Theme.MUTED);
+            JLabel lKieu = label("Loại hàng này là");
+            for (JComponent c : new JComponent[] {lKieu, kieu, note}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
+            kieu.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
+            body.add(Box.createVerticalStrut(14));
+            body.add(lKieu);
+            body.add(Box.createVerticalStrut(8));
+            body.add(kieu);
+            body.add(Box.createVerticalStrut(8));
+            body.add(note);
+        }
         body.add(Box.createVerticalStrut(6));
         body.add(err);
         card.add(body, BorderLayout.CENTER);
 
         RoundedButton quayLai = secondary("Quay lại", 130);
-        RoundedButton tao = primary("Tạo loại", 150);
+        RoundedButton tao = primary(chon ? "Tạo loại" : "Tạo nhóm", 150);
         quayLai.addActionListener(e -> onBack.run());
         Runnable xong = () -> {
             try {
@@ -677,8 +546,18 @@ final class HoaDonPopups {
     // Xác nhận hủy
     // =====================================================================
     static void xacNhanHuy(Component host, Runnable onYes) {
-        RoundedPanel card = card(580, 340, "Bạn có muốn hủy hóa đơn này không?",
-                "Thông tin chưa lưu sẽ bị mất nếu bạn xác nhận hủy.");
+        xacNhan(host, "Bạn có muốn hủy hóa đơn này không?", "Thông tin chưa lưu sẽ bị mất nếu bạn xác nhận hủy.",
+                "Thao tác này không thể hoàn tác.", "Không", "Có, hủy", onYes);
+    }
+
+    /** Hỏi xác nhận trước khi xóa một hóa đơn đã lưu / dịch vụ / mã giảm giá. */
+    static void xacNhanXoa(Component host, String tieuDe, String moTa, String canhBao, Runnable onYes) {
+        xacNhan(host, tieuDe, moTa, canhBao, "Không", "Có, xóa", onYes);
+    }
+
+    /** Popup xác nhận có biểu tượng cảnh báo; nút "xác nhận" màu đỏ. Esc hoặc "Không" thì đóng. */
+    static void xacNhan(Component host, String tieuDe, String moTa, String canhBao, String nutKhong, String nutCo, Runnable onYes) {
+        RoundedPanel card = card(580, 340, tieuDe, moTa);
 
         JComponent icon = new JComponent() {
             { setPreferredSize(new Dimension(46, 46)); }
@@ -695,7 +574,7 @@ final class HoaDonPopups {
                 g2.dispose();
             }
         };
-        JLabel msg = new JLabel("Thao tác này không thể hoàn tác.");
+        JLabel msg = new JLabel(canhBao);
         msg.setFont(Theme.font(Font.PLAIN, 13));
         msg.setForeground(Theme.TEXT);
         JPanel row = new JPanel(new FlowLayout(FlowLayout.LEFT, 14, 0));
@@ -705,8 +584,8 @@ final class HoaDonPopups {
         row.add(msg);
         card.add(row, BorderLayout.CENTER);
 
-        RoundedButton khong = secondary("Không", 150);
-        RoundedButton co = new RoundedButton("Có, hủy", Theme.DANGER, Theme.DANGER_HOVER, Color.WHITE, null, 8);
+        RoundedButton khong = secondary(nutKhong, 150);
+        RoundedButton co = new RoundedButton(nutCo, Theme.DANGER, Theme.DANGER_HOVER, Color.WHITE, null, 8);
         co.setPreferredSize(new Dimension(172, 42));
         Runnable dong = () -> Overlay.dong(host);
         khong.addActionListener(e -> dong.run());
@@ -716,6 +595,19 @@ final class HoaDonPopups {
         });
         card.add(buttons(khong, co), BorderLayout.SOUTH);
         Overlay.hien(host, card, dong);
+    }
+
+    /** Thông báo ngắn kèm một nút "Đóng". */
+    static void thongBao(Component host, String tieuDe, String noiDung) {
+        RoundedPanel card = card(540, 250, tieuDe, noiDung);
+        RoundedButton dong = primary("Đóng", 130);
+        Runnable d = () -> Overlay.dong(host);
+        dong.addActionListener(e -> d.run());
+        JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        south.setOpaque(false);
+        south.add(dong);
+        card.add(south, BorderLayout.SOUTH);
+        Overlay.hien(host, card, d);
     }
 
     // =====================================================================
@@ -817,7 +709,7 @@ final class HoaDonPopups {
         Overlay.hien(host, card, dongPopup);
     }
 
-    private static JPanel infoRow(String k, String v) {
+    static JPanel infoRow(String k, String v) {
         JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
         p.setAlignmentX(Component.LEFT_ALIGNMENT);
@@ -879,7 +771,7 @@ final class HoaDonPopups {
     // =====================================================================
     // Khung chung
     // =====================================================================
-    private static RoundedPanel card(int w, int h, String title, String subtitle) {
+    static RoundedPanel card(int w, int h, String title, String subtitle) {
         RoundedPanel c = new RoundedPanel(16, Color.WHITE, null);
         c.setLayout(new BorderLayout());
         c.setBorder(new EmptyBorder(32, PAD, 30, PAD));
@@ -903,7 +795,7 @@ final class HoaDonPopups {
         return c;
     }
 
-    private static JPanel body(JLabel label, FieldBox box, JLabel err) {
+    static JPanel body(JLabel label, FieldBox box, JLabel err) {
         JPanel p = new JPanel();
         p.setOpaque(false);
         p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
@@ -920,7 +812,7 @@ final class HoaDonPopups {
         return p;
     }
 
-    private static JPanel buttons(RoundedButton left, RoundedButton right) {
+    static JPanel buttons(RoundedButton left, RoundedButton right) {
         JPanel p = new JPanel(new BorderLayout());
         p.setOpaque(false);
         p.add(left, BorderLayout.WEST);
@@ -928,21 +820,21 @@ final class HoaDonPopups {
         return p;
     }
 
-    private static JLabel label(String text) {
+    static JLabel label(String text) {
         JLabel l = new JLabel(text);
         l.setFont(Theme.font(Font.BOLD, 12));
         l.setForeground(Theme.TEXT);
         return l;
     }
 
-    private static JLabel errorLabel() {
+    static JLabel errorLabel() {
         JLabel l = new JLabel(" ");
         l.setFont(Theme.font(Font.PLAIN, 12));
         l.setForeground(Theme.DANGER);
         return l;
     }
 
-    private static DocumentListener clearError(JLabel err, FieldBox box) {
+    static DocumentListener clearError(JLabel err, FieldBox box) {
         return new DocumentListener() {
             private void c() { err.setText(" "); box.setError(false); }
             @Override public void insertUpdate(DocumentEvent e) { c(); }
@@ -951,13 +843,13 @@ final class HoaDonPopups {
         };
     }
 
-    private static RoundedButton primary(String text, int w) {
+    static RoundedButton primary(String text, int w) {
         RoundedButton b = new RoundedButton(text, Theme.PRIMARY, Theme.PRIMARY_HOVER, Color.WHITE, null, 8);
         b.setPreferredSize(new Dimension(w, 42));
         return b;
     }
 
-    private static RoundedButton secondary(String text, int w) {
+    static RoundedButton secondary(String text, int w) {
         RoundedButton b = new RoundedButton(text, Color.WHITE, Theme.FIELD_BG, Theme.TEXT, Theme.BORDER, 8);
         b.setPreferredSize(new Dimension(w, 42));
         return b;

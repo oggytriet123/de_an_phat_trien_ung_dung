@@ -16,17 +16,20 @@ public class QuanLyHoaDonPanel extends JPanel implements Refreshable {
 
     private final HoaDonBUS bus;
     private final IntConsumer moO;
+    private final IntConsumer xoaO;
     private final JLabel lblThongBao = new JLabel(" ");
     private Timer hen;
 
     /**
      * @param moO     được gọi với chỉ số ô (0..19) khi nhấn một ô
+     * @param xoaO    được gọi với chỉ số ô khi nhấn dấu x trên ô có hóa đơn (xóa hóa đơn đã lưu)
      * @param taoMoi  được gọi khi nhấn nút "Tạo hóa đơn mới"
      */
-    public QuanLyHoaDonPanel(HoaDonBUS bus, IntConsumer moO, Runnable taoMoi) {
+    public QuanLyHoaDonPanel(HoaDonBUS bus, IntConsumer moO, IntConsumer xoaO, Runnable taoMoi) {
         super(new BorderLayout(0, 14));
         this.bus = bus;
         this.moO = moO;
+        this.xoaO = xoaO;
         setBackground(Theme.BG);
         setBorder(new EmptyBorder(26, 32, 22, 32));
 
@@ -35,7 +38,8 @@ public class QuanLyHoaDonPanel extends JPanel implements Refreshable {
         JPanel grid = new JPanel(new GridLayout(HoaDonBUS.SO_O / COT, COT, 20, 18));
         grid.setOpaque(false);
         for (int i = 0; i < HoaDonBUS.SO_O; i++) grid.add(new OTile(i));
-        // Đủ chỗ thì các ô giãn đầy vùng hiển thị; cửa sổ thấp quá thì cuộn dọc thay vì chồng chữ.
+
+        // Đủ chỗ thì các ô giãn đầy vùng hiển thị; cửa sổ thấp quá thì cuộn dọc.
         ScrollPanel view = new ScrollPanel(new BorderLayout()) {
             @Override public boolean getScrollableTracksViewportHeight() {
                 return getParent() instanceof JViewport vp && vp.getHeight() >= getPreferredSize().height;
@@ -149,17 +153,35 @@ public class QuanLyHoaDonPanel extends JPanel implements Refreshable {
     private class OTile extends JPanel {
         private final int viTri;
         private boolean hover;
+        private boolean hoverXoa;
+
+        /** Vùng dấu x (góc trên bên phải), chỉ có ở ô đang giữ hóa đơn. */
+        private Rectangle vungXoa() {
+            return new Rectangle(getWidth() - 14 - 26, 10, 26, 26);
+        }
 
         OTile(int viTri) {
             this.viTri = viTri;
             setOpaque(false);
-            setPreferredSize(new Dimension(150, 120)); // đủ chỗ cho mã, tên, tiền và nhãn trạng thái
+            setPreferredSize(new Dimension(150, 120));
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
             addMouseListener(new MouseAdapter() {
                 @Override public void mouseEntered(MouseEvent e) { hover = true; repaint(); }
-                @Override public void mouseExited(MouseEvent e) { hover = false; repaint(); }
+                @Override public void mouseExited(MouseEvent e) { hover = false; hoverXoa = false; repaint(); }
                 @Override public void mouseReleased(MouseEvent e) {
-                    if (SwingUtilities.isLeftMouseButton(e) && contains(e.getPoint())) moO.accept(OTile.this.viTri);
+                    if (!SwingUtilities.isLeftMouseButton(e) || !contains(e.getPoint())) return;
+                    if (bus.layO(OTile.this.viTri) != null && vungXoa().contains(e.getPoint())) xoaO.accept(OTile.this.viTri);
+                    else moO.accept(OTile.this.viTri);
+                }
+            });
+            addMouseMotionListener(new MouseAdapter() {
+                @Override public void mouseMoved(MouseEvent e) {
+                    boolean tren = bus.layO(OTile.this.viTri) != null && vungXoa().contains(e.getPoint());
+                    if (tren != hoverXoa) {
+                        hoverXoa = tren;
+                        setToolTipText(tren ? "Xóa hóa đơn này" : null);
+                        repaint();
+                    }
                 }
             });
         }
@@ -182,7 +204,7 @@ public class QuanLyHoaDonPanel extends JPanel implements Refreshable {
             g2.drawString(String.format("Ô %02d", viTri + 1), pad, 24);
 
             if (hd == null) {
-                // dấu + và dòng hướng dẫn nằm giữa ô
+                // Dấu + và dòng hướng dẫn nằm giữa ô
                 int cx = w / 2, cy = h / 2 - 8;
                 g2.setColor(new Color(0x8795A0));
                 g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
@@ -194,6 +216,17 @@ public class QuanLyHoaDonPanel extends JPanel implements Refreshable {
                 String s = "Nhấn để tạo hóa đơn";
                 g2.drawString(s, (w - fm.stringWidth(s)) / 2, cy + 38);
             } else {
+                // Dấu x xóa hóa đơn
+                Rectangle x = vungXoa();
+                if (hoverXoa) {
+                    g2.setColor(new Color(0xFBE3E3));
+                    g2.fillOval(x.x, x.y, x.width, x.height);
+                }
+                g2.setColor(hoverXoa ? Theme.DANGER : new Color(0x9AA6B0));
+                g2.setStroke(new BasicStroke(1.8f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
+                g2.drawLine(x.x + 9, x.y + 9, x.x + 17, x.y + 17);
+                g2.drawLine(x.x + 17, x.y + 9, x.x + 9, x.y + 17);
+
                 g2.setFont(Theme.font(Font.BOLD, 18));
                 g2.setColor(Theme.TEXT);
                 g2.drawString(hd.getMaHD(), pad, 50);
@@ -207,7 +240,7 @@ public class QuanLyHoaDonPanel extends JPanel implements Refreshable {
                 g2.setColor(Theme.TEXT);
                 g2.drawString(Theme.money(hd.canThanhToan()), pad, 90);
 
-                // nhãn trạng thái
+                // Nhãn trạng thái
                 g2.setFont(Theme.font(Font.BOLD, 10));
                 fm = g2.getFontMetrics();
                 int pw = fm.stringWidth(hd.getTrangThai()) + 24, ph = 20, py = Math.max(98, h - 34);
@@ -223,7 +256,7 @@ public class QuanLyHoaDonPanel extends JPanel implements Refreshable {
     private static String cat(String s, FontMetrics fm, int maxW) {
         if (fm.stringWidth(s) <= maxW) return s;
         int n = s.length();
-        while (n > 0 && fm.stringWidth(s.substring(0, n).trim() + "…") > maxW) n--;
-        return s.substring(0, n).trim() + "…";
+        while (n > 0 && fm.stringWidth(s.substring(0, n).trim() + ".") > maxW) n--;
+        return s.substring(0, n).trim() + ".";
     }
 }
