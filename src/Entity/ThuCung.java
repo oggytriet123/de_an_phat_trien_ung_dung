@@ -98,6 +98,14 @@ public class ThuCung {
     public String getHangTheChuNuoi() { return hangTheChuNuoi != null ? hangTheChuNuoi : "Thường"; }
     public void setHangTheChuNuoi(String hangTheChuNuoi) { this.hangTheChuNuoi = hangTheChuNuoi; }
 
+
+    // Compatibility aliases cho DonThuocPanel & PhacDoPanel
+    public String getMaTC() { return petID; }
+    public String getTenChu() { return getTenChuNuoi(); }
+    public String getSdtChu() { return getSdtChuNuoi(); }
+    public String getSucKhoe() { return trangThai != null ? trangThai : "Khỏe mạnh"; }
+    public boolean isDangLuuTru() { return "Đang lưu trú".equalsIgnoreCase(trangThai); }
+    public String getGhiChu() { return theCanhBao != null ? theCanhBao : ""; }
     @Override
     public String toString() {
         return ten;
