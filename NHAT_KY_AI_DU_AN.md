@@ -270,3 +270,4 @@ Nhật ký AI này minh chứng rằng việc ứng dụng Trí tuệ Nhân tạ
 *Tài liệu được lập và lưu trữ chính thức trong cây thư mục dự án.*  
 **Người thực hiện:** Nhóm sinh viên phát triển Đề án PetCare POS  
 **Ngày hoàn thành:** Tháng 10/2026
+
