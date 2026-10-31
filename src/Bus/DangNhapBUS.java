@@ -39,7 +39,7 @@ public class DangNhapBUS {
 
     /** Tài khoản mẫu (chạy thử, không có trong CSDL). */
     public static boolean laTaiKhoanMau(TaiKhoan tk) {
-        return tk != null && (tk.getMaTaiKhoan().equals("QL001") || tk.getMaTaiKhoan().equals("NV01"));
+        return tk != null && (tk.getMaTaiKhoan().equals("QL001") || tk.getMaTaiKhoan().matches("NV0[1-3]"));
     }
 
     private TaiKhoan taiKhoanMau(String id, String matKhau) {
@@ -50,6 +50,12 @@ public class DangNhapBUS {
         if (id.equalsIgnoreCase("nv01") || id.equals("0902345678"))
             return mau(new TaiKhoan("NV01", "nv01", "Thu Trang", "Bán hàng", ChucNang.macDinh("Bán hàng"),
                     "0902345678", java.time.LocalDate.of(1998, 11, 3), "trang@petstation.vn"));
+        if (id.equalsIgnoreCase("nv02") || id.equals("0903456789"))
+            return mau(new TaiKhoan("NV02", "nv02", "Quốc Việt", "Kho", ChucNang.macDinh("Kho"),
+                    "0903456789", java.time.LocalDate.of(1996, 2, 14), "viet@petstation.vn"));
+        if (id.equalsIgnoreCase("nv03") || id.equals("0904567890"))
+            return mau(new TaiKhoan("NV03", "nv03", "Thanh Tùng", "Bác sĩ", ChucNang.macDinh("Bác sĩ"),
+                    "0904567890", java.time.LocalDate.of(1990, 8, 9), "tung@petstation.vn"));
         return null;
     }
 

@@ -124,7 +124,7 @@ public class LoginFrame extends JFrame {
         JLabel title = new JLabel("ĐĂNG NHẬP", SwingConstants.CENTER);
         title.setFont(Theme.font(Font.BOLD, 34));
         title.setForeground(Color.BLACK);
-        JLabel sub = new JLabel("Vui lòng đăng nhập để tiếp tục (Tài khoản mẫu: admin / 123456)", SwingConstants.CENTER);
+        JLabel sub = new JLabel("Vui lòng đăng nhập để tiếp tục (Mẫu: admin, nv01, nv02, nv03 / 123456)", SwingConstants.CENTER);
         sub.setFont(Theme.font(Font.PLAIN, 16));
         sub.setForeground(new Color(0x98A3AC));
 
