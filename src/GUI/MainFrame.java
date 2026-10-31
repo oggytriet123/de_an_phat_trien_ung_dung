@@ -84,6 +84,7 @@ public class MainFrame extends JFrame {
                 Item.leaf("Theo Ngày", "calendar", "Doanh thu và hoá đơn theo từng khung giờ trong ngày.", ChucNang.TK_DOANH_THU),
                 Item.leaf("Theo Tháng", "calendar", "Doanh thu và hoá đơn theo từng ngày trong tháng.", ChucNang.TK_DOANH_THU),
                 Item.leaf("Theo Năm", "calendar", "Doanh thu và hoá đơn theo từng tháng trong năm.", ChucNang.TK_DOANH_THU)),
+            Item.leaf("Tồn Kho & Mặt Hàng", "box", "Thống kê tồn kho, mặt hàng sắp hết", ChucNang.TK_DOANH_THU),
             Item.leaf("Khách Hàng", "customers", "Thống kê khách hàng thân thiết, khách mới", ChucNang.TK_KHACH_HANG),
             Item.leaf("Thú Cưng", "paw", "Thống kê thú cưng theo loài, giống", ChucNang.TK_THU_CUNG)),
     };
@@ -126,6 +127,7 @@ public class MainFrame extends JFrame {
     // Trang Xử Lý (Lập hoá đơn) và Lịch sử hoá đơn — khởi tạo lười để tái sử dụng
     private XuLyPanel xuLyPanel;
     private LichSuHoaDonPanel lichSuPanel;
+    private ThongKePanel pnlThongKe;
     private QuanLyDichVuPanel dichVuPanel;
     private TiemPhongPanel tiemPhongPanel;
     private PhauThuatPanel phauThuatPanel;
@@ -279,6 +281,15 @@ public class MainFrame extends JFrame {
                 return;
             }
         }
+        if (t.equalsIgnoreCase("Thống Kê")) {
+            if (pnlThongKe == null) pnlThongKe = new ThongKePanel();
+            pnlThongKe.refresh();
+            content.add(pnlThongKe, "Thống Kê");
+            cards.show(content, "Thống Kê");
+            navs.forEach((k, b) -> b.setSelected(k.equals("Thống Kê")));
+            return;
+        }
+        cards.show(content, t);
     }
 
     /** Tìm mục lá theo tên, kể cả trong nhóm con (ví dụ Xử Lý > Quản Lý Lịch Hẹn). */
@@ -369,6 +380,23 @@ public class MainFrame extends JFrame {
                 }
                 lichSuPanel.lamMoi();
                 p = lichSuPanel;
+            } else if (tab.equals("Thống Kê")) {
+                if (pnlThongKe == null) {
+                    pnlThongKe = new ThongKePanel();
+                }
+                if ("Theo Ngày".equals(it.label) || "Theo Tháng".equals(it.label) || "Theo Năm".equals(it.label) || "Doanh Thu".equalsIgnoreCase(it.label)) {
+                    pnlThongKe.chonTab("Doanh thu & Dòng tiền");
+                } else if ("Khách Hàng".equalsIgnoreCase(it.label)) {
+                    pnlThongKe.chonTab("Khách hàng & Thú cưng");
+                } else if ("Thú Cưng".equalsIgnoreCase(it.label)) {
+                    pnlThongKe.chonTab("Khách hàng & Thú cưng");
+                } else if ("Tồn Kho & Mặt Hàng".equalsIgnoreCase(it.label) || "Tồn Kho".equalsIgnoreCase(it.label) || "Sản Phẩm".equalsIgnoreCase(it.label)) {
+                    pnlThongKe.chonTab("Tồn kho & Mặt hàng");
+                }
+                p = pnlThongKe;
+            } else if (it.label.equals("Sản Phẩm") && tab.equals("Danh Mục")) {
+                if (pnlKhoHang == null) pnlKhoHang = new KhoHangPanel();
+                p = pnlKhoHang;
             } else if (it.label.equals("Quản Lý Dịch Vụ")) {
                 if (dichVuPanel == null) {
                     dichVuPanel = new QuanLyDichVuPanel(sanPhamBus, maGiamGiaBus);
@@ -394,7 +422,17 @@ public class MainFrame extends JFrame {
             }
             content.add(p, key);
         } else {
-            if ((it.label.equals("Lập Hoá Đơn") || it.label.equals("Lập Hóa Đơn")) && xuLyPanel != null) {
+            if (tab.equals("Thống Kê") && pnlThongKe != null) {
+                if ("Theo Ngày".equals(it.label) || "Theo Tháng".equals(it.label) || "Theo Năm".equals(it.label) || "Doanh Thu".equalsIgnoreCase(it.label)) {
+                    pnlThongKe.chonTab("Doanh thu & Dòng tiền");
+                } else if ("Khách Hàng".equalsIgnoreCase(it.label)) {
+                    pnlThongKe.chonTab("Khách hàng & Thú cưng");
+                } else if ("Thú Cưng".equalsIgnoreCase(it.label)) {
+                    pnlThongKe.chonTab("Khách hàng & Thú cưng");
+                } else if ("Tồn Kho & Mặt Hàng".equalsIgnoreCase(it.label) || "Tồn Kho".equalsIgnoreCase(it.label) || "Sản Phẩm".equalsIgnoreCase(it.label)) {
+                    pnlThongKe.chonTab("Tồn kho & Mặt hàng");
+                }
+            } else if ((it.label.equals("Lập Hoá Đơn") || it.label.equals("Lập Hóa Đơn")) && xuLyPanel != null) {
                 xuLyPanel.hienQuanLy();
             } else if ((it.label.equals("Lịch Sử Hoá Đơn") || it.label.equals("Lịch Sử Hóa Đơn") || it.label.equals("Lịch Sử HĐ") || (tab.equals("Danh Mục") && it.label.equals("Hoá Đơn"))) && lichSuPanel != null) {
                 lichSuPanel.lamMoi();
@@ -409,6 +447,8 @@ public class MainFrame extends JFrame {
         cards.show(content, key);
         navs.forEach((k, b) -> b.setSelected(k.equals(tab)));
     }
+
+
 
     private JComponent buildUserBox() {
         JPanel box = new JPanel(new BorderLayout(10, 0));

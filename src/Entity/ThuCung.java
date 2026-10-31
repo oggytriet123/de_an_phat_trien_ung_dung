@@ -82,7 +82,6 @@ public class ThuCung {
 
     public String getTrangThai() { return trangThai; }
     public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
-
     public String getMaKH() { return maKH; }
     public void setMaKH(String maKH) { this.maKH = maKH; }
 
