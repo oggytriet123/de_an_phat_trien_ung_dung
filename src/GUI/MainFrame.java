@@ -63,16 +63,16 @@ public class MainFrame extends JFrame {
             Item.leaf("Phẫu Thuật",    "service",  "Tiếp nhận và theo dõi tiến độ ca phẫu thuật",      ChucNang.PHAU_THUAT),
             Item.leaf("Lồng Chuồng",   "cage",     "Quản lý lồng, chuồng gửi thú cưng",                ChucNang.CHUONG),
             Item.leaf("Đặt Lịch Hẹn",  "calendar", "Đặt lịch spa, khám, tiêm phòng",                   ChucNang.LICH_HEN),
+            new Item("Quản Lý Lịch Hẹn", "calendar", null, null,
+                Item.leaf("Hồ sơ lịch hẹn", "card", "Tra cứu toàn bộ hồ sơ lịch hẹn", ChucNang.LICH_HEN),
+                Item.leaf("Quản lý lịch hẹn", "calendar", "Tiếp nhận và theo dõi lịch hẹn", ChucNang.LICH_HEN),
+                Item.leaf("Đổi lịch hẹn", "sync", "Thay đổi ngày giờ hẹn theo yêu cầu", ChucNang.LICH_HEN),
+                Item.leaf("Xác nhận lịch hẹn", "check", "Xác nhận các lịch hẹn đang chờ", ChucNang.LICH_HEN),
+                Item.leaf("Hủy lịch hẹn", "close", "Hủy lịch hẹn và ghi nhận lý do", ChucNang.LICH_HEN)),
             Item.leaf("Lịch Sử Nhập / Xuất Kho", "eye", "Lịch sử nhập xuất kho hàng",                   ChucNang.SAN_PHAM)),
         new Item("Điều Trị & Đơn Thuốc", "medical", null, null,
             Item.leaf("Quản lý Đơn thuốc", "prescription", "Kê đơn và quản lý đơn thuốc", ChucNang.DICH_VU),
             Item.leaf("Phác đồ Điều trị", "protocol", "Thiết lập và theo dõi phác đồ điều trị", ChucNang.DICH_VU)),
-        new Item("Quản Lý Lịch Hẹn", "calendar", null, null,
-            Item.leaf("Hồ sơ lịch hẹn", "card", "Tra cứu toàn bộ hồ sơ lịch hẹn", ChucNang.LICH_HEN),
-            Item.leaf("Quản lý lịch hẹn", "calendar", "Tiếp nhận và theo dõi lịch hẹn", ChucNang.LICH_HEN),
-            Item.leaf("Đổi lịch hẹn", "sync", "Thay đổi ngày giờ hẹn theo yêu cầu", ChucNang.LICH_HEN),
-            Item.leaf("Xác nhận lịch hẹn", "check", "Xác nhận các lịch hẹn đang chờ", ChucNang.LICH_HEN),
-            Item.leaf("Hủy lịch hẹn", "close", "Hủy lịch hẹn và ghi nhận lý do", ChucNang.LICH_HEN)),
         new Item("Tìm Kiếm", "search", null, null,
             Item.leaf("Tìm Nhân Viên", "person", "Tra cứu nhân viên", ChucNang.TIM_KIEM),
             Item.leaf("Tìm Khách Hàng", "customers", "Tra cứu khách hàng", ChucNang.TIM_KIEM),
@@ -142,7 +142,7 @@ public class MainFrame extends JFrame {
     private Bus.PhacDoBUS sharedPhacDoBus;
 
     public MainFrame(TaiKhoan taiKhoan) {
-        super("PetCare POS");
+        super("Pet Station");
         this.taiKhoan = taiKhoan;
         setIconImage(Icons.appIcon());
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -165,6 +165,7 @@ public class MainFrame extends JFrame {
         setSize(1320, 840);
         setMinimumSize(new Dimension(1100, 700));
         setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH); // mở toàn màn hình
     }
 
     private static void bindKey(JComponent c, String stroke, Runnable r) {
@@ -272,13 +273,26 @@ public class MainFrame extends JFrame {
         if (tenTrang == null) return;
         String t = tenTrang.trim();
         for (Item m : MENU) {
-            for (Item c : m.children) {
-                if (c.label != null && c.label.equalsIgnoreCase(t)) {
-                    hienTrang(m.label, c);
-                    return;
-                }
+            Item c = timMucLa(m.children, t);
+            if (c != null) {
+                hienTrang(m.label, c);
+                return;
             }
         }
+    }
+
+    /** Tìm mục lá theo tên, kể cả trong nhóm con (ví dụ Xử Lý > Quản Lý Lịch Hẹn). */
+    private static Item timMucLa(Item[] items, String ten) {
+        for (Item c : items) {
+            if (c.label == null) continue;
+            if (c.children.length > 0) {
+                Item r = timMucLa(c.children, ten);
+                if (r != null) return r;
+            } else if (c.label.equalsIgnoreCase(ten)) {
+                return c;
+            }
+        }
+        return null;
     }
 
     /** Hiển thị trang tương ứng mục menu (tạo lần đầu khi cần). */
