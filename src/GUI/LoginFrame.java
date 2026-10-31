@@ -49,6 +49,7 @@ public class LoginFrame extends JFrame {
         setSize(1100, 690);
         setMinimumSize(new Dimension(900, 640));
         setLocationRelativeTo(null);
+        setExtendedState(JFrame.MAXIMIZED_BOTH); // mở toàn màn hình
         getRootPane().setDefaultButton(btnDangNhap);
     }
 
