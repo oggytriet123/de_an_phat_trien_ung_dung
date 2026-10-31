@@ -26,6 +26,16 @@ public class MaGiamGiaBUS {
         return new ArrayList<>(ds.values());
     }
 
+    /**
+     * Xóa một mã giảm giá khỏi danh sách. Hóa đơn đã áp dụng mã này vẫn giữ mức giảm đã áp dụng.
+     * @throws IllegalArgumentException nếu không có mã đó.
+     */
+    public void xoa(String ma) {
+        if (ma == null || ds.remove(ma.trim().toUpperCase()) == null) {
+            throw new IllegalArgumentException("Không tìm thấy mã giảm giá " + ma + ".");
+        }
+    }
+
     public boolean daHetHan(MaGiamGia m) {
         return m.getHanDung().isBefore(LocalDate.now());
     }

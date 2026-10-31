@@ -44,6 +44,8 @@ public class LoginFrame extends JFrame {
         setContentPane(root);
 
         wireEvents();
+        txtTaiKhoan.setText("admin");
+        txtMatKhau.setText("123456");
         setSize(1100, 690);
         setMinimumSize(new Dimension(900, 640));
         setLocationRelativeTo(null);
@@ -123,7 +125,7 @@ public class LoginFrame extends JFrame {
         JLabel title = new JLabel("ĐĂNG NHẬP", SwingConstants.CENTER);
         title.setFont(Theme.font(Font.BOLD, 34));
         title.setForeground(Color.BLACK);
-        JLabel sub = new JLabel("Vui lòng đăng nhập để tiếp tục", SwingConstants.CENTER);
+        JLabel sub = new JLabel("Vui lòng đăng nhập để tiếp tục (Tài khoản mẫu: admin / 123456)", SwingConstants.CENTER);
         sub.setFont(Theme.font(Font.PLAIN, 16));
         sub.setForeground(new Color(0x98A3AC));
 
@@ -241,8 +243,14 @@ public class LoginFrame extends JFrame {
                         txtMatKhau.setText("");
                         txtMatKhau.requestFocusInWindow();
                     } else {
-                        dispose();
-                        new MainFrame(tk).setVisible(true);
+                        try {
+                            MainFrame mf = new MainFrame(tk);
+                            dispose();
+                            mf.setVisible(true);
+                        } catch (Throwable ex) {
+                            ex.printStackTrace();
+                            baoLoi("Lỗi khởi tạo giao diện: " + ex.getMessage());
+                        }
                     }
                 } catch (Exception ex) {
                     setBusy(false);

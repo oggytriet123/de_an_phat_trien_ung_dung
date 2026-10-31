@@ -3,10 +3,21 @@ package GUI;
 import java.awt.*;
 import javax.swing.JToggleButton;
 
-/** Nút lọc danh mục dạng viên thuốc. */
+/** Nút lọc / chọn dạng viên thuốc (bo tròn hoàn toàn) hoặc chip bo góc nhẹ. */
 final class Pill extends JToggleButton {
+    private final Color mauChon;
+    private final Color nen;
+    private final int bo;   // < 0: bo tròn hoàn toàn
+
     Pill(String text) {
+        this(text, Theme.PRIMARY, Theme.FIELD_BG, -1);
+    }
+
+    Pill(String text, Color mauChon, Color nen, int bo) {
         super(text);
+        this.mauChon = mauChon;
+        this.nen = nen;
+        this.bo = bo;
         setFont(Theme.font(Font.PLAIN, 12));
         setContentAreaFilled(false);
         setBorderPainted(false);
@@ -22,14 +33,15 @@ final class Pill extends JToggleButton {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
         int w = getWidth(), h = getHeight();
+        int arc = bo < 0 ? h : bo;
         if (isSelected()) {
-            g2.setColor(Theme.PRIMARY);
-            g2.fillRoundRect(0, 0, w, h, h, h);
+            g2.setColor(mauChon);
+            g2.fillRoundRect(0, 0, w, h, arc, arc);
         } else {
-            g2.setColor(Theme.FIELD_BG);
-            g2.fillRoundRect(0, 0, w, h, h, h);
+            g2.setColor(nen);
+            g2.fillRoundRect(0, 0, w, h, arc, arc);
             g2.setColor(Theme.BORDER);
-            g2.drawRoundRect(0, 0, w - 1, h - 1, h, h);
+            g2.drawRoundRect(0, 0, w - 1, h - 1, arc, arc);
         }
         g2.setFont(getFont());
         g2.setColor(isSelected() ? Color.WHITE : Theme.TEXT);

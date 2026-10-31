@@ -11,9 +11,20 @@ import Entity.SanPham;
  */
 public class KhoHangBUS {
     private final List<SanPham> ds = new ArrayList<>();
+    private final List<Runnable> listeners = new ArrayList<>();
 
     public KhoHangBUS() {
         napDuLieuMau();
+    }
+
+    public void addListener(Runnable r) {
+        if (r != null && !listeners.contains(r)) listeners.add(r);
+    }
+
+    public void notifyListeners() {
+        for (Runnable r : listeners) {
+            try { r.run(); } catch (Exception ignored) {}
+        }
     }
 
     public List<SanPham> layDanhSach() {
@@ -53,6 +64,7 @@ public class KhoHangBUS {
         }
         SanPham sp = new SanPham(maSKU, tenSP, quyCach, danhMuc, ton, dvt, donGia, trangThai);
         ds.add(0, sp);
+        notifyListeners();
         return sp;
     }
 
@@ -63,6 +75,23 @@ public class KhoHangBUS {
                 if (sp.getSoLuongTon() > 0 && "Tạm hết hàng".equals(sp.getTrangThai())) {
                     sp.setTrangThai("Đang bán");
                 }
+                notifyListeners();
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public boolean xuatKho(String maSKU, int soLuongXuat) {
+        if (maSKU == null || maSKU.trim().isEmpty() || soLuongXuat <= 0) return false;
+        for (SanPham sp : ds) {
+            if (sp.getMaSKU().equalsIgnoreCase(maSKU.trim())) {
+                int tonMoi = Math.max(0, sp.getSoLuongTon() - soLuongXuat);
+                sp.setSoLuongTon(tonMoi);
+                if (tonMoi == 0) {
+                    sp.setTrangThai("Tạm hết hàng");
+                }
+                notifyListeners();
                 return true;
             }
         }
@@ -70,7 +99,9 @@ public class KhoHangBUS {
     }
 
     public boolean xoa(String maSKU) {
-        return ds.removeIf(sp -> sp.getMaSKU().equalsIgnoreCase(maSKU));
+        boolean ok = ds.removeIf(sp -> sp.getMaSKU().equalsIgnoreCase(maSKU));
+        if (ok) notifyListeners();
+        return ok;
     }
 
     public SanPham timTheoSKU(String maSKU) {

@@ -232,15 +232,24 @@ public class ThongKeBUS {
     }
 
     public int getTongSoThuCung() {
-        return thuCungBUS.getTongSoThuCung();
+        return thuCungBUS.layDanhSach().size();
     }
 
     public int getSoDangLuuTru() {
-        return thuCungBUS.getSoDangLuuTru();
+        int cnt = 0;
+        for (ThuCung tc : thuCungBUS.layDanhSach()) {
+            if ("Đang lưu trú".equals(tc.getTrangThai())) cnt++;
+        }
+        return cnt;
     }
 
     public int getSoCanTheoDoi() {
-        return thuCungBUS.getSoCanTheoDoi();
+        int cnt = 0;
+        for (ThuCung tc : thuCungBUS.layDanhSach()) {
+            String tt = tc.getTrangThai();
+            if ("Cần theo dõi".equals(tt) || "Đang điều trị".equals(tt)) cnt++;
+        }
+        return cnt;
     }
 
     /** Cơ cấu khách hàng theo hạng thẻ */
@@ -276,7 +285,7 @@ public class ThongKeBUS {
         map.put("Đang điều trị", 0);
 
         for (ThuCung tc : thuCungBUS.layDanhSach()) {
-            String sk = tc.getSucKhoe() == null ? "Khỏe mạnh" : tc.getSucKhoe();
+            String sk = tc.getTrangThai() == null ? "Khỏe mạnh" : tc.getTrangThai();
             map.put(sk, map.getOrDefault(sk, 0) + 1);
         }
         return map;

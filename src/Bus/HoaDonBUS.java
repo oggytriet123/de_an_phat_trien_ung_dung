@@ -138,6 +138,19 @@ public class HoaDonBUS {
     }
 
     /**
+     * Xóa hóa đơn đã lưu (chưa thanh toán) khỏi ô: ô trở thành trống để tạo hóa đơn mới.
+     * Hóa đơn đã thanh toán nằm trong lịch sử nên không xóa được. Mã hóa đơn đã dùng không được cấp lại.
+     * @param viTri 0..19
+     * @return hóa đơn vừa bị xóa
+     */
+    public HoaDon xoa(int viTri) {
+        HoaDon h = cacO[viTri];
+        if (h == null) throw new IllegalStateException("Ô " + (viTri + 1) + " đang trống.");
+        cacO[viTri] = null;
+        return h;
+    }
+
+    /**
      * Ghi nhận thanh toán đã được xác nhận thành công: hóa đơn rời ô, vào lịch sử.
      * Nếu chưa lưu thì lưu trước.
      */

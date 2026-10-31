@@ -37,6 +37,7 @@ public class ThuCungPanel extends JPanel {
     private static final String[] DS_SAP_XEP = {"Mới nhất", "Tên A-Z", "Cân nặng cao nhất", "Cân nặng thấp nhất"};
 
     private final ThuCungBUS bus = new ThuCungBUS();
+    public ThuCungBUS getBus() { return bus; }
     private List<ThuCung> dsHienThi = new ArrayList<>();
     private String loaiDangLoc = "Tất cả";
     private String sapXepHienTai = DS_SAP_XEP[0];
@@ -110,6 +111,8 @@ public class ThuCungPanel extends JPanel {
         // Nút chức năng: Xuất Excel, Xem chi tiết, Sửa, Xóa, Thêm mới
         RoundedButton btnExcel = new RoundedButton("Xuất Excel", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
         RoundedButton btnXem = new RoundedButton("Xem chi tiết", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        RoundedButton btnKeDon = new RoundedButton("Kê đơn", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        RoundedButton btnPhacDo = new RoundedButton("Phác đồ", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
         RoundedButton btnSua = new RoundedButton("Chỉnh sửa", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
         RoundedButton btnXoa = new RoundedButton("Xóa", Color.WHITE, new Color(0xFEE2E2), Theme.RED, Theme.BORDER, 10).pad(14, 9);
         RoundedButton btnThem = new RoundedButton("+ Thêm thú cưng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(16, 9);
@@ -120,6 +123,28 @@ public class ThuCungPanel extends JPanel {
             ThuCung tc = layThuCungDangChon();
             if (tc != null) moDialogChiTiet(tc);
             else JOptionPane.showMessageDialog(this, "Vui lòng chọn một thú cưng trong bảng!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+        });
+        btnKeDon.addActionListener(e -> {
+            ThuCung tc = layThuCungDangChon();
+            if (tc != null) {
+                Window w = SwingUtilities.getWindowAncestor(this);
+                if (w instanceof MainFrame mf) {
+                    mf.moKeDonChoThuCung(tc);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một thú cưng để kê đơn!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            }
+        });
+        btnPhacDo.addActionListener(e -> {
+            ThuCung tc = layThuCungDangChon();
+            if (tc != null) {
+                Window w = SwingUtilities.getWindowAncestor(this);
+                if (w instanceof MainFrame mf) {
+                    mf.moPhacDoChoThuCung(tc);
+                }
+            } else {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn một thú cưng để lập phác đồ!", "Thông báo", JOptionPane.WARNING_MESSAGE);
+            }
         });
         btnSua.addActionListener(e -> {
             ThuCung tc = layThuCungDangChon();
@@ -136,6 +161,8 @@ public class ThuCungPanel extends JPanel {
         pnlNut.setOpaque(false);
         pnlNut.add(btnExcel);
         pnlNut.add(btnXem);
+        pnlNut.add(btnKeDon);
+        pnlNut.add(btnPhacDo);
         pnlNut.add(btnSua);
         pnlNut.add(btnXoa);
         pnlNut.add(btnThem);
