@@ -391,12 +391,21 @@ public class NhanVienPanel extends JPanel {
         try {
             for (NhanVienDAO.QuyenOption q : bus.layDanhSachQuyen()) cboQuyen.addItem(q);
         } catch (SQLException ignored) {}
+        if (cboQuyen.getItemCount() == 0) { // bảng PHANQUYEN trống / chưa kết nối CSDL
+            cboQuyen.addItem(new NhanVienDAO.QuyenOption(1, "Quản lý"));
+            cboQuyen.addItem(new NhanVienDAO.QuyenOption(2, "Bán hàng"));
+            cboQuyen.addItem(new NhanVienDAO.QuyenOption(3, "Kho"));
+            cboQuyen.addItem(new NhanVienDAO.QuyenOption(4, "Bác sĩ"));
+        }
+        if (!laSua) cboQuyen.setSelectedIndex(0);
+        for (JComboBox<?> c : new JComboBox<?>[] {cboQuyen}) styleCombo(c);
 
         JTextField txtSdt = taoTextField();
         JTextField txtNgaySinh = taoTextField();
         txtNgaySinh.setToolTipText("dd/MM/yyyy (ví dụ: 15/03/1995)");
         JTextField txtEmail = taoTextField();
         JComboBox<String> cboCaLam = new JComboBox<>(new String[] {"Toàn thời gian", "Ca sáng", "Ca chiều", "Ca tối"});
+        styleCombo(cboCaLam);
         JComboBox<String> cboTrangThai = new JComboBox<>(new String[] {"Đang làm việc", "Tạm nghỉ", "Đã nghỉ việc"});
         JTextField txtChuyenMon = taoTextField();
 
@@ -441,6 +450,10 @@ public class NhanVienPanel extends JPanel {
             String rawPass = new String(txtMatKhau.getPassword()).trim();
             NhanVienDAO.QuyenOption qOpt = (NhanVienDAO.QuyenOption) cboQuyen.getSelectedItem();
 
+            if (qOpt == null) {
+                JOptionPane.showMessageDialog(dlg, "Vui lòng chọn chức danh!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             if (hoTen.isEmpty() || username.isEmpty()) {
                 JOptionPane.showMessageDialog(dlg, "Vui lòng nhập đầy đủ họ tên và tên đăng nhập!", "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return;
@@ -551,6 +564,20 @@ public class NhanVienPanel extends JPanel {
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "Lỗi xuất file: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private static void styleCombo(JComboBox<?> c) {
+        c.setFont(Theme.font(Font.PLAIN, 13));
+        c.setBackground(Color.WHITE);
+        c.setMaximumRowCount(8);
+        c.setRenderer(new DefaultListCellRenderer() {
+            @Override public Component getListCellRendererComponent(JList<?> l, Object v, int i, boolean sel, boolean foc) {
+                JLabel lb = (JLabel) super.getListCellRendererComponent(l, v, i, sel, foc);
+                lb.setFont(Theme.font(Font.PLAIN, 13));
+                lb.setBorder(new EmptyBorder(5, 8, 5, 8));
+                return lb;
+            }
+        });
     }
 
     private static JTextField taoTextField() {
