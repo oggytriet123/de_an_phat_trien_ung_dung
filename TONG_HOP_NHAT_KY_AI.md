@@ -282,3 +282,4 @@ Việc ứng dụng Trí tuệ Nhân tạo trong Đề án Phát triển Ứng d
 **Sinh viên thực hiện:** **Nguyễn Ngọc Toàn**  
 **Đề án:** Hệ thống Quản lý Phòng khám Thú y (PetCare POS)  
 **Ngày hoàn thành:** 30 tháng 10 năm 2026
+
