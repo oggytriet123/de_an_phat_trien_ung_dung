@@ -80,4 +80,22 @@ public class TaiKhoanDAO {
             return ps.executeUpdate();
         }
     }
+
+    /**
+     * Đặt lại mật khẩu khi người dùng cung cấp đúng SĐT hoặc email đã đăng ký của tài khoản.
+     * @return số dòng bị ảnh hưởng (0 = thông tin không khớp)
+     */
+    public int datLaiMatKhau(String maHoacTenDN, String lienHe, String hashMoi) throws SQLException {
+        String sql = "UPDATE NHANVIEN SET matKhau = ? "
+                + "WHERE (maNV = ? OR tenDangNhap = ?) AND (soDienThoai = ? OR LOWER(email) = LOWER(?))";
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, hashMoi);
+            ps.setString(2, maHoacTenDN);
+            ps.setString(3, maHoacTenDN);
+            ps.setString(4, lienHe);
+            ps.setString(5, lienHe);
+            return ps.executeUpdate();
+        }
+    }
 }
