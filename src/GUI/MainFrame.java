@@ -135,6 +135,7 @@ public class MainFrame extends JFrame {
     private LichSuNhapXuatPanel pnlLichSuKho;
     private ThuCungPanel pnlThuCung;
     private KhachHangPanel pnlKhachHang;
+    private DanhMucBenhPanel pnlDanhMucBenh;
     private LichHenPanel pnlHoSoLichHen, pnlQuanLyLichHen, pnlDoiLichHen, pnlXacNhanLichHen, pnlHuyLichHen;
     private DonThuocPanel pnlDonThuoc;
     private PhacDoPanel pnlPhacDo;
@@ -355,6 +356,10 @@ public class MainFrame extends JFrame {
                 p = pnlHuyLichHen;
             } else if (it.label.equals("Nhân Viên") || it.label.equals("Tìm Nhân Viên")) {
                 p = new NhanVienPanel(taiKhoan);
+            } else if (it.label.equals("Danh Mục Bệnh")) {
+                if (pnlDanhMucBenh == null) pnlDanhMucBenh = new DanhMucBenhPanel();
+                pnlDanhMucBenh.lamMoi();
+                p = pnlDanhMucBenh;
             } else if (it.label.equals("Lồng Chuồng")) {
                 p = new LongChuongPanel();
             } else if (it.label.equals("Lập Hoá Đơn") || it.label.equals("Lập Hóa Đơn")) {
