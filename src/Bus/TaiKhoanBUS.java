@@ -65,7 +65,9 @@ public class TaiKhoanBUS {
         if (moi.equals(cu)) return "Mật khẩu mới phải khác mật khẩu hiện tại.";
         if (!moi.equals(nhapLai)) return "Mật khẩu nhập lại không khớp.";
         if (DangNhapBUS.laTaiKhoanMau(tk)) {
-            return "123456".equals(cu) ? null : "Mật khẩu hiện tại không đúng."; // tài khoản mẫu: không lưu CSDL
+            if (!DangNhapBUS.dungMatKhauMau(tk, cu)) return "Mật khẩu hiện tại không đúng.";
+            DangNhapBUS.datMatKhauMau(tk, moi);
+            return null; // tài khoản mẫu: chỉ lưu trong lần chạy này
         }
         try {
             if (dao.doiMatKhau(tk.getMaTaiKhoan(), DangNhapBUS.bamSha256(cu), DangNhapBUS.bamSha256(moi)) == 0)
