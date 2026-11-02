@@ -660,9 +660,9 @@ public class LoginFrame extends JFrame {
 
                     if (tk == null) {
 
-                        baoLoi("Tài khoản hoặc mật khẩu không đúng.");
-
                         txtMatKhau.setText("");
+
+                        baoLoi("Tài khoản hoặc mật khẩu không đúng.");
 
                         txtMatKhau.requestFocusInWindow();
 

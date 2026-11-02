@@ -21,8 +21,8 @@ if %ERRORLEVEL% neq 0 (
 
 echo Dang bien dich ma nguon Java...
 if not exist bin mkdir bin
-dir /s /b src\*.java > sources.txt
-javac -encoding UTF-8 -cp "lib/*;bin" -d bin @sources.txt
+powershell -NoProfile -Command "(Get-ChildItem -Path src -Filter *.java -Recurse | Resolve-Path -Relative) -replace '^\.\\', '' -replace '\\', '/' | Set-Content sources.txt"
+javac --release 21 -encoding UTF-8 -cp "lib/*;bin" -d bin @sources.txt
 if %ERRORLEVEL% equ 0 (
     if exist sources.txt del sources.txt
     echo [THANH CONG] Bien dich thanh cong!

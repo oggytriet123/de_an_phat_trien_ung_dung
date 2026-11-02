@@ -450,7 +450,7 @@ final class HoaDonPopups {
         String[] huongDan = {
             "Xác nhận sau khi đã nhận đủ tiền mặt từ khách.",
             "Xác nhận sau khi giao dịch quẹt thẻ thành công.",
-            "Chỉ xác nhận sau khi nhận được thông báo thanh toán MoMo thành công.",
+            "Quét mã QR MoMo / VietQR bên dưới (Hiệu lực: 1 phút).",
             "Chỉ xác nhận sau khi nhận được thông báo thanh toán ZaloPay thành công.",
         };
         JLabel hint = new JLabel(huongDan[0]);
@@ -461,6 +461,58 @@ final class HoaDonPopups {
         List<MethodCard> cards = new ArrayList<>();
         JPanel grid = new JPanel(new GridLayout(2, 2, 12, 12));
         grid.setOpaque(false);
+
+        RoundedButton dong = secondary("Đóng", 150);
+        RoundedButton xacNhan = primary("Xác nhận thanh toán", 210);
+
+        // Panel QR MoMo có đồng hồ đếm ngược 1 phút
+        JPanel pnlMoMo = new JPanel();
+        pnlMoMo.setOpaque(false);
+        pnlMoMo.setLayout(new BoxLayout(pnlMoMo, BoxLayout.Y_AXIS));
+        pnlMoMo.setAlignmentX(Component.LEFT_ALIGNMENT);
+        pnlMoMo.setVisible(false);
+
+        QRPanel qrComp = new QRPanel(layAnhQRMomo());
+        qrComp.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel lblTimer = new JLabel("⏱ Mã QR có hiệu lực trong: 01:00");
+        lblTimer.setFont(Theme.font(Font.BOLD, 14));
+        lblTimer.setForeground(new Color(0x0284C7));
+        lblTimer.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel lblSubQR = new JLabel("Vui lòng quét mã trên ứng dụng MoMo hoặc Ngân hàng (VietQR)");
+        lblSubQR.setFont(Theme.font(Font.PLAIN, 12));
+        lblSubQR.setForeground(Theme.MUTED);
+        lblSubQR.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        pnlMoMo.add(Box.createVerticalStrut(10));
+        pnlMoMo.add(qrComp);
+        pnlMoMo.add(Box.createVerticalStrut(8));
+        pnlMoMo.add(lblTimer);
+        pnlMoMo.add(Box.createVerticalStrut(4));
+        pnlMoMo.add(lblSubQR);
+
+        int[] giayConLai = {60};
+        Timer[] timerHolder = new Timer[1];
+        timerHolder[0] = new Timer(1000, e -> {
+            giayConLai[0]--;
+            if (giayConLai[0] > 0) {
+                lblTimer.setText("⏱ Mã QR có hiệu lực trong: " + String.format("%02d:%02d", giayConLai[0] / 60, giayConLai[0] % 60));
+                if (giayConLai[0] <= 15) {
+                    lblTimer.setForeground(Theme.RED);
+                } else {
+                    lblTimer.setForeground(new Color(0x0284C7));
+                }
+            } else {
+                timerHolder[0].stop();
+                Overlay.dong(host);
+                JOptionPane.showMessageDialog(host,
+                    "Thanh toán không thành công!\nMã QR MoMo đã hết hạn (quá 1 phút).\nVui lòng thực hiện lại giao dịch.",
+                    "Thanh toán thất bại",
+                    JOptionPane.ERROR_MESSAGE);
+            }
+        });
+
         for (int i = 0; i < HoaDonBUS.PHUONG_THUC.length; i++) {
             MethodCard mc = new MethodCard(HoaDonBUS.PHUONG_THUC[i], i == 0);
             int idx = i;
@@ -470,6 +522,25 @@ final class HoaDonPopups {
                     for (MethodCard c : cards) c.setChon(c == mc);
                     chon[0] = mc.ten;
                     hint.setText(huongDan[idx]);
+
+                    if ("MoMo".equalsIgnoreCase(mc.ten)) {
+                        card.setPreferredSize(new Dimension(580, 680));
+                        pnlMoMo.setVisible(true);
+                        xacNhan.setText("Hoàn thành");
+                        giayConLai[0] = 60;
+                        lblTimer.setText("⏱ Mã QR có hiệu lực trong: 01:00");
+                        lblTimer.setForeground(new Color(0x0284C7));
+                        timerHolder[0].restart();
+                    } else {
+                        timerHolder[0].stop();
+                        pnlMoMo.setVisible(false);
+                        card.setPreferredSize(new Dimension(580, 450));
+                        xacNhan.setText("Xác nhận thanh toán");
+                    }
+                    card.revalidate();
+                    card.repaint();
+                    JRootPane rp = SwingUtilities.getRootPane(host);
+                    if (rp != null) rp.repaint();
                 }
             });
             cards.add(mc);
@@ -481,7 +552,7 @@ final class HoaDonPopups {
         body.setOpaque(false);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setBorder(new EmptyBorder(22, 0, 0, 0));
-        for (JComponent c : new JComponent[] {tl, amount, grid, hint}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
+        for (JComponent c : new JComponent[] {tl, amount, grid, hint, pnlMoMo}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
         body.add(tl);
         body.add(Box.createVerticalStrut(4));
         body.add(amount);
@@ -489,18 +560,70 @@ final class HoaDonPopups {
         body.add(grid);
         body.add(Box.createVerticalStrut(10));
         body.add(hint);
+        body.add(pnlMoMo);
         card.add(body, BorderLayout.CENTER);
 
-        RoundedButton dong = secondary("Đóng", 150);
-        RoundedButton xacNhan = primary("Xác nhận thanh toán", 210);
-        Runnable dongPopup = () -> Overlay.dong(host);
+        Runnable dongPopup = () -> {
+            if (timerHolder[0] != null) timerHolder[0].stop();
+            Overlay.dong(host);
+        };
         dong.addActionListener(e -> dongPopup.run());
         xacNhan.addActionListener(e -> {
+            if (timerHolder[0] != null) timerHolder[0].stop();
             Overlay.dong(host);
             onConfirm.accept(chon[0]);
         });
         card.add(buttons(dong, xacNhan), BorderLayout.SOUTH);
         Overlay.hien(host, card, dongPopup);
+    }
+
+    private static Image layAnhQRMomo() {
+        try {
+            java.io.File f = new java.io.File("data/qr_momo.png");
+            if (f.exists()) return javax.imageio.ImageIO.read(f);
+
+            java.net.URL url = HoaDonPopups.class.getResource("qr_momo.png");
+            if (url != null) return javax.imageio.ImageIO.read(url);
+
+            url = HoaDonPopups.class.getResource("/data/qr_momo.png");
+            if (url != null) return javax.imageio.ImageIO.read(url);
+
+            java.io.File f2 = new java.io.File("src/GUI/qr_momo.png");
+            if (f2.exists()) return javax.imageio.ImageIO.read(f2);
+        } catch (Exception ignored) {}
+        return null;
+    }
+
+    private static class QRPanel extends JPanel {
+        private final Image img;
+        QRPanel(Image img) {
+            this.img = img;
+            setOpaque(false);
+            Dimension d = new Dimension(190, 190);
+            setPreferredSize(d);
+            setMinimumSize(d);
+            setMaximumSize(d);
+        }
+
+        @Override protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            int w = getWidth(), h = getHeight();
+            g2.setColor(Color.WHITE);
+            g2.fillRoundRect(0, 0, w, h, 14, 14);
+            g2.setColor(new Color(0xD1D5DB));
+            g2.drawRoundRect(0, 0, w - 1, h - 1, 14, 14);
+            if (img != null) {
+                g2.drawImage(img, 8, 8, w - 16, h - 16, this);
+            } else {
+                g2.setColor(Theme.MUTED);
+                g2.setFont(Theme.font(Font.PLAIN, 12));
+                g2.drawString("Không tìm thấy mã QR", 25, h / 2);
+            }
+            g2.dispose();
+        }
     }
 
     /** Ô chọn phương thức thanh toán; ô đang chọn nền xanh nhạt, viền xanh và dấu ✓. */

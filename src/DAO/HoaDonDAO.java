@@ -172,6 +172,37 @@ public class HoaDonDAO {
                     }
                 }
 
+                // Đảm bảo maKH tồn tại trong bảng KHACHHANG để không vi phạm ràng buộc ngoại FK_HD_KH
+                String maKH = (h.getMaKH() != null && !h.getMaKH().trim().isEmpty()) ? h.getMaKH() : null;
+                if (maKH != null) {
+                    try (PreparedStatement chk = con.prepareStatement("SELECT 1 FROM KHACHHANG WHERE maKH = ?")) {
+                        chk.setString(1, maKH);
+                        try (ResultSet rsChk = chk.executeQuery()) {
+                            if (!rsChk.next()) {
+                                // Không tìm thấy maKH trong CSDL, thử tra cứu theo số điện thoại
+                                String sdtChiSo = h.getSdt() == null ? "" : h.getSdt().replaceAll("\\D", "");
+                                String foundMaKH = null;
+                                if (!sdtChiSo.isEmpty()) {
+                                    try (PreparedStatement chkSdt = con.prepareStatement(
+                                            "SELECT maKH FROM KHACHHANG WHERE REPLACE(soDienThoai, ' ', '') = ?")) {
+                                        chkSdt.setString(1, sdtChiSo);
+                                        try (ResultSet rsSdt = chkSdt.executeQuery()) {
+                                            if (rsSdt.next()) foundMaKH = rsSdt.getString(1);
+                                        }
+                                    }
+                                }
+                                if (foundMaKH == null && h.getTenKH() != null && !h.getTenKH().trim().isEmpty()) {
+                                    try {
+                                        foundMaKH = new KhachHangDAO().them(h.getTenKH().trim(), sdtChiSo, 0, new java.util.ArrayList<>());
+                                    } catch (Exception ignored) {}
+                                }
+                                maKH = foundMaKH;
+                                h.setMaKH(maKH);
+                            }
+                        }
+                    }
+                }
+
                 if (!exists) {
                     String insSql = "INSERT INTO HOADON (maHD, ngayLap, tongTien, maKH, soO, trangThai, "
                             + "phuongThuc, ngayTao, ngayThanhToan, tienGiam, maGiamGia, tenKH, soDienThoai) "
@@ -180,7 +211,7 @@ public class HoaDonDAO {
                         ps.setString(1, h.getMaHD());
                         ps.setDate(2, Date.valueOf(h.getNgayTao().toLocalDate()));
                         ps.setDouble(3, h.canThanhToan());
-                        ps.setString(4, (h.getMaKH() != null && !h.getMaKH().trim().isEmpty()) ? h.getMaKH() : null);
+                        ps.setString(4, maKH);
                         ps.setInt(5, h.getSoO());
                         ps.setString(6, h.getTrangThai());
                         ps.setString(7, h.getPhuongThuc());
@@ -198,7 +229,7 @@ public class HoaDonDAO {
                             + "tenKH = ?, soDienThoai = ? WHERE maHD = ?";
                     try (PreparedStatement ps = con.prepareStatement(upSql)) {
                         ps.setDouble(1, h.canThanhToan());
-                        ps.setString(2, (h.getMaKH() != null && !h.getMaKH().trim().isEmpty()) ? h.getMaKH() : null);
+                        ps.setString(2, maKH);
                         ps.setInt(3, h.getSoO());
                         ps.setString(4, h.getTrangThai());
                         ps.setString(5, h.getPhuongThuc());

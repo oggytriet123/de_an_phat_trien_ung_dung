@@ -13,10 +13,26 @@ public final class ConnectDB {
             "jdbc:sqlserver://localhost:1433;databaseName=PetCare;encrypt=true;trustServerCertificate=true;loginTimeout=3";
     private static final String USER = "sa";
     private static final String PASSWORD = "sapassword";
+    private static volatile String activePassword = null;
 
     private ConnectDB() {}
 
     public static Connection getConnection() throws SQLException {
-        return DriverManager.getConnection(URL, USER, PASSWORD);
+        if (activePassword != null) {
+            return DriverManager.getConnection(URL, USER, activePassword);
+        }
+        try {
+            Connection con = DriverManager.getConnection(URL, USER, PASSWORD);
+            activePassword = PASSWORD;
+            return con;
+        } catch (SQLException e) {
+            try {
+                Connection con = DriverManager.getConnection(URL, USER, "123456");
+                activePassword = "123456";
+                return con;
+            } catch (SQLException ex) {
+                throw e;
+            }
+        }
     }
 }

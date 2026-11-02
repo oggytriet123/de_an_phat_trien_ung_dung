@@ -102,16 +102,30 @@ public class KhachHangBUS {
         return dao.them(hoTen, chiSo(sdt), diem, thuCung == null ? new ArrayList<>() : thuCung);
     }
 
-    /** Thêm khách hàng mới vào bộ nhớ (dùng khi lập hóa đơn không qua CSDL). */
+    /** Thêm khách hàng mới (lưu vào CSDL nếu có kết nối, đồng thời nạp vào bộ nhớ). */
     public KhachHang them(String hoTen, String sdt, String hangThe, String thuCung) {
-        int max = 0;
-        for (KhachHang k : ds) {
+        String so = chiSo(sdt);
+        String maKH = null;
+        try {
+            maKH = dao.them(hoTen, so, 0, new ArrayList<>());
+        } catch (SQLException e) {
+            System.err.println("[KhachHangBUS] Lỗi khi thêm khách vào CSDL: " + e.getMessage());
             try {
-                if (k.getMaKH() != null && k.getMaKH().startsWith("KH"))
-                    max = Math.max(max, Integer.parseInt(k.getMaKH().substring(2)));
+                KhachHang tonTai = dao.timTheoSdt(so);
+                if (tonTai != null) maKH = tonTai.getMaKH();
             } catch (Exception ignored) {}
         }
-        KhachHang kh = new KhachHang(String.format("KH%03d", max + 1), hoTen,
+        if (maKH == null) {
+            int max = 0;
+            for (KhachHang k : ds) {
+                try {
+                    if (k.getMaKH() != null && k.getMaKH().startsWith("KH"))
+                        max = Math.max(max, Integer.parseInt(k.getMaKH().substring(2)));
+                } catch (Exception ignored) {}
+            }
+            maKH = String.format("KH%03d", max + 1);
+        }
+        KhachHang kh = new KhachHang(maKH, hoTen,
                 dinhDangSdt(sdt), hangThe == null ? "Thường" : hangThe,
                 0, (thuCung == null || thuCung.isEmpty()) ? "—" : thuCung, null, 0);
         ds.add(kh);
