@@ -137,7 +137,7 @@ public class DanhMucBenhPanel extends JPanel {
         hienTai = bus.timKiem(txtTim.getText());
         model.setRowCount(0);
         for (DanhMucBenh b : hienTai) model.addRow(new Object[] {b.getMaBenh(), b.getTenBenh(), b.getTrieuChung()});
-        String che = bus.laNgoaiTuyen() ? "  •  Chưa kết nối SQL Server: đang dùng dữ liệu mẫu, thay đổi sẽ không được lưu." : "";
+        String che = bus.laNgoaiTuyen() ? "  •  Chưa kết nối SQL Server: không có dữ liệu, thay đổi sẽ không được lưu." : "";
         lblDem.setText(hienTai.size() + " bệnh" + che);
     }
 

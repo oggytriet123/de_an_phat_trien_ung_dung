@@ -11,7 +11,7 @@ import Entity.DanhMucBenh;
 
 /**
  * Nghiệp vụ Danh mục bệnh: kiểm tra dữ liệu, tìm kiếm, thêm/sửa/xóa.
- * Nếu không kết nối được SQL Server thì chạy ở chế độ ngoại tuyến với dữ liệu mẫu (không lưu).
+ * Dữ liệu nạp từ SQL Server (data/PetCare.sql); mất kết nối thì danh sách rỗng, thay đổi không được lưu.
  */
 public class DanhMucBenhBUS {
     private final DanhMucBenhDAO dao = new DanhMucBenhDAO();
@@ -27,18 +27,7 @@ public class DanhMucBenhBUS {
             ngoaiTuyen = false;
         } catch (SQLException ex) {
             ngoaiTuyen = true;
-            if (ds.isEmpty()) ds.addAll(duLieuMau());
         }
-    }
-
-    private static List<DanhMucBenh> duLieuMau() {
-        List<DanhMucBenh> m = new ArrayList<>();
-        m.add(new DanhMucBenh("BNH001", "Viêm da dị ứng", "Ngứa ngáy dữ dội, rụng lông thành từng mảng, da ửng đỏ, nổi mẩn li ti"));
-        m.add(new DanhMucBenh("BNH002", "Parvo virus", "Nôn ói liên tục, tiêu chảy ra máu tanh nồng, sốt cao, ủ rũ bỏ ăn"));
-        m.add(new DanhMucBenh("BNH003", "Viêm tai ngoài", "Lắc đầu liên tục, gãi tai chảy máu, ống tai tiết dịch màu nâu hôi"));
-        m.add(new DanhMucBenh("BNH004", "Sỏi bàng quang", "Tiểu rắt, tiểu ngắt quãng, có tia máu trong nước tiểu, cong lưng đau"));
-        m.add(new DanhMucBenh("BNH005", "Cảm cúm hô hấp", "Hắt hơi, chảy nước mũi đặc, ho khan, mắt đỏ đổ ghèn, sốt nhẹ"));
-        return m;
     }
 
     public synchronized List<DanhMucBenh> layDanhSach() { return new ArrayList<>(ds); }
