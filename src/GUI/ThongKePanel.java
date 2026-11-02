@@ -350,6 +350,8 @@ public class ThongKePanel extends JPanel {
 
     // ---------------- REFRESH DATA & CẬP NHẬT GIAO DIỆN ----------------
     public void refresh() {
+        // Tải lại dữ liệu mới nhất từ CSDL
+        bus.taiLaiTatCa();
         // Cập nhật style nút Tab
         for (RoundedButton b : tabChips) {
             boolean active = b.getText().equals(currentTab);
@@ -379,24 +381,25 @@ public class ThongKePanel extends JPanel {
         long tongDoanhThu = bus.tinhTongDoanhThu(tuNgay, denNgay);
         long tongChiNhap = bus.tinhTongChiNhap(tuNgay, denNgay);
         long loiNhuan = tongDoanhThu - tongChiNhap;
-        int soPhieuXuat = bus.demSoPhieu(tuNgay, denNgay, "Xuất bán");
-        int soPhieuNhap = bus.demSoPhieu(tuNgay, denNgay, "Nhập mới");
+        int soHoaDon = bus.demSoHoaDon(tuNgay, denNgay);
+        int soPhieuNhap = bus.demSoPhieuNhap(tuNgay, denNgay);
 
         // Cập nhật 4 thẻ KPI
-        card1.update("DOANH THU XUẤT BÁN", Theme.money(tongDoanhThu), soPhieuXuat + " phiếu bán", "card", Theme.BLUE_TEXT, Theme.BLUE_BG);
-        card2.update("CHI PHÍ NHẬP KHO", Theme.money(tongChiNhap), soPhieuNhap + " phiếu nhập", "box", Theme.MUTED, Theme.BADGE_GRAY_BG);
+        card1.update("DOANH THU BÁN & DỊCH VỤ", Theme.money(tongDoanhThu), soHoaDon + " hóa đơn đã thu", "card", Theme.BLUE_TEXT, Theme.BLUE_BG);
+        card2.update("CHI PHÍ NHẬP HÀNG KHO", Theme.money(tongChiNhap), soPhieuNhap + " phiếu nhập mới", "box", Theme.MUTED, Theme.BADGE_GRAY_BG);
 
         double tySuat = tongDoanhThu > 0 ? (loiNhuan * 100.0 / tongDoanhThu) : 0;
         Color lnColor = loiNhuan >= 0 ? Theme.GREEN : Theme.RED;
         Color lnBg = loiNhuan >= 0 ? Theme.GREEN_BG : Theme.RED_BG;
-        card3.update("LỢI NHUẬN GỘP", Theme.money(loiNhuan), String.format("Tỷ suất %.1f%%", tySuat), "bar-chart", lnColor, lnBg);
+        String tySuatStr = (loiNhuan >= 0 ? "+" : "") + String.format("%.1f%%", tySuat);
+        card3.update("LỢI NHUẬN GỘP", Theme.money(loiNhuan), "Tỷ suất " + tySuatStr, "bar-chart", lnColor, lnBg);
 
-        int tongPhieu = bus.layDanhSachPhieu(tuNgay, denNgay, null).size();
-        card4.update("TỔNG GIAO DỊCH", tongPhieu + " phiếu", "Nhập, xuất & hủy", "sync", Theme.ORANGE, Theme.ORANGE_BG);
+        int tongGiaoDich = soHoaDon + soPhieuNhap;
+        card4.update("TỔNG GIAO DỊCH", tongGiaoDich + " giao dịch", "Thu chi dòng tiền", "sync", Theme.ORANGE, Theme.ORANGE_BG);
 
         // Biểu đồ cột: Doanh thu vs Chi phí theo ngày
         barChart.clearData();
-        barChart.setTitle("Doanh thu xuất bán & Chi phí nhập kho theo ngày");
+        barChart.setTitle("Doanh thu bán hàng & Chi phí nhập kho theo ngày (VNĐ)");
         Map<LocalDate, long[]> daily = bus.layDoanhThuTheoNgay(tuNgay, denNgay);
 
         List<String> cats = new ArrayList<>();
@@ -413,29 +416,24 @@ public class ThongKePanel extends JPanel {
         barChart.addSeries("Doanh thu", Theme.ACCENT, valDoanhThu);
         barChart.addSeries("Chi phí", Theme.ORANGE, valChiNhap);
 
-        // Biểu đồ Donut: Cơ cấu loại phiếu
+        // Biểu đồ Donut: Cơ cấu nguồn thu dòng tiền
         donutChart.clearData();
-        donutChart.setTitle("Cơ cấu giao dịch phiếu kho");
-        Map<String, Integer> coCau = bus.layCoCauLoaiPhieu(tuNgay, denNgay);
-        donutChart.addSlice("Xuất bán", coCau.getOrDefault("Xuất bán", 0), Theme.ACCENT);
-        donutChart.addSlice("Nhập mới", coCau.getOrDefault("Nhập mới", 0), Theme.ORANGE);
-        donutChart.addSlice("Xuất hủy", coCau.getOrDefault("Xuất hủy", 0), Theme.RED);
-        donutChart.setCenterText(tongPhieu + "", "Phiếu");
-
-        // Dữ liệu bảng chi tiết: Danh sách phiếu kho
-        String[] cols = {"MÃ PHIẾU", "LOẠI PHIẾU", "NGÀY LẬP", "NGƯỜI THỰC HIỆN", "ĐỐI TÁC", "GIÁ TRỊ", "TRẠNG THÁI"};
-        allTableData.clear();
-        for (PhieuKho pk : bus.layDanhSachPhieu(tuNgay, denNgay, null)) {
-            allTableData.add(new Object[]{
-                    pk.getMaPhieu(),
-                    pk.getLoaiPhieu(),
-                    pk.getNgayLap() + " " + pk.getGioLap(),
-                    pk.getNguoiThucHien(),
-                    pk.getDoiTac(),
-                    NUM_FMT.format(pk.getTongGiaTri()) + " đ",
-                    pk.getTrangThai()
-            });
+        donutChart.setTitle("Cơ cấu Nguồn thu theo Dịch vụ & Hàng hóa");
+        Map<String, Long> nguonThu = bus.layCoCauNguonThu(tuNgay, denNgay);
+        Color[] colors = {Theme.ACCENT, Theme.ORANGE, Theme.GREEN, new Color(0x8B5CF6)};
+        int ci = 0;
+        for (Map.Entry<String, Long> e : nguonThu.entrySet()) {
+            if (e.getValue() > 0) {
+                donutChart.addSlice(e.getKey(), (int) (e.getValue() / 1000), colors[ci % colors.length]);
+            }
+            ci++;
         }
+        donutChart.setCenterText(Theme.money(tongDoanhThu), "Doanh thu");
+
+        // Dữ liệu bảng chi tiết: Toàn bộ giao dịch dòng tiền (Hóa đơn thu tiền & Phiếu nhập kho)
+        String[] cols = {"MÃ GIAO DỊCH", "LOẠI GIAO DỊCH", "NGÀY LẬP", "NGƯỜI THỰC HIỆN", "ĐỐI TÁC / KHÁCH HÀNG", "GIÁ TRỊ", "TRẠNG THÁI"};
+        allTableData.clear();
+        allTableData.addAll(bus.layBangKeDongTien(tuNgay, denNgay));
         tableModel.setColumns(cols);
     }
 
@@ -474,7 +472,7 @@ public class ThongKePanel extends JPanel {
         // Bảng chi tiết: Danh sách sản phẩm sắp hết hàng cần nhập bổ sung
         String[] cols = {"MÃ SKU", "TÊN SẢN PHẨM", "QUY CÁCH", "DANH MỤC", "ĐƠN VỊ", "ĐƠN GIÁ", "TỒN KHO", "TRẠNG THÁI"};
         allTableData.clear();
-        for (SanPham sp : bus.layDanhSachSapHet()) {
+        for (SanPham sp : bus.layDanhSachTonKho()) {
             allTableData.add(new Object[]{
                     sp.getMaSKU(),
                     sp.getTenSP(),
@@ -516,10 +514,9 @@ public class ThongKePanel extends JPanel {
         donutChart.clearData();
         donutChart.setTitle("Cơ cấu Hạng thẻ Khách hàng thân thiết");
         Map<String, Integer> hangThe = bus.layCoCauHangThe();
-        donutChart.addSlice("VIP", hangThe.getOrDefault("VIP", 0), new Color(0xE11D48));
-        donutChart.addSlice("Vàng", hangThe.getOrDefault("Vàng", 0), new Color(0xF59E0B));
-        donutChart.addSlice("Bạc", hangThe.getOrDefault("Bạc", 0), new Color(0x64748B));
-        donutChart.addSlice("Thường", hangThe.getOrDefault("Thường", 0), new Color(0x94A3B8));
+                donutChart.addSlice("VIP", hangThe.getOrDefault("VIP", 0), new Color(0x8B5CF6));
+        donutChart.addSlice("Thân thiết", hangThe.getOrDefault("Thân thiết", 0), new Color(0xF59E0B));
+        donutChart.addSlice("Thường", hangThe.getOrDefault("Thường", 0), new Color(0x64748B));
         donutChart.setCenterText(tongKH + "", "Khách");
 
         // Bảng chi tiết: Top khách hàng chi tiêu nhiều nhất

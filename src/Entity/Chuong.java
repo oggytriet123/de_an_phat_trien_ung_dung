@@ -9,11 +9,12 @@ public class Chuong {
     private String maChuong;      // Ví dụ: C-01, C-02, VIP-01
     private int soChuong;         // Số thứ tự 1, 2, 3...
     private String tenChuong;     // Tên hiển thị
-    private String size;          // "Nhỏ (<5kg)", "Vừa (5-15kg)", "Lớn (>15kg)", "VIP Suite"
-    private String khuVuc;        // "Khu Mèo", "Khu Chó Nhỏ", "Khu Chó Lớn", "Khu VIP"
+    private String size;          // "Nhỏ (≤ 5kg)", "Vừa (5-15kg)", "Lớn (15-30kg)", "VIP Suite (≤ 50kg)"
+    private String khuVuc;        // "Khu Mèo", "Khu Chó Nhỏ", "Khu Chó Lớn", "Khu VIP", "Khu Loài Khác"
     private String trangThai;     // "Trống", "Đã đặt", "Đang lưu trú", "Bảo trì"
     private double giaTheoNgay;   // Đơn giá lưu trú 1 ngày (VNĐ)
     private boolean isVip;        // Lồng VIP có điều hòa, camera 24/7
+    private double canNangToiDa;  // Tải trọng tối đa của chuồng (kg)
 
     // Thông tin thú cưng và khách hàng đang lưu trú hoặc đặt trước (null nếu trống)
     private String tenPet;
@@ -77,6 +78,9 @@ public class Chuong {
 
     public boolean isVip() { return isVip; }
     public void setVip(boolean vip) { isVip = vip; }
+
+    public double getCanNangToiDa() { return canNangToiDa; }
+    public void setCanNangToiDa(double canNangToiDa) { this.canNangToiDa = canNangToiDa; }
 
     public String getTenPet() { return tenPet; }
     public void setTenPet(String tenPet) { this.tenPet = tenPet; }

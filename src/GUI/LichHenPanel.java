@@ -635,11 +635,75 @@ public class LichHenPanel extends JPanel {
     // ---------------- Thêm / Cập nhật ----------------
     private void moForm(LichHen edit) {
         boolean isEdit = edit != null;
-        JDialog d = newDialog(isEdit ? "Cập nhật lịch hẹn" : "Thêm lịch hẹn");
+        JDialog d = newDialog(isEdit ? "Cáº­p nháº­t lá»‹ch háº¹n" : "ThÃªm lá»‹ch háº¹n");
 
-        JTextField tfKh = textField(isEdit ? edit.khachHang : "");
+        // Táº£i danh sÃ¡ch khÃ¡ch hÃ ng vÃ  thÃº cÆ°ng tá»« CSDL (nhÆ° á»Ÿ panel KhÃ¡ch HÃ ng)
+        List<Entity.KhachHang> dsKh = new ArrayList<>();
+        List<Entity.ThuCung> dsTc = new ArrayList<>();
+        try {
+            dsKh = new DAO.KhachHangDAO().layTatCa();
+            dsTc = new DAO.ThuCungDAO().layTatCa();
+        } catch (Exception ignored) {}
+
+        JComboBox<String> cbKh = new JComboBox<>();
+        cbKh.setFont(Theme.font(Font.PLAIN, 13));
+        cbKh.setBackground(Color.WHITE);
+        cbKh.setPreferredSize(new Dimension(0, 36));
+        cbKh.setEditable(true);
+
         JTextField tfSdt = textField(isEdit ? edit.sdt : "");
-        JTextField tfTc = textField(isEdit ? edit.thuCung : "");
+
+        JComboBox<String> cbTc = new JComboBox<>();
+        cbTc.setFont(Theme.font(Font.PLAIN, 13));
+        cbTc.setBackground(Color.WHITE);
+        cbTc.setPreferredSize(new Dimension(0, 36));
+        cbTc.setEditable(true);
+
+        if (isEdit) {
+            cbKh.addItem(edit.khachHang);
+            cbTc.addItem(edit.thuCung);
+        } else {
+            cbKh.addItem("-- Chá»n khÃ¡ch hÃ ng cÃ³ sáºµn --");
+        }
+
+        for (Entity.KhachHang kh : dsKh) {
+            cbKh.addItem(kh.getHoTen() + " (" + kh.getSoDienThoai() + ")");
+        }
+
+        final List<Entity.KhachHang> finalKhList = dsKh;
+        final List<Entity.ThuCung> finalTcList = dsTc;
+
+        cbKh.addActionListener(e -> {
+            int idx = cbKh.getSelectedIndex();
+            int offset = 1;
+            if (idx >= offset && idx - offset < finalKhList.size()) {
+                Entity.KhachHang khChon = finalKhList.get(idx - offset);
+                tfSdt.setText(khChon.getSoDienThoai() != null ? khChon.getSoDienThoai() : "");
+
+                cbTc.removeAllItems();
+                List<Entity.ThuCung> petsCuaKhach = new ArrayList<>();
+                for (Entity.ThuCung t : finalTcList) {
+                    if (khChon.getMaKH() != null && khChon.getMaKH().equalsIgnoreCase(t.getMaKH())) {
+                        petsCuaKhach.add(t);
+                    }
+                }
+                if (!petsCuaKhach.isEmpty()) {
+                    for (Entity.ThuCung t : petsCuaKhach) {
+                        String petLabel = t.getTen() + (t.getLoai() != null && !t.getLoai().isEmpty() ? " (" + t.getLoai() + ")" : "");
+                        cbTc.addItem(petLabel);
+                    }
+                    cbTc.setSelectedIndex(0);
+                } else if (khChon.getThuCung() != null && !khChon.getThuCung().isEmpty() && !khChon.getThuCung().equals("â€”")) {
+                    for (String p : khChon.getThuCung().split(",")) {
+                        cbTc.addItem(p.trim());
+                    }
+                    cbTc.setSelectedIndex(0);
+                } else {
+                    cbTc.addItem("Nháº­p tÃªn thÃº cÆ°ng...");
+                }
+            }
+        });
+
         JComboBox<String> cbDv = combo(LichHenData.DICH_VU, isEdit ? edit.dichVu : null);
         JComboBox<String> cbBs = combo(LichHenData.BAC_SI, isEdit ? edit.bacSi : null);
         JComboBox<String> cbGio = combo(LichHenData.GIO, isEdit ? edit.gio.format(LichHenData.TIME_FMT) : "09:00");
@@ -655,33 +719,53 @@ public class LichHenPanel extends JPanel {
 
         JPanel body = new JPanel(new GridBagLayout());
         body.setOpaque(false);
-        addField(body, 0, 0, 1, "Khách hàng *", boxed(tfKh));
-        addField(body, 1, 0, 1, "Số điện thoại *", boxed(tfSdt));
-        addField(body, 0, 1, 1, "Thú cưng *", boxed(tfTc));
-        addField(body, 1, 1, 1, "Dịch vụ", cbDv);
-        addField(body, 0, 2, 1, "Bác sĩ phụ trách", cbBs);
-        addField(body, 1, 2, 1, "Ngày hẹn", dbNgay);
-        addField(body, 0, 3, 1, "Giờ hẹn", cbGio);
-        if (isEdit) addField(body, 1, 3, 1, "Trạng thái", cbTt);
+        addField(body, 0, 0, 1, "KhÃ¡ch hÃ ng *", cbKh);
+        addField(body, 1, 0, 1, "Sá»‘ Ä‘iá»‡n thoáº¡i *", boxed(tfSdt));
+        addField(body, 0, 1, 1, "ThÃº cÆ°ng *", cbTc);
+        addField(body, 1, 1, 1, "Dá»‹ch vá»¥", cbDv);
+        addField(body, 0, 2, 1, "BÃ¡c sÄ© phá»¥ trÃ¡ch", cbBs);
+        addField(body, 1, 2, 1, "NgÃ y háº¹n", dbNgay);
+        addField(body, 0, 3, 1, "Giá» háº¹n", cbGio);
+        if (isEdit) addField(body, 1, 3, 1, "Tráº¡ng thÃ¡i", cbTt);
         RoundedPanel noteBox = new RoundedPanel(8, Color.WHITE, Theme.BORDER);
         noteBox.setLayout(new BorderLayout());
         noteBox.add(taGhiChu);
-        addField(body, 0, 4, 2, "Ghi chú", noteBox);
+        addField(body, 0, 4, 2, "Ghi chÃº", noteBox);
 
         JLabel err = errorLabel();
-        RoundedButton save = primaryButton(isEdit ? "Lưu thay đổi" : "Thêm lịch hẹn");
+        RoundedButton save = primaryButton(isEdit ? "LÆ°u thay Ä‘á»•i" : "ThÃªm lá»‹ch háº¹n");
         save.addActionListener(e -> {
-            String kh = tfKh.getText().trim(), sdt = tfSdt.getText().trim(), tc = tfTc.getText().trim();
-            if (kh.isEmpty() || sdt.isEmpty() || tc.isEmpty()) { err.setText("Vui lòng nhập đủ khách hàng, số điện thoại và thú cưng."); return; }
-            if (!sdt.matches("\\d{9,11}")) { err.setText("Số điện thoại phải gồm 9–11 chữ số."); return; }
+            Object khObj = cbKh.getSelectedItem();
+            String kh = (khObj != null) ? khObj.toString().trim() : "";
+            if (kh.contains("(") && kh.endsWith(")")) {
+                kh = kh.substring(0, kh.lastIndexOf('(')).trim();
+            }
+            if (kh.equals("-- Chá»n khÃ¡ch hÃ ng cÃ³ sáºµn --")) kh = "";
+
+            String sdt = tfSdt.getText().trim();
+            Object tcObj = cbTc.getSelectedItem();
+            String tc = (tcObj != null) ? tcObj.toString().trim() : "";
+            if (tc.equals("Nháº­p tÃªn thÃº cÆ°ng...")) tc = "";
+
+            if (kh.isEmpty() || sdt.isEmpty() || tc.isEmpty()) {
+                err.setText("Vui lÃ²ng chá»n hoáº·c nháº­p Ä‘á»§ khÃ¡ch hÃ ng, sá»‘ Ä‘iá»‡n thoáº¡i vÃ  thÃº cÆ°ng.");
+                return;
+            }
+            if (!sdt.replaceAll("\\s", "").matches("\\d{9,11}")) {
+                err.setText("Sá»‘ Ä‘iá»‡n thoáº¡i pháº£i gá»“m 9â€“11 chá»¯ sá»‘.");
+                return;
+            }
             LocalDate ngay = dbNgay.value;
-            if (!isEdit && ngay.isBefore(LocalDate.now())) { err.setText("Ngày hẹn không được ở quá khứ."); return; }
+            if (!isEdit && ngay.isBefore(LocalDate.now())) {
+                err.setText("NgÃ y háº¹n khÃ´ng Ä‘Æ°á»£c á»Ÿ quÃ¡ khá»©.");
+                return;
+            }
             LocalTime gio = LocalTime.parse((String) cbGio.getSelectedItem());
             String bs = (String) cbBs.getSelectedItem();
             String tt = isEdit ? (String) cbTt.getSelectedItem() : LichHenData.CHO_XAC_NHAN;
             boolean conHieuLuc = !LichHenData.HOAN_TAT.equals(tt) && !LichHenData.DA_HUY.equals(tt);
             if (conHieuLuc && LichHenData.biTrung(bs, ngay, gio, isEdit ? edit.ma : null)) {
-                err.setText(bs + " đã có lịch lúc " + gio.format(LichHenData.TIME_FMT) + " ngày "
+                err.setText(bs + " Ä‘Ã£ cÃ³ lá»‹ch lÃºc " + gio.format(LichHenData.TIME_FMT) + " ngÃ y "
                         + ngay.format(CalendarPicker.DATE_FMT) + ".");
                 return;
             }
@@ -698,7 +782,7 @@ public class LichHenPanel extends JPanel {
             d.dispose();
             if (isEdit) LichHenData.capNhat(l); else LichHenData.them(l);
         });
-        RoundedButton cancel = secondaryButton("Hủy bỏ");
+        RoundedButton cancel = secondaryButton("Há»§y bá»");
         cancel.addActionListener(e -> d.dispose());
         showDialog(d, body, cancel, save, err);
     }

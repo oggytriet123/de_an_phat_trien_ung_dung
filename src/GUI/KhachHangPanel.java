@@ -36,7 +36,7 @@ import Entity.ThuCung;
 public class KhachHangPanel extends JPanel {
     private static final int PAGE_SIZE = 7;
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final String[] HANG = {"Tất cả", "VIP", "Vàng", "Bạc", "Thường"};
+    private static final String[] HANG = {"Tất cả", "VIP", "Thân thiết", "Thường"};
     private static final String[] SORTS = {"Điểm cao nhất", "Chi tiêu cao nhất", "Giao dịch gần nhất", "Tên A-Z"};
 
     private final KhachHangBUS bus = new KhachHangBUS();
@@ -57,8 +57,9 @@ public class KhachHangPanel extends JPanel {
     };
     private final JTable table = new JTable(tableModel);
     private final PlaceholderField txtTim = new PlaceholderField("Tìm theo tên, số điện thoại, mã thẻ...");
+    private final JComboBox<String> cboHangThe = new JComboBox<>(new String[]{"Tất cả hạng", "VIP", "Thân thiết", "Thường"});
+    private final JComboBox<String> cboSapXep = new JComboBox<>(SORTS);
     private final List<RoundedButton> chips = new ArrayList<>();
-    private final RoundedButton btnSort = new RoundedButton("", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10);
     private final JLabel lblFooter = new JLabel();
     private final JPanel pnlPages = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
 
@@ -83,6 +84,19 @@ public class KhachHangPanel extends JPanel {
                 refresh();
             }
         });
+    }
+
+    public void focusTimKiem() {
+        SwingUtilities.invokeLater(() -> {
+            txtTim.requestFocusInWindow();
+            txtTim.selectAll();
+        });
+    }
+
+    /** Làm mới dữ liệu – gọi khi chuyển sang panel này từ menu Tìm Kiếm. */
+    public void lamMoi() {
+        taiDuLieu();
+        refresh();
     }
 
     // ---------------- Tiêu đề + nút chức năng (Thêm, Sửa, Xóa, Xem) ----------------
@@ -244,7 +258,7 @@ public class KhachHangPanel extends JPanel {
 
         RoundedPanel search = new RoundedPanel(10, Color.WHITE, Theme.BORDER);
         search.setLayout(new BorderLayout());
-        search.setPreferredSize(new Dimension(300, 36));
+        search.setPreferredSize(new Dimension(280, 36));
         JLabel ic = new JLabel(Icons.of("search", 16, new Color(0x8795A0)));
         ic.setBorder(new EmptyBorder(0, 10, 0, 4));
         txtTim.setBorder(new EmptyBorder(0, 4, 0, 8));
@@ -262,30 +276,44 @@ public class KhachHangPanel extends JPanel {
         JPanel left = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         left.setOpaque(false);
         left.add(search);
+
+        // Combobox lọc hạng thẻ
+        styleCombo(cboHangThe);
+        cboHangThe.setPreferredSize(new Dimension(140, 36));
+        cboHangThe.addActionListener(e -> {
+            String sel = (String) cboHangThe.getSelectedItem();
+            hangLoc = (sel == null || sel.equals("Tất cả hạng")) ? "Tất cả" : sel;
+            trang = 1;
+            refresh();
+        });
+        left.add(cboHangThe);
+
         for (String h : HANG) {
             RoundedButton chip = new RoundedButton(h, Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(15, 8);
             chip.setFont(Theme.font(Font.PLAIN, 13));
             chip.setPreferredSize(new Dimension(chip.getPreferredSize().width, 36));
-            chip.addActionListener(e -> { hangLoc = h; trang = 1; refresh(); });
+            chip.addActionListener(e -> {
+                hangLoc = h;
+                cboHangThe.setSelectedItem(h.equals("Tất cả") ? "Tất cả hạng" : h);
+                trang = 1;
+                refresh();
+            });
             chips.add(chip);
             left.add(chip);
         }
 
-        btnSort.setFont(Theme.font(Font.PLAIN, 13));
-        btnSort.pad(16, 8);
-        btnSort.addActionListener(e -> {
-            JPopupMenu m = new JPopupMenu();
-            for (String s : SORTS) {
-                JMenuItem it = new JMenuItem(s);
-                it.setFont(Theme.font(Font.PLAIN, 13));
-                it.addActionListener(ev -> { sapXep = s; trang = 1; refresh(); });
-                m.add(it);
-            }
-            m.show(btnSort, 0, btnSort.getHeight() + 2);
+        // Combobox sắp xếp
+        styleCombo(cboSapXep);
+        cboSapXep.setPreferredSize(new Dimension(170, 36));
+        cboSapXep.addActionListener(e -> {
+            sapXep = (String) cboSapXep.getSelectedItem();
+            trang = 1;
+            refresh();
         });
+
         JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
         right.setOpaque(false);
-        right.add(btnSort);
+        right.add(cboSapXep);
 
         bar.add(left, BorderLayout.WEST);
         bar.add(right, BorderLayout.EAST);
@@ -299,7 +327,23 @@ public class KhachHangPanel extends JPanel {
         table.getColumnModel().getColumn(0).setPreferredWidth(80);
         table.getColumnModel().getColumn(0).setCellRenderer(Theme.cellCenter());
         table.getColumnModel().getColumn(2).setCellRenderer(Theme.cellCenter());
-        table.getColumnModel().getColumn(3).setCellRenderer(Theme.cellCenter());
+        table.getColumnModel().getColumn(3).setCellRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object val, boolean isSel, boolean hasFoc, int row, int col) {
+                JLabel l = (JLabel) super.getTableCellRendererComponent(t, val, isSel, hasFoc, row, col);
+                l.setHorizontalAlignment(SwingConstants.CENTER);
+                String h = String.valueOf(val).trim();
+                l.setFont(Theme.font(Font.BOLD, 12));
+                if ("VIP".equalsIgnoreCase(h)) {
+                    l.setForeground(new Color(0x7C3AED));
+                } else if ("Thân thiết".equalsIgnoreCase(h) || h.toLowerCase().contains("thiet")) {
+                    l.setForeground(new Color(0xD97706));
+                } else {
+                    l.setForeground(new Color(0x64748B));
+                }
+                return l;
+            }
+        });
         table.getColumnModel().getColumn(4).setCellRenderer(Theme.cellRight());
         table.getColumnModel().getColumn(6).setCellRenderer(Theme.cellCenter());
         table.getColumnModel().getColumn(7).setCellRenderer(Theme.cellRight());
@@ -333,7 +377,7 @@ public class KhachHangPanel extends JPanel {
         String kw = norm(txtTim.getText().trim());
         List<KhachHang> list = new ArrayList<>();
         for (KhachHang k : bus.layDanhSach()) {
-            if (!hangLoc.equals("Tất cả") && !k.getHangThe().equals(hangLoc)) continue;
+            if (!hangLoc.equals("Tất cả") && !k.getHangThe().equalsIgnoreCase(hangLoc)) continue;
             if (!kw.isEmpty()) {
                 String hay = norm(k.getHoTen()) + "|" + KhachHangBUS.chiSo(k.getSoDienThoai()) + "|" + norm(k.getMaKH());
                 if (!hay.contains(kw) && !hay.contains(KhachHangBUS.chiSo(kw).isEmpty() ? "\u0000" : KhachHangBUS.chiSo(kw))) continue;
@@ -368,10 +412,9 @@ public class KhachHangPanel extends JPanel {
                    : bus.layDanhSach().isEmpty() ? "Chưa có khách hàng nào — bấm \"+ Thêm khách hàng\" để bắt đầu"
                    : "Không tìm thấy khách hàng phù hợp")
                 : "Hiển thị " + (from + 1) + "–" + to + " trong " + Theme.number(filtered.size()) + " khách hàng");
-        btnSort.setText("Sắp xếp: " + sapXep);
-        btnSort.setPreferredSize(null);
+
         for (RoundedButton c : chips) {
-            boolean on = c.getText().equals(hangLoc);
+            boolean on = c.getText().equalsIgnoreCase(hangLoc);
             if (on) c.style(Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null);
             else c.style(Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER);
         }
@@ -452,7 +495,8 @@ public class KhachHangPanel extends JPanel {
         for (JTextField t : new JTextField[] {r.tfTen, r.tfCan}) {
             t.setBorder(new CompoundBorder(new LineBorder(new Color(0xD5DCE1)), new EmptyBorder(0, 8, 0, 8)));
         }
-        RoundedButton del = new RoundedButton("✕", Color.WHITE, new Color(0xFBE9E9), Theme.RED, Theme.BORDER, 8);
+        RoundedButton del = new RoundedButton("×", Color.WHITE, new Color(0xFBE9E9), Theme.RED, Theme.BORDER, 8);
+        del.setFont(new Font("Arial", Font.PLAIN, 20));
         r.panel.setBackground(Color.WHITE);
         GridBagConstraints c = new GridBagConstraints();
         c.gridy = 0;
@@ -520,7 +564,7 @@ public class KhachHangPanel extends JPanel {
 
         JPanel petHead = new JPanel(new BorderLayout());
         petHead.setBackground(Color.WHITE);
-        petHead.add(new JLabel("Thú cưng (tên · loài · cân nặng kg)"), BorderLayout.WEST);
+        petHead.add(new JLabel("Thú cưng [tên · loài · cân nặng kg]"), BorderLayout.WEST);
         petHead.add(addPet, BorderLayout.EAST);
         c.gridy = y++; c.insets = new Insets(0, 0, 6, 0); form.add(petHead, c);
         c.gridy = y++; c.insets = new Insets(0, 0, 8, 0); form.add(petScroll, c);
@@ -692,6 +736,20 @@ public class KhachHangPanel extends JPanel {
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "Không ghi được file: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private static void styleCombo(JComboBox<?> c) {
+        c.setFont(Theme.font(Font.PLAIN, 13));
+        c.setBackground(Color.WHITE);
+        c.setMaximumRowCount(8);
+        c.setRenderer(new DefaultListCellRenderer() {
+            @Override public Component getListCellRendererComponent(JList<?> l, Object v, int i, boolean sel, boolean foc) {
+                JLabel lb = (JLabel) super.getListCellRendererComponent(l, v, i, sel, foc);
+                lb.setFont(Theme.font(Font.PLAIN, 13));
+                lb.setBorder(new EmptyBorder(5, 8, 5, 8));
+                return lb;
+            }
+        });
     }
 
     private static String csv(String s) { return "\"" + (s == null ? "" : s.replace("\"", "\"\"")) + "\""; }

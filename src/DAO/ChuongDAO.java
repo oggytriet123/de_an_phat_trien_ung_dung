@@ -25,7 +25,64 @@ import Entity.PhieuDatChuong;
 public class ChuongDAO {
 
     public ChuongDAO() {
-        // Đảm bảo dữ liệu bảng được cập nhật
+        damBaoCauTrucBang();
+    }
+
+    /**
+     * Tự động bổ sung các cột cần thiết cho bảng PHIEU_LUUTRU và CHITIET_DICHVU_CHUONG nếu chưa có.
+     */
+    public void damBaoCauTrucBang() {
+        try (Connection con = ConnectDB.getConnection(); Statement st = con.createStatement()) {
+            st.executeUpdate("IF COL_LENGTH('CHUONGLUUTRU', 'khuVuc') IS NULL "
+                    + "ALTER TABLE CHUONGLUUTRU ADD khuVuc NVARCHAR(50) NULL");
+            st.executeUpdate("IF COL_LENGTH('CHUONGLUUTRU', 'canNangToiDa') IS NULL "
+                    + "ALTER TABLE CHUONGLUUTRU ADD canNangToiDa FLOAT NULL");
+            st.executeUpdate("IF COL_LENGTH('CHUONGLUUTRU', 'tenChuong') IS NULL "
+                    + "ALTER TABLE CHUONGLUUTRU ADD tenChuong NVARCHAR(100) NULL");
+            st.executeUpdate("UPDATE CHUONGLUUTRU SET khuVuc = N'Khu Loài Khác' WHERE cageID IN ('LK-101','LK-102','LK-103','LK-104') AND (khuVuc IS NULL OR khuVuc NOT LIKE N'%Loài%')");
+            st.executeUpdate("UPDATE CHUONGLUUTRU SET khuVuc = N'Khu Mèo' WHERE cageID LIKE 'M-%' AND (khuVuc IS NULL OR khuVuc = '')");
+            st.executeUpdate("UPDATE CHUONGLUUTRU SET khuVuc = N'Khu Chó Nhỏ' WHERE cageID LIKE 'CN-%' AND (khuVuc IS NULL OR khuVuc = '')");
+            st.executeUpdate("UPDATE CHUONGLUUTRU SET khuVuc = N'Khu Chó Lớn' WHERE cageID LIKE 'CL-%' AND (khuVuc IS NULL OR khuVuc = '')");
+            st.executeUpdate("UPDATE CHUONGLUUTRU SET khuVuc = N'Khu VIP' WHERE cageID LIKE 'VIP%' AND (khuVuc IS NULL OR khuVuc = '')");
+            st.executeUpdate("UPDATE CHUONGLUUTRU SET canNangToiDa = 5.0 WHERE (size LIKE N'%5kg%' OR cageID LIKE 'M-%' OR cageID LIKE 'LK-101' OR cageID LIKE 'LK-102') AND (canNangToiDa IS NULL OR canNangToiDa = 0)");
+            st.executeUpdate("UPDATE CHUONGLUUTRU SET canNangToiDa = 15.0 WHERE (size LIKE N'%15kg%' OR cageID LIKE 'CN-%' OR cageID LIKE 'LK-103' OR cageID LIKE 'LK-104') AND (canNangToiDa IS NULL OR canNangToiDa = 0)");
+            st.executeUpdate("UPDATE CHUONGLUUTRU SET canNangToiDa = 30.0 WHERE (size LIKE N'%30kg%' OR cageID LIKE 'CL-%') AND (canNangToiDa IS NULL OR canNangToiDa = 0)");
+            st.executeUpdate("UPDATE CHUONGLUUTRU SET canNangToiDa = 50.0 WHERE (size LIKE N'%50kg%' OR cageID LIKE 'VIP%') AND (canNangToiDa IS NULL OR canNangToiDa = 0)");
+            st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'trangThai') IS NULL "
+                    + "ALTER TABLE PHIEU_LUUTRU ADD trangThai NVARCHAR(50) DEFAULT N'Đang lưu trú'");
+            st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'ngayVao') IS NULL "
+                    + "ALTER TABLE PHIEU_LUUTRU ADD ngayVao DATETIME NULL");
+            st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'ngayRaDuKien') IS NULL "
+                    + "ALTER TABLE PHIEU_LUUTRU ADD ngayRaDuKien DATETIME NULL");
+            st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'ngayRaThucTe') IS NULL "
+                    + "ALTER TABLE PHIEU_LUUTRU ADD ngayRaThucTe DATETIME NULL");
+            st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'tenPet') IS NULL "
+                    + "ALTER TABLE PHIEU_LUUTRU ADD tenPet NVARCHAR(100) NULL");
+            st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'loaiPet') IS NULL "
+                    + "ALTER TABLE PHIEU_LUUTRU ADD loaiPet NVARCHAR(50) NULL");
+            st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'tenKhach') IS NULL "
+                    + "ALTER TABLE PHIEU_LUUTRU ADD tenKhach NVARCHAR(100) NULL");
+            st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'sdtKhach') IS NULL "
+                    + "ALTER TABLE PHIEU_LUUTRU ADD sdtKhach NVARCHAR(20) NULL");
+            st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'tienCoc') IS NULL "
+                    + "ALTER TABLE PHIEU_LUUTRU ADD tienCoc FLOAT DEFAULT 0");
+            st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'ghiChu') IS NULL "
+                    + "ALTER TABLE PHIEU_LUUTRU ADD ghiChu NVARCHAR(500) NULL");
+            st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'maKH') IS NULL "
+                    + "ALTER TABLE PHIEU_LUUTRU ADD maKH NVARCHAR(20) NULL");
+
+            try { st.executeUpdate("ALTER TABLE PHIEU_LUUTRU ALTER COLUMN ngayBatDau DATE NULL"); } catch (Exception ignored) {}
+            try { st.executeUpdate("ALTER TABLE PHIEU_LUUTRU ALTER COLUMN ngayKetThuc DATE NULL"); } catch (Exception ignored) {}
+            try { st.executeUpdate("ALTER TABLE PHIEU_LUUTRU ALTER COLUMN petID NVARCHAR(20) NULL"); } catch (Exception ignored) {}
+
+            st.executeUpdate("IF COL_LENGTH('CHITIET_DICHVU_CHUONG', 'tenDV') IS NULL "
+                    + "ALTER TABLE CHITIET_DICHVU_CHUONG ADD tenDV NVARCHAR(100) NULL");
+            st.executeUpdate("IF COL_LENGTH('CHITIET_DICHVU_CHUONG', 'loai') IS NULL "
+                    + "ALTER TABLE CHITIET_DICHVU_CHUONG ADD loai NVARCHAR(50) NULL");
+            st.executeUpdate("IF COL_LENGTH('CHITIET_DICHVU_CHUONG', 'thoiGian') IS NULL "
+                    + "ALTER TABLE CHITIET_DICHVU_CHUONG ADD thoiGian DATETIME DEFAULT GETDATE()");
+        } catch (Exception ignored) {
+        }
     }
 
     /**
@@ -45,13 +102,22 @@ public class ChuongDAO {
                         String sz = rs.getString("size");
                         String trangThai = rs.getString("trangThai");
                         double gia = rs.getDouble("giaTheoDem");
+                        String khuVuc = rs.getString("khuVuc");
+                        double canNangMax = 0;
+                        try { canNangMax = rs.getDouble("canNangToiDa"); } catch (Exception ignored) {}
+                        String tenC = null;
+                        try { tenC = rs.getString("tenChuong"); } catch (Exception ignored) {}
+                        if (tenC == null || tenC.trim().isEmpty()) tenC = "Lồng " + id;
 
-                        boolean isVip = (sz != null && sz.contains("VIP")) || id.contains("VIP");
-                        String khuVuc = isVip ? "Khu VIP" :
-                                (sz != null && sz.contains("Nhỏ") ? "Khu Mèo" :
-                                (sz != null && sz.contains("Vừa") ? "Khu Chó Nhỏ" : "Khu Chó Lớn"));
+                        boolean isVip = (khuVuc != null && khuVuc.contains("VIP")) || (sz != null && sz.contains("VIP")) || id.contains("VIP");
+                        if (khuVuc == null || khuVuc.trim().isEmpty()) {
+                            khuVuc = isVip ? "Khu VIP" :
+                                    (sz != null && sz.contains("Nhỏ") ? "Khu Mèo" :
+                                    (sz != null && sz.contains("Vừa") ? "Khu Chó Nhỏ" : "Khu Chó Lớn"));
+                        }
 
-                        Chuong c = new Chuong(id, stt++, "Lồng " + id, sz, khuVuc, trangThai, gia > 0 ? gia : 100000, isVip);
+                        Chuong c = new Chuong(id, stt++, tenC, sz, khuVuc, trangThai, gia > 0 ? gia : 100000, isVip);
+                        c.setCanNangToiDa(canNangMax);
                         list.add(c);
                     }
                 }
@@ -355,7 +421,7 @@ public class ChuongDAO {
                         while (rs.next()) {
                             Timestamp tg = rs.getTimestamp("thoiGian");
                             list.add(new ChiTietDichVuChuong(
-                                    rs.getString("maDV"),
+                                     rs.getString("maDV"),
                                     rs.getString("tenDV"),
                                     rs.getString("loai"),
                                     rs.getDouble("donGia"),
@@ -409,5 +475,32 @@ public class ChuongDAO {
 
     public void xoaDichVu(String maChuong, int index) {
         // Có thể mở rộng xóa theo ID dịch vụ
+    }
+
+    public boolean chuyenBaoTri(String maChuong) {
+        return capNhatTrangThai(maChuong, "Bảo trì");
+    }
+
+    public boolean hoanTatBaoTri(String maChuong) {
+        return capNhatTrangThai(maChuong, "Trống");
+    }
+
+    public boolean themChuong(Chuong c) {
+        if (c == null || c.getMaChuong() == null) return false;
+        String sql = "INSERT INTO CHUONGLUUTRU (cageID, size, trangThai, giaTheoDem, khuVuc, canNangToiDa, tenChuong, maNV_QL) VALUES (?, ?, ?, ?, ?, ?, ?, NULL)";
+        try (Connection conn = ConnectDB.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, c.getMaChuong());
+            ps.setString(2, c.getSize());
+            ps.setString(3, c.getTrangThai() != null ? c.getTrangThai() : "Trống");
+            ps.setDouble(4, c.getGiaTheoNgay());
+            ps.setString(5, c.getKhuVuc());
+            ps.setDouble(6, c.getCanNangToiDa());
+            ps.setString(7, c.getTenChuong() != null ? c.getTenChuong() : "Lồng " + c.getMaChuong());
+            return ps.executeUpdate() > 0;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

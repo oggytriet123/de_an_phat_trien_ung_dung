@@ -422,6 +422,27 @@ public class DialogDatChuong extends JDialog {
         String loaiPet = (String) cbLoaiPet.getSelectedItem();
         String ghiChu = txtGhiChu.getText().trim();
 
+        Chuong cage = bus.timTheoMa(maChuong);
+        if (cage != null) {
+            String kv = cage.getKhuVuc() != null ? cage.getKhuVuc() : "";
+            if (kv.equalsIgnoreCase("Khu Mèo") && !"Mèo".equalsIgnoreCase(loaiPet)) {
+                JOptionPane.showMessageDialog(this, "Khu Mèo chỉ dành riêng cho Mèo! Bé này là " + loaiPet + ".", "Ràng buộc khu vực", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if ((kv.equalsIgnoreCase("Khu Chó Nhỏ") || kv.equalsIgnoreCase("Khu Chó Lớn")) && !"Chó".equalsIgnoreCase(loaiPet)) {
+                JOptionPane.showMessageDialog(this, "Khu vực Chó chỉ dành riêng cho Chó! Bé này là " + loaiPet + ".", "Ràng buộc khu vực", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (kv.equalsIgnoreCase("Khu Loài Khác") && ("Chó".equalsIgnoreCase(loaiPet) || "Mèo".equalsIgnoreCase(loaiPet))) {
+                JOptionPane.showMessageDialog(this, "Khu Loài Khác chỉ dành cho thỏ, hamster, chim,... không nhận Chó / Mèo!", "Ràng buộc khu vực", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (cage.getCanNangToiDa() > 0 && canNang > cage.getCanNangToiDa()) {
+                JOptionPane.showMessageDialog(this, "Cân nặng thú cưng (" + canNang + " kg) vượt quá tải trọng tối đa của lồng (" + cage.getCanNangToiDa() + " kg)!\nVui lòng chọn lồng kích cỡ lớn hơn.", "Cảnh báo tải trọng", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
+
         String maPhieu = "PDC-" + String.format("%03d", bus.layDanhSachPhieuDat().size() + 1);
 
         PhieuDatChuong pdc = new PhieuDatChuong(

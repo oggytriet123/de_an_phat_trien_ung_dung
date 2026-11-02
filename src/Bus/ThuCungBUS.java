@@ -19,6 +19,7 @@ public class ThuCungBUS {
     private final List<ThuCung> cache = new ArrayList<>();
 
     public ThuCungBUS() {
+        try { taiLai(); } catch (Exception ignored) {}
     }
 
     /**

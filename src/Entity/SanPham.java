@@ -15,6 +15,7 @@ public class SanPham implements Serializable {
     private boolean dichVu;
 
     // Các thuộc tính mở rộng cho Dịch vụ (từ alo)
+    private String moTa = "";
     private String thoiLuong = "";                 // ví dụ "30 phút", "1 ngày"
     private String doiTuong = "Tất cả thú cưng";   // đối tượng áp dụng
     private boolean dangMo = true;                 // false = tạm ngưng
@@ -67,6 +68,9 @@ public class SanPham implements Serializable {
     public void setDanhMuc(String v) { this.danhMuc = v; }
 
     public long getDonGia() { return donGia; }
+    public long getGia() { return donGia; }
+    public String getMoTa() { return moTa; }
+    public void setMoTa(String v) { this.moTa = v == null ? "" : v; }
     public void setDonGia(long v) { this.donGia = v; }
 
     public boolean isDichVu() { return dichVu; }

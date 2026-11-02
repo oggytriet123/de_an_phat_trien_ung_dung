@@ -290,7 +290,7 @@ public class ThuCungDAO {
                 + " (SELECT COUNT(*) FROM THUCUNG WHERE loai = N'Mèo') AS soMeo, "
                 + " (SELECT COUNT(*) FROM THUCUNG WHERE loai NOT IN (N'Chó', N'Mèo')) AS soKhac, "
                 + " (SELECT COUNT(*) FROM THUCUNG WHERE (theCanhBao IS NOT NULL AND LEN(theCanhBao) > 0) "
-                + "                                    OR trangThai IN (N'Cần chú ý', N'Đang theo dõi', N'Đang điều trị')) AS soCanhBao, "
+                + "                                    OR trangThai IN (N'Cần chú ý', N'Đang theo dõi', N'Đang điều trị', N'Hậu phẫu', N'Chờ phẫu thuật')) AS soCanhBao, "
                 + " (SELECT COUNT(*) FROM THUCUNG WHERE ngayTiepNhan >= @dauThang) AS tiepNhanThang";
 
         try (Connection con = ConnectDB.getConnection();

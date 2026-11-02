@@ -146,6 +146,7 @@ public class QuanLyHoaDonPanel extends JPanel implements Refreshable {
     }
 
     @Override public void lamMoi() {
+        bus.taiTuCSDL();
         repaint();
     }
 
