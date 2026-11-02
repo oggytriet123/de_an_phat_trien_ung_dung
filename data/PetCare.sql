@@ -577,14 +577,10 @@ GO
 
 -- 10. DANHMUCBENH
 INSERT INTO DANHMUCBENH (maBenh, tenBenh, trieuChung, maNV_QL) VALUES
-(N'BNH001', N'Viêm da dị ứng', N'Ngứa ngáy dữ dội, rụng lông thành từng mảng, da ửng đỏ, nổi mẩn li ti', N'NV001'),
-(N'BNH002', N'Parvo virus', N'Nôn ói liên tục, tiêu chảy ra máu tanh nồng, sốt cao, ủ rũ bỏ ăn', N'NV001'),
-(N'BNH003', N'Viêm tai ngoài', N'Lắc đầu liên tục, gãi tai chảy máu, ống tai tiết dịch màu nâu hôi', N'NV001'),
-(N'BNH004', N'Sỏi bàng quang', N'Tiểu rắt, tiểu ngắt quãng, có tia máu trong nước tiểu, cong lưng đau', N'NV001'),
-(N'BNH005', N'Cảm cúm hô hấp', N'Hắt hơi, chảy nước mũi đặc, ho khan, mắt đỏ đổ ghèn, sốt nhẹ', N'NV001'),
-(N'BNH006', N'Bệnh Care ở chó (Canine Distemper)', N'Sốt cao, chảy nước mũi, ho, co giật', N'NV001'),
-(N'BNH007', N'Bệnh Giảm bạch cầu ở mèo (FPV)', N'Ủ rũ, bỏ ăn, sốt cao, nôn dịch vàng', N'NV001'),
-(N'BNH008', N'Viêm da do nấm (Dermatophytosis)', N'Rụng lông từng mảng tròn, da đóng vảy ngứa', N'NV001');
+(N'B001', N'Bệnh Care ở chó (Canine Distemper)', N'Sốt cao, chảy nước mũi, ho, co giật', N'NV001'),
+(N'B002', N'Bệnh Parvo ở chó (Canine Parvovirus)', N'Nôn mửa dữ dội, tiêu chảy ra máu mùi tanh', N'NV001'),
+(N'B003', N'Bệnh Giảm bạch cầu ở mèo (FPV)', N'Ủ rũ, bỏ ăn, sốt cao, nôn dịch vàng', N'NV001'),
+(N'B004', N'Viêm da do nấm (Dermatophytosis)', N'Rụng lông từng mảng tròn, da đóng vảy ngứa', N'NV001');
 GO
 
 -- 11. MAGIAMGIA
