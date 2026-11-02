@@ -50,14 +50,16 @@ public class ThuCungPanel extends JPanel {
     private final StatCard cardCanhBao = new StatCard("Cần theo dõi / Cảnh báo");
 
     // Bảng và tìm kiếm
-    private final String[] tieuDeCot = {"Mã thú cưng", "Tên thú cưng", "Loài", "Giống loài", "Giới tính", "Tuổi", "Cân nặng", "Chủ nuôi", "Tình trạng"};
+    private final String[] tieuDeCot = {"Mã thú cưng", "Tên thú cưng", "Loài", "Giống loài", "Giới tính", "Tuổi", "Cân nặng", "Chủ nuôi", "Tình trạng sức khỏe"};
     private final DefaultTableModel tableModel = new DefaultTableModel(tieuDeCot, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
     private final JTable table = new JTable(tableModel);
     private final PlaceholderField txtTim = new PlaceholderField("Tìm theo tên bé, mã PET, giống, tên chủ, số điện thoại...");
     private final List<RoundedButton> chipsLoai = new ArrayList<>();
-    private final RoundedButton btnSort = new RoundedButton("", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10);
+    private final JComboBox<String> cboGioiTinh = new JComboBox<>(new String[]{"Tất cả giới tính", "Đực", "Cái"});
+    private final JComboBox<String> cboTrangThai = new JComboBox<>(new String[]{"Tất cả tình trạng", "Khỏe mạnh", "Đang theo dõi", "Đang điều trị", "Chờ phẫu thuật", "Hậu phẫu", "Đang lưu trú", "Đã hồi phục"});
+    private final JComboBox<String> cboSapXep = new JComboBox<>(DS_SAP_XEP);
     private final JLabel lblTrangThai = new JLabel();
     private final JPanel pnlPhanTrang = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
 
@@ -86,6 +88,19 @@ public class ThuCungPanel extends JPanel {
                 capNhatBang();
             }
         });
+    }
+
+    public void focusTimKiem() {
+        SwingUtilities.invokeLater(() -> {
+            txtTim.requestFocusInWindow();
+            txtTim.selectAll();
+        });
+    }
+
+    /** Làm mới dữ liệu – gọi khi chuyển sang panel này từ menu Tìm Kiếm. */
+    public void lamMoi() {
+        taiDuLieu();
+        capNhatBang();
     }
 
     // ----------------- 1. HEADER & CÁC NÚT CHỨC NĂNG -----------------
@@ -201,14 +216,14 @@ public class ThuCungPanel extends JPanel {
         RoundedPanel card = new RoundedPanel(14, Theme.CARD, null);
         card.setLayout(new BorderLayout());
 
-        // Thanh công cụ: Ô tìm kiếm + Chip lọc loài + Nút sắp xếp
+        // Thanh công cụ: Ô tìm kiếm + Chip lọc loài + Combobox giới tính + Combobox trạng thái + Sắp xếp
         JPanel toolbar = new JPanel(new BorderLayout(10, 0));
         toolbar.setOpaque(false);
         toolbar.setBorder(new EmptyBorder(14, 16, 14, 16));
 
         RoundedPanel searchBox = new RoundedPanel(10, Color.WHITE, Theme.BORDER);
         searchBox.setLayout(new BorderLayout());
-        searchBox.setPreferredSize(new Dimension(300, 36));
+        searchBox.setPreferredSize(new Dimension(260, 36));
         JLabel ic = new JLabel(Icons.of("search", 16, new Color(0x8795A0)));
         ic.setBorder(new EmptyBorder(0, 10, 0, 4));
         txtTim.setBorder(new EmptyBorder(0, 4, 0, 8));
@@ -239,24 +254,35 @@ public class ThuCungPanel extends JPanel {
             pnlTrai.add(chip);
         }
 
-        btnSort.setFont(Theme.font(Font.PLAIN, 12));
-        btnSort.pad(14, 6);
-        btnSort.addActionListener(e -> {
-            JPopupMenu menu = new JPopupMenu();
-            for (String s : DS_SAP_XEP) {
-                JMenuItem mi = new JMenuItem(s);
-                mi.addActionListener(ev -> {
-                    sapXepHienTai = s;
-                    trangHienTai = 1;
-                    capNhatBang();
-                });
-                menu.add(mi);
-            }
-            menu.show(btnSort, 0, btnSort.getHeight() + 2);
+        // Combobox lọc giới tính
+        styleCombo(cboGioiTinh);
+        cboGioiTinh.setPreferredSize(new Dimension(130, 36));
+        cboGioiTinh.addActionListener(e -> {
+            trangHienTai = 1;
+            capNhatBang();
+        });
+        pnlTrai.add(cboGioiTinh);
+
+        // Combobox lọc trạng thái
+        styleCombo(cboTrangThai);
+        cboTrangThai.setPreferredSize(new Dimension(175, 36));
+        cboTrangThai.addActionListener(e -> {
+            trangHienTai = 1;
+            capNhatBang();
+        });
+        pnlTrai.add(cboTrangThai);
+
+        // Combobox sắp xếp kết quả
+        styleCombo(cboSapXep);
+        cboSapXep.setPreferredSize(new Dimension(160, 36));
+        cboSapXep.addActionListener(e -> {
+            sapXepHienTai = (String) cboSapXep.getSelectedItem();
+            trangHienTai = 1;
+            capNhatBang();
         });
 
         toolbar.add(pnlTrai, BorderLayout.WEST);
-        toolbar.add(btnSort, BorderLayout.EAST);
+        toolbar.add(cboSapXep, BorderLayout.EAST);
         card.add(toolbar, BorderLayout.NORTH);
 
         // Bảng JTable - kẻ khung lưới đẹp
@@ -299,8 +325,14 @@ public class ThuCungPanel extends JPanel {
 
     // ----------------- 4. LỌC, SẮP XẾP & ĐỔ DỮ LIỆU VÀO BẢNG -----------------
     private void capNhatBang() {
+        String gioiTinh = (String) cboGioiTinh.getSelectedItem();
+        if (gioiTinh == null || gioiTinh.equals("Tất cả giới tính")) gioiTinh = "Tất cả";
+
+        String trangThai = (String) cboTrangThai.getSelectedItem();
+        if (trangThai == null || trangThai.equals("Tất cả tình trạng") || trangThai.equals("Tất cả trạng thái")) trangThai = "Tất cả";
+
         // Lấy danh sách lọc từ BUS
-        List<ThuCung> list = bus.timKiemVaLoc(txtTim.getText(), loaiDangLoc, "Tất cả", "Tất cả");
+        List<ThuCung> list = bus.timKiemVaLoc(txtTim.getText(), loaiDangLoc, gioiTinh, trangThai);
 
         // Sắp xếp
         if (sapXepHienTai.equals("Tên A-Z")) {
@@ -343,7 +375,6 @@ public class ThuCungPanel extends JPanel {
 
         lblTrangThai.setText(dsHienThi.isEmpty() ? "Không tìm thấy thú cưng nào phù hợp."
                 : "Hiển thị " + (tuDong + 1) + "–" + denDong + " trong " + dsHienThi.size() + " thú cưng");
-        btnSort.setText("Sắp xếp: " + sapXepHienTai);
 
         for (RoundedButton b : chipsLoai) {
             boolean active = b.getText().equals(loaiDangLoc);
@@ -395,10 +426,10 @@ public class ThuCungPanel extends JPanel {
         JTextField txtTen = taoTextField();
         JComboBox<String> cboLoai = new JComboBox<>(new String[] {"Chó", "Mèo", "Thỏ", "Chuột Hamster", "Khác"});
         JTextField txtGiong = taoTextField();
-        JComboBox<String> cboGioiTinh = new JComboBox<>(new String[] {"Đực", "Cái", "Không rõ"});
+        JComboBox<String> cboGioiTinhForm = new JComboBox<>(new String[] {"Đực", "Cái", "Không rõ"});
         JSpinner spnTuoi = new JSpinner(new SpinnerNumberModel(1, 0, 50, 1));
         JTextField txtCanNang = taoTextField();
-        JComboBox<String> cboTrangThai = new JComboBox<>(new String[] {"Khỏe mạnh", "Đang theo dõi", "Cần chú ý", "Đang tiêm phòng", "Đang điều trị"});
+        JComboBox<String> cboTrangThaiForm = new JComboBox<>(new String[] {"Khỏe mạnh", "Đang theo dõi", "Đang điều trị", "Chờ phẫu thuật", "Hậu phẫu", "Đang lưu trú", "Đã hồi phục"});
         JTextArea txtCanhBao = new JTextArea(3, 20);
         txtCanhBao.setBorder(BorderFactory.createLineBorder(new Color(0xD5DCE1)));
 
@@ -413,10 +444,10 @@ public class ThuCungPanel extends JPanel {
             txtTen.setText(tcHienTai.getTen());
             cboLoai.setSelectedItem(tcHienTai.getLoai());
             txtGiong.setText(tcHienTai.getGiong());
-            cboGioiTinh.setSelectedItem(tcHienTai.getGioiTinh());
+            cboGioiTinhForm.setSelectedItem(tcHienTai.getGioiTinh());
             spnTuoi.setValue(tcHienTai.getTuoi());
             txtCanNang.setText(tcHienTai.getCanNang() > 0 ? String.valueOf(tcHienTai.getCanNang()) : "");
-            cboTrangThai.setSelectedItem(tcHienTai.getTrangThai());
+            cboTrangThaiForm.setSelectedItem(tcHienTai.getTrangThai());
             txtCanhBao.setText(tcHienTai.getTheCanhBao());
             for (int i = 0; i < cboChuNuoi.getItemCount(); i++) {
                 ThuCungDAO.KhachHangOption op = cboChuNuoi.getItemAt(i);
@@ -431,11 +462,11 @@ public class ThuCungPanel extends JPanel {
         form.add(new JLabel("Tên thú cưng (*):")); form.add(txtTen);
         form.add(new JLabel("Loài (*):")); form.add(cboLoai);
         form.add(new JLabel("Giống loài:")); form.add(txtGiong);
-        form.add(new JLabel("Giới tính:")); form.add(cboGioiTinh);
+        form.add(new JLabel("Giới tính:")); form.add(cboGioiTinhForm);
         form.add(new JLabel("Tuổi:")); form.add(spnTuoi);
         form.add(new JLabel("Cân nặng (kg):")); form.add(txtCanNang);
         form.add(new JLabel("Chủ nuôi sở hữu:")); form.add(cboChuNuoi);
-        form.add(new JLabel("Tình trạng sức khỏe:")); form.add(cboTrangThai);
+        form.add(new JLabel("Tình trạng sức khỏe:")); form.add(cboTrangThaiForm);
 
         JPanel pnlGhiChu = new JPanel(new BorderLayout(0, 4));
         pnlGhiChu.setOpaque(false);
@@ -466,9 +497,9 @@ public class ThuCungPanel extends JPanel {
             String maKH = (khOpt != null && !khOpt.maKH.isEmpty()) ? khOpt.maKH : null;
 
             ThuCung tc = new ThuCung(laSua ? tcHienTai.getPetID() : null, ten, (String) cboLoai.getSelectedItem(),
-                    txtGiong.getText().trim(), (String) cboGioiTinh.getSelectedItem(),
+                    txtGiong.getText().trim(), (String) cboGioiTinhForm.getSelectedItem(),
                     (int) spnTuoi.getValue(), canNang, txtCanhBao.getText().trim(),
-                    (String) cboTrangThai.getSelectedItem(), maKH);
+                    (String) cboTrangThaiForm.getSelectedItem(), maKH);
 
             try {
                 if (laSua) {
@@ -510,6 +541,7 @@ public class ThuCungPanel extends JPanel {
                     {"Tuổi", tc.getTuoi() + " tuổi"},
                     {"Cân nặng", tc.getCanNang() > 0 ? tc.getCanNang() + " kg" : "Chưa cân"},
                     {"Chủ nuôi", tc.getTenChuNuoi() + (tc.getSdtChuNuoi().isEmpty() ? "" : " (" + tc.getSdtChuNuoi() + ")")},
+                    {"Tình trạng sức khỏe", tc.getTrangThai()},
                     {"Cảnh báo / Lưu ý", tc.getTheCanhBao().isEmpty() ? "Khỏe mạnh bình thường" : tc.getTheCanhBao()}
                 }, false, 470);
     }
@@ -540,7 +572,7 @@ public class ThuCungPanel extends JPanel {
         java.io.File file = fc.getSelectedFile();
         try (Writer w = new OutputStreamWriter(Files.newOutputStream(file.toPath()), StandardCharsets.UTF_8)) {
             w.write('\uFEFF'); // BOM tiếng Việt
-            w.write("Mã,Tên,Loài,Giống,Giới tính,Tuổi,Cân nặng,Chủ nuôi,SĐT,Tình trạng\r\n");
+            w.write("Mã,Tên,Loài,Giống,Giới tính,Tuổi,Cân nặng,Chủ nuôi,SĐT,Tình trạng sức khỏe\r\n");
             for (ThuCung t : dsHienThi) {
                 w.write(String.format("\"%s\",\"%s\",\"%s\",\"%s\",\"%s\",\"%d\",\"%.1f\",\"%s\",\"%s\",\"%s\"\r\n",
                         t.getPetID(), t.getTen(), t.getLoai(), t.getGiong(), t.getGioiTinh(), t.getTuoi(), t.getCanNang(),
@@ -550,6 +582,20 @@ public class ThuCungPanel extends JPanel {
         } catch (IOException ex) {
             JOptionPane.showMessageDialog(this, "Lỗi xuất file: " + ex.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    private static void styleCombo(JComboBox<?> c) {
+        c.setFont(Theme.font(Font.PLAIN, 13));
+        c.setBackground(Color.WHITE);
+        c.setMaximumRowCount(8);
+        c.setRenderer(new DefaultListCellRenderer() {
+            @Override public Component getListCellRendererComponent(JList<?> l, Object v, int i, boolean sel, boolean foc) {
+                JLabel lb = (JLabel) super.getListCellRendererComponent(l, v, i, sel, foc);
+                lb.setFont(Theme.font(Font.PLAIN, 13));
+                lb.setBorder(new EmptyBorder(5, 8, 5, 8));
+                return lb;
+            }
+        });
     }
 
     private static JTextField taoTextField() {

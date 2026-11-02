@@ -17,7 +17,90 @@ public class DonThuocBUS {
     private final List<Runnable> listeners = new ArrayList<>();
 
     public DonThuocBUS() {
-        napDuLieuMau();
+        khoiTaoDuLieuMau();
+    }
+
+    private void khoiTaoDuLieuMau() {
+        if (!ds.isEmpty()) return;
+
+        // DT-001: Milu (PET002) - Hậu phẫu sỏi bàng quang PT-001
+        DonThuoc dt1 = new DonThuoc("DT-001", "PET002", "Milu", "Chó", "Golden Retriever",
+                28.5, "Lê Thị Cẩm Tú", "0938222111", "BS. Võ Thanh Hùng",
+                LocalDate.of(2026, 10, 16), LocalTime.of(8, 30),
+                "Hậu phẫu lấy sỏi bàng quang (PT-001) & nhiễm khuẩn tiết niệu",
+                "Tiểu buốt, tiểu rắt, nước tiểu đục sau phẫu thuật sỏi",
+                DonThuoc.DANG_DIEU_TRI,
+                "Uống thuốc sau ăn no, uống nhiều nước lọc (1.5L/ngày), kiêng thức ăn mặn và hải sản",
+                LocalDate.of(2026, 10, 23), "PD-001");
+        dt1.themChiTiet(new ChiTietDonThuoc("YT-001", "Amoxicillin + Clavulanic 250mg", "viên", 14, 15000, "Uống 1 viên/lần, ngày 2 lần sáng - chiều sau ăn 30 phút"));
+        dt1.themChiTiet(new ChiTietDonThuoc("YT-002", "Meloxicam kháng viêm giảm đau 0.5mg", "viên", 7, 12000, "Uống 1 viên/ngày vào buổi sáng sau ăn"));
+        dt1.themChiTiet(new ChiTietDonThuoc("YT-004", "Dung dịch xịt sát trùng Betadine Vet 100ml", "chai", 1, 75000, "Xịt vệ sinh mép vết mổ 2 lần/ngày, giữ vết mổ khô ráo"));
+        dt1.themChiTiet(new ChiTietDonThuoc("SP008", "Gel dinh dưỡng cho chó mèo Nourse 120g", "tuýp", 1, 180000, "Ăn 5cm gel/ngày giúp bồi bổ thể lực hậu phẫu"));
+        dt1.ghiLog("Đã tạo đơn thuốc hậu phẫu liên kết với phác đồ PD-001 bởi BS. Võ Thanh Hùng");
+        dt1.ghiLog("Đã xuất kho và cấp phát thuốc cho chủ nuôi Lê Thị Cẩm Tú");
+        ds.add(dt1);
+
+        // DT-002: Buddy (PET007) - Viêm da cơ địa, đang lưu trú C-101
+        DonThuoc dt2 = new DonThuoc("DT-002", "PET007", "Buddy", "Chó", "Poodle Toy",
+                4.5, "Hoàng Minh Tuấn", "0945678901", "BS. Nguyễn Hoài Anh",
+                LocalDate.of(2026, 10, 20), LocalTime.of(9, 15),
+                "Viêm da cơ địa dị ứng, nhiễm nấm Microsporum canis",
+                "Ngứa dữ dội, gãi rụng lông từng mảng tròn ở lưng và vành tai",
+                DonThuoc.DANG_DIEU_TRI,
+                "Đeo loa chống liếm 24/24, tắm bằng sữa tắm thuốc 2 lần/tuần theo phác đồ",
+                LocalDate.of(2026, 10, 27), "PD-002");
+        dt2.themChiTiet(new ChiTietDonThuoc("SP004", "Sữa tắm trị ve rận Bio Derma 250ml", "chai", 1, 95000, "Tắm 2 lần/tuần, xoa kỹ bọt ủ 10 phút rồi xả sạch nước ấm"));
+        dt2.themChiTiet(new ChiTietDonThuoc("YT-005", "Kem bôi da trị nấm Dermaleen 20g", "tuýp", 2, 85000, "Bôi lớp mỏng lên vùng da tổn thương 2 lần/ngày sáng - tối"));
+        dt2.themChiTiet(new ChiTietDonThuoc("YT-007", "Kháng Histamin chống dị ứng Cetirizine 5mg", "viên", 10, 6000, "Uống 1/2 viên/ngày vào buổi tối giúp giảm ngứa"));
+        dt2.ghiLog("Tạo đơn thuốc điều trị viêm da liên kết với phác đồ PD-002");
+        dt2.ghiLog("Đã cấp phát thuốc và chuyển giao quy trình cho khu lưu trú C-101");
+        ds.add(dt2);
+
+        // DT-003: Rocky (PET004) - Hậu phẫu kết hợp xương đùi gãy PT-003
+        DonThuoc dt3 = new DonThuoc("DT-003", "PET004", "Rocky", "Chó", "Rottweiler",
+                35.0, "Võ Hoàng Long", "0386909808", "BS. Võ Thanh Hùng",
+                LocalDate.of(2026, 10, 21), LocalTime.of(10, 0),
+                "Hậu phẫu kết hợp xương đùi gãy (PT-003), phòng ngừa nhiễm trùng huyết",
+                "Sưng nề vùng đùi phải, hạn chế vận động, đau khi cử động chi",
+                DonThuoc.CHO_CAP_THUOC,
+                "Bất động tuyệt đối, nhốt chuồng lưu trú tĩnh dưỡng, thay gạc 2 ngày/lần",
+                LocalDate.of(2026, 10, 28), "PD-003");
+        dt3.themChiTiet(new ChiTietDonThuoc("YT-008", "Cefalexin 500mg kháng sinh phổ rộng", "viên", 20, 18000, "Uống 1 viên/lần, ngày 2 lần sáng - tối sau ăn no"));
+        dt3.themChiTiet(new ChiTietDonThuoc("YT-002", "Meloxicam kháng viêm giảm đau 0.5mg", "viên", 14, 12000, "Uống 2 viên/ngày vào buổi sáng sau ăn no"));
+        dt3.themChiTiet(new ChiTietDonThuoc("YT-009", "Canxi nano sinh học Pet Cal Plus", "lọ", 1, 220000, "Uống 2 viên/ngày kích thích liền can xương sớm"));
+        dt3.ghiLog("Tạo đơn thuốc kháng sinh & giảm đau hậu phẫu kết hợp xương bởi BS. Võ Thanh Hùng");
+        ds.add(dt3);
+
+        // DT-004: Kitty (PET001) - Rối loạn tiêu hóa cấp
+        DonThuoc dt4 = new DonThuoc("DT-004", "PET001", "Kitty", "Mèo", "Anh lông ngắn",
+                4.2, "Nguyễn Minh Anh", "0903123456", "BS. Ngô Gia Bảo",
+                LocalDate.of(2026, 10, 15), LocalTime.of(14, 0),
+                "Viêm ruột cấp tính, rối loạn tiêu hóa nhẹ do đổi thức ăn",
+                "Nôn dịch bọt trắng 1 lần, phân lỏng nhẹ, ăn kém",
+                DonThuoc.HOAN_TAT,
+                "Cho ăn thức ăn mềm dễ tiêu, chia nhỏ 4 bữa/ngày, uống đủ nước",
+                LocalDate.of(2026, 10, 19), "");
+        dt4.themChiTiet(new ChiTietDonThuoc("YT-003", "Men tiêu hóa vi sinh sống Probiotic Bio-Scour", "gói", 10, 20000, "Hòa 1 gói vào 10ml nước ấm cho uống ngày 2 lần"));
+        dt4.themChiTiet(new ChiTietDonThuoc("SP007", "Dung dịch nhỏ mắt cho thú cưng Bioline 50ml", "lọ", 1, 65000, "Nhỏ 2 giọt/mắt/lần, ngày 2 lần vệ sinh gỉ mắt"));
+        dt4.ghiLog("Đã tạo đơn thuốc khám bệnh ngoại trú");
+        dt4.ghiLog("Đã cấp phát đầy đủ thuốc cho chủ nuôi Nguyễn Minh Anh");
+        dt4.ghiLog("Tái khám ngày 19/10: Bé Kitty đã hoàn toàn khỏe mạnh, phân khuôn đẹp");
+        ds.add(dt4);
+
+        // DT-005: Mimi (PET005) - Hậu phẫu triệt sản nội soi PT-002
+        DonThuoc dt5 = new DonThuoc("DT-005", "PET005", "Mimi", "Mèo", "Xiêm (Siamese)",
+                3.2, "Võ Hoàng Long", "0386909808", "BS. Ngô Gia Bảo",
+                LocalDate.of(2026, 10, 19), LocalTime.of(11, 30),
+                "Chăm sóc và giảm đau hậu phẫu triệt sản nội soi (PT-002)",
+                "Vết mổ nội soi 1cm khô ráo, thân nhiệt ổn định 38.4°C",
+                DonThuoc.DA_CAP_PHAT,
+                "Kiểm tra mép vết mổ hàng ngày, không để liếm vết thương, cắt chỉ sau 7 ngày",
+                LocalDate.of(2026, 10, 26), "");
+        dt5.themChiTiet(new ChiTietDonThuoc("YT-001", "Amoxicillin + Clavulanic 125mg", "viên", 8, 10000, "Uống 1/2 viên/lần, ngày 2 lần sau ăn no"));
+        dt5.themChiTiet(new ChiTietDonThuoc("YT-004", "Dung dịch xịt sát trùng Betadine Vet 100ml", "chai", 1, 75000, "Xịt sát khuẩn vết mổ 1 lần/ngày vào buổi tối"));
+        dt5.ghiLog("Kê đơn thuốc hậu phẫu triệt sản nội soi cho bé Mimi");
+        dt5.ghiLog("Đã xuất kho và cấp phát thuốc cho chủ nuôi");
+        ds.add(dt5);
     }
 
     public void addListener(Runnable r) {
@@ -164,134 +247,5 @@ public class DonThuocBUS {
             if (!DonThuoc.DA_HUY.equals(d.getTrangThai())) sum += d.tinhTongTien();
         }
         return sum;
-    }
-
-    private void napDuLieuMau() {
-        LocalDate nay = LocalDate.now();
-
-        // 1. Milo - Viêm da dị ứng & ngứa
-        DonThuoc d1 = new DonThuoc("DT-001", "TC005", "Milo", "Chó", "Corgi", 10.4,
-                "Phạm Gia Hân", "0912 345 678", "BS. Nguyễn Thanh Tùng",
-                nay, LocalTime.of(9, 15),
-                "Viêm da dị ứng thể tiếp xúc, nhiễm khuẩn ngoài da",
-                "Ngứa gãi liên tục, rụng lông vùng cổ và hông, da ửng đỏ",
-                DonThuoc.DANG_DIEU_TRI,
-                "Đeo loa chống liếm 24/24. Giữ chuồng trại thoáng mát, kiêng tắm nước nóng.",
-                nay.plusDays(7), "PD-001");
-        d1.themChiTiet(new ChiTietDonThuoc("YT-0018", "Nhỏ gáy Frontline Plus", "hộp", 1, 385000, "Nhỏ 1 tuýp dọc sống lưng cổ sau khi tắm sạch"));
-        d1.themChiTiet(new ChiTietDonThuoc("YT-0055", "Xịt trị ve rận Hantox-200", "lọ", 1, 85000, "Xịt nhẹ vùng đệm nằm và xung quanh chuồng"));
-        d1.themChiTiet(new ChiTietDonThuoc("", "Kháng sinh Clavamox 125mg", "viên", 14, 18000, "Uống 1 viên/lần, ngày 2 lần sau khi ăn"));
-        d1.themChiTiet(new ChiTietDonThuoc("", "Thuốc chống dị ứng Prednisolone 5mg", "viên", 7, 5000, "Uống 1/2 viên vào buổi sáng sau ăn no"));
-        d1.ghiLog("Tạo mới đơn thuốc bởi BS. Nguyễn Thanh Tùng");
-        d1.ghiLog("Đã xuất kho và cấp phát thuốc cho khách hàng");
-        ds.add(d1);
-
-        // 2. Sữa - Viêm kết mạc mắt
-        DonThuoc d2 = new DonThuoc("DT-002", "TC009", "Sữa", "Mèo", "Xiêm", 3.5,
-                "Hoàng Văn Tuấn", "0909 333 444", "BS. Lê Mai Anh",
-                nay.minusDays(1), LocalTime.of(10, 30),
-                "Viêm kết mạc mắt cấp tính, chảy ghèn",
-                "Mắt phải sưng nhẹ, chảy nước mắt nhiều, nhắm tịt mắt khi ra sáng",
-                DonThuoc.CHO_CAP_THUOC,
-                "Vệ sinh mắt bằng nước muối sinh lý NaCl 0.9% trước khi nhỏ thuốc 10 phút.",
-                nay.plusDays(5), "PD-002");
-        d2.themChiTiet(new ChiTietDonThuoc("", "Thuốc nhỏ mắt Tobrex 0.3%", "lọ", 1, 65000, "Nhỏ 1-2 giọt vào mắt phải, ngày 3 lần (sáng, trưa, tối)"));
-        d2.themChiTiet(new ChiTietDonThuoc("YT-0031", "Gel dinh dưỡng Nutri-Plus", "tuýp", 1, 245000, "Cho liếm trực tiếp 1 thìa cafe/ngày để tăng đề kháng"));
-        d2.themChiTiet(new ChiTietDonThuoc("", "Bột kháng sinh Amoxicillin gói", "gói", 5, 12000, "Pha 1/2 gói với nước ấm cho uống sau ăn"));
-        d2.ghiLog("Tạo mới đơn thuốc bởi BS. Lê Mai Anh");
-        ds.add(d2);
-
-        // 3. Lu - Theo dõi dị ứng thức ăn
-        DonThuoc d3 = new DonThuoc("DT-003", "TC003", "Lu", "Chó", "Golden Retriever", 25.5,
-                "Trần Quốc Bảo", "0978 456 789", "BS. Phạm Quốc Việt",
-                nay.minusDays(2), LocalTime.of(14, 0),
-                "Rối loạn tiêu hóa nhẹ nghi do dị ứng thức ăn",
-                "Phân sệt lỏng, hơi đầy bụng, chán ăn",
-                DonThuoc.DA_CAP_PHAT,
-                "Chuyển sang chế độ ăn cháo loãng thịt nạc, bổ sung nước điện giải Oresol.",
-                nay.plusDays(3), "");
-        d3.themChiTiet(new ChiTietDonThuoc("", "Men tiêu hóa vi sinh Probio Pet", "hộp", 1, 135000, "Hòa 1 gói vào nước uống, ngày 2 lần"));
-        d3.themChiTiet(new ChiTietDonThuoc("", "Gel bao niêm mạc Phosphalugel", "gói", 6, 8000, "Uống 1 gói trước khi ăn 30 phút"));
-        d3.themChiTiet(new ChiTietDonThuoc("", "Kháng viêm ruột Smecta", "gói", 4, 6000, "Uống 1/2 gói khi đi ngoài phân lỏng"));
-        d3.ghiLog("Tạo mới đơn thuốc bởi BS. Phạm Quốc Việt");
-        d3.ghiLog("Đã cấp thuốc");
-        ds.add(d3);
-
-        // 4. Mochi - Tẩy giun định kỳ & bổ sung canxi
-        DonThuoc d4 = new DonThuoc("DT-004", "TC001", "Mochi", "Chó", "Poodle", 4.2,
-                "Nguyễn Minh Anh", "0901 234 456", "BS. Nguyễn Thanh Tùng",
-                nay.minusDays(3), LocalTime.of(11, 20),
-                "Tẩy giun sán định kỳ & Bổ sung khoáng vi lượng",
-                "Thể trạng bình thường, lông hơi khô xơ",
-                DonThuoc.HOAN_TAT,
-                "Tái tẩy giun sau 3 tháng. Cho phơi nắng sáng sớm 15 phút.",
-                null, "");
-        d4.themChiTiet(new ChiTietDonThuoc("", "Viên tẩy giun Endogard 10", "viên", 1, 45000, "Uống 1/2 viên vào buổi sáng lúc đói"));
-        d4.themChiTiet(new ChiTietDonThuoc("", "Viên nhai Calxi Delice", "hộp", 1, 210000, "Nhai 1/2 viên mỗi ngày cùng bữa ăn"));
-        d4.ghiLog("Tạo mới đơn thuốc");
-        d4.ghiLog("Đã cấp phát thuốc và hoàn tất điều trị");
-        ds.add(d4);
-
-        // 5. Kem - Nấm tai ngoài
-        DonThuoc d5 = new DonThuoc("DT-005", "TC004", "Kem", "Mèo", "Munchkin", 3.2,
-                "Lê Thị Cẩm Tú", "0933 222 111", "BS. Lê Mai Anh",
-                nay.minusDays(4), LocalTime.of(16, 45),
-                "Viêm ống tai ngoài do nấm Malassezia",
-                "Gãi tai thường xuyên, vành tai có bã nhờn màu nâu đen, có mùi hôi",
-                DonThuoc.DANG_DIEU_TRI,
-                "Rửa sạch tai bằng dung dịch Epi-Otic trước khi tra thuốc. Không để nước vào tai.",
-                nay.plusDays(6), "PD-003");
-        d5.themChiTiet(new ChiTietDonThuoc("", "Dung dịch rửa tai Epi-Otic 125ml", "chai", 1, 175000, "Bơm vào ống tai, xoa nhẹ gốc tai rồi lau bằng bông sạch"));
-        d5.themChiTiet(new ChiTietDonThuoc("", "Thuốc mỡ tra tai Otomax", "tuýp", 1, 140000, "Nhỏ 4 giọt vào tai bị bệnh, ngày 2 lần trong 7 ngày"));
-        d5.ghiLog("Tạo mới đơn thuốc bởi BS. Lê Mai Anh");
-        d5.ghiLog("Đã giao thuốc cho chủ nuôi");
-        ds.add(d5);
-
-        // 6. Đậu - Viêm dạ dày cấp
-        DonThuoc d6 = new DonThuoc("DT-006", "TC008", "Đậu", "Chó", "Phốc sóc", 2.6,
-                "Lê Thị Cẩm Tú", "0933 222 111", "BS. Nguyễn Thanh Tùng",
-                nay.minusDays(5), LocalTime.of(8, 50),
-                "Viêm dạ dày cấp do nuốt dị vật nhỏ mềm",
-                "Nôn ọe dịch trắng có bọt, đau vùng bụng khi chạm nhẹ",
-                DonThuoc.DA_CAP_PHAT,
-                "Nhịn ăn trong 12h đầu, sau đó cho uống từng ngụm nước ấm.",
-                nay.plusDays(2), "PD-004");
-        d6.themChiTiet(new ChiTietDonThuoc("", "Thuốc giảm tiết Omeprazole 10mg", "viên", 7, 7000, "Uống 1/2 viên trước ăn 1 tiếng"));
-        d6.themChiTiet(new ChiTietDonThuoc("", "Thuốc chống co thắt No-spa", "viên", 5, 8000, "Uống 1/4 viên khi thấy bé đau quằn bụng"));
-        d6.themChiTiet(new ChiTietDonThuoc("", "Bột bù điện giải Hydrite", "gói", 4, 10000, "Pha 200ml nước ấm uống dần trong ngày"));
-        d6.ghiLog("Tạo mới đơn thuốc");
-        d6.ghiLog("Đã cấp thuốc");
-        ds.add(d6);
-
-        // 7. Bơ - Viêm khớp sưng nhẹ chân sau
-        DonThuoc d7 = new DonThuoc("DT-007", "TC010", "Bơ", "Chó", "Shiba Inu", 9.8,
-                "Ngô Đức Thắng", "0944 333 555", "BS. Phạm Quốc Việt",
-                nay.minusDays(6), LocalTime.of(15, 10),
-                "Viêm khớp gối thoái hóa nhẹ chân sau bên trái",
-                "Đi khập khiễng sau khi ngủ dậy, ngại vận động chạy nhảy",
-                DonThuoc.DANG_DIEU_TRI,
-                "Hạn chế leo cầu thang, giảm cân nặng xuống mức 9.0kg trong 2 tháng.",
-                nay.plusDays(14), "");
-        d7.themChiTiet(new ChiTietDonThuoc("", "Giảm đau kháng viêm Carprofen 25mg", "viên", 10, 22000, "Uống 1 viên sau bữa ăn sáng"));
-        d7.themChiTiet(new ChiTietDonThuoc("", "Viên bổ khớp Cosequin DS", "hộp", 1, 480000, "Uống 1 viên/ngày liên tục 30 ngày"));
-        d7.ghiLog("Tạo mới đơn thuốc");
-        d7.ghiLog("Đã cấp phát thuốc");
-        ds.add(d7);
-
-        // 8. Rex - Hồi phục sau mổ vết thương hở
-        DonThuoc d8 = new DonThuoc("DT-008", "TC006", "Rex", "Chó", "Husky", 22.0,
-                "Võ Hoàng Long", "0988 000 666", "BS. Nguyễn Thanh Tùng",
-                nay.minusDays(8), LocalTime.of(9, 40),
-                "Nhiễm trùng vết cắn phần mềm sau mổ khâu làm sạch",
-                "Vết khâu dài 4cm vùng đùi, hơi sưng phù nhẹ",
-                DonThuoc.HOAN_TAT,
-                "Rửa vết mổ ngày 2 lần bằng cồn đỏ Povidone Iodine 10%, giữ vết thương khô ráo.",
-                null, "");
-        d8.themChiTiet(new ChiTietDonThuoc("", "Kháng sinh Cefalexin 250mg", "viên", 16, 15000, "Uống 1 viên sáng, 1 viên tối sau ăn"));
-        d8.themChiTiet(new ChiTietDonThuoc("", "Giảm phù nề Alphachymotrypsin", "vỉ", 2, 35000, "Uống 2 viên/lần, ngày 2 lần"));
-        d8.themChiTiet(new ChiTietDonThuoc("", "Dung dịch sát trùng Povidine 10%", "chai", 1, 25000, "Thấm gạc chấm sát trùng mép vết mổ"));
-        d8.ghiLog("Tạo mới đơn thuốc");
-        d8.ghiLog("Cắt chỉ ngày thứ 7, vết thương lành tốt. Hoàn tất đơn thuốc.");
-        ds.add(d8);
     }
 }

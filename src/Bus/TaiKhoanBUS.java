@@ -45,13 +45,11 @@ public class TaiKhoanBUS {
             return "Email không hợp lệ, ví dụ: ten@gmail.com.";
 
         String emailLuu = email.isEmpty() ? null : email;
-        if (!DangNhapBUS.laTaiKhoanMau(tk)) {
-            try {
-                if (dao.capNhatLienHe(tk.getMaTaiKhoan(), sdt, ns, emailLuu) == 0)
-                    return "Không tìm thấy tài khoản trong CSDL.";
-            } catch (SQLException e) {
-                return "Không lưu được vào CSDL: " + e.getMessage();
-            }
+        try {
+            if (dao.capNhatLienHe(tk.getMaTaiKhoan(), sdt, ns, emailLuu) == 0)
+                return "Không tìm thấy tài khoản trong CSDL.";
+        } catch (SQLException e) {
+            return "Không lưu được vào CSDL: " + e.getMessage();
         }
         tk.capNhatLienHe(sdt, ns, emailLuu);
         return null;
@@ -64,9 +62,6 @@ public class TaiKhoanBUS {
         if (moi.contains(" ")) return "Mật khẩu mới không được chứa khoảng trắng.";
         if (moi.equals(cu)) return "Mật khẩu mới phải khác mật khẩu hiện tại.";
         if (!moi.equals(nhapLai)) return "Mật khẩu nhập lại không khớp.";
-        if (DangNhapBUS.laTaiKhoanMau(tk)) {
-            return "123456".equals(cu) ? null : "Mật khẩu hiện tại không đúng."; // tài khoản mẫu: không lưu CSDL
-        }
         try {
             if (dao.doiMatKhau(tk.getMaTaiKhoan(), DangNhapBUS.bamSha256(cu), DangNhapBUS.bamSha256(moi)) == 0)
                 return "Mật khẩu hiện tại không đúng.";

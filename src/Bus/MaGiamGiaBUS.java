@@ -1,25 +1,39 @@
 package Bus;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import DAO.MaGiamGiaDAO;
 import Entity.MaGiamGia;
 
-/** Quản lý mã giảm giá / khuyến mãi. */
+/** Quản lý mã giảm giá, đồng bộ trực tiếp với CSDL SQL Server (bảng MAGIAMGIA). */
 public class MaGiamGiaBUS {
     private final Map<String, MaGiamGia> ds = new LinkedHashMap<>();
+    private final MaGiamGiaDAO dao = new MaGiamGiaDAO();
 
     public MaGiamGiaBUS() {
-        them(new MaGiamGia("GIAM10", true, 10, LocalDate.of(2027, 12, 31), "Giảm 10% cho khách hàng thành viên"));
-        them(new MaGiamGia("PET50K", false, 50_000, LocalDate.of(2027, 12, 31), "Giảm 50.000₫ cho hóa đơn dịch vụ"));
-        them(new MaGiamGia("VIP100K", false, 100_000, LocalDate.of(2027, 11, 30), "Ưu đãi khách hàng VIP thân thiết"));
-        them(new MaGiamGia("PETCARE20", true, 20, LocalDate.of(2027, 12, 31), "Chương trình tri ân khách hàng Pet Care"));
-        them(new MaGiamGia("TRIAN15", true, 15, LocalDate.of(2027, 6, 30), "Giảm 15% gói combo tiêm phòng và spa"));
-        them(new MaGiamGia("TET2026", true, 15, LocalDate.of(2026, 2, 28), "Khuyến mãi dịp Tết Nguyên Đán (Đã hết hạn)"));
-        them(new MaGiamGia("HE2025", false, 30_000, LocalDate.of(2025, 8, 31), "Khuyến mãi chào hè 2025 (Đã hết hạn)"));
+        taiTuCSDL();
+    }
+
+    public synchronized void taiTuCSDL() {
+        ds.clear();
+        List<MaGiamGia> list = dao.layTatCa();
+        for (MaGiamGia m : list) {
+            ds.put(m.getMa(), m);
+        }
+        if (ds.isEmpty()) {
+            them(new MaGiamGia("GIAM10", true, 10, LocalDate.of(2027, 12, 31), "Giảm 10% cho khách hàng thành viên"));
+            them(new MaGiamGia("PET50K", false, 50_000, LocalDate.of(2027, 12, 31), "Giảm 50.000₫ cho hóa đơn dịch vụ"));
+            them(new MaGiamGia("VIP100K", false, 100_000, LocalDate.of(2027, 11, 30), "Ưu đãi khách hàng VIP thân thiết"));
+            them(new MaGiamGia("PETCARE20", true, 20, LocalDate.of(2027, 12, 31), "Chương trình tri ân khách hàng Pet Care"));
+            them(new MaGiamGia("TRIAN15", true, 15, LocalDate.of(2027, 6, 30), "Giảm 15% gói combo tiêm phòng và spa"));
+            them(new MaGiamGia("TET2026", true, 15, LocalDate.of(2026, 2, 28), "Khuyến mãi dịp Tết Nguyên Đán (Đã hết hạn)"));
+            them(new MaGiamGia("HE2025", false, 30_000, LocalDate.of(2025, 8, 31), "Khuyến mãi chào hè 2025 (Đã hết hạn)"));
+        }
     }
 
     private void them(MaGiamGia m) {
@@ -41,12 +55,17 @@ public class MaGiamGiaBUS {
     }
 
     /**
-     * Xóa một mã giảm giá khỏi danh sách.
+     * Xóa một mã giảm giá khỏi danh sách và CSDL.
      * @throws IllegalArgumentException nếu không có mã đó.
      */
     public void xoa(String ma) {
         if (ma == null || ds.remove(ma.trim().toUpperCase()) == null) {
             throw new IllegalArgumentException("Không tìm thấy mã giảm giá " + ma + ".");
+        }
+        try {
+            dao.xoa(ma.trim().toUpperCase());
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -62,7 +81,7 @@ public class MaGiamGiaBUS {
     }
 
     /**
-     * Tạo mã giảm giá mới có ghi chú/mô tả.
+     * Tạo mã giảm giá mới có ghi chú/mô tả và lưu vào CSDL.
      * @throws IllegalArgumentException với nội dung lỗi hiển thị cho nhân viên.
      */
     public MaGiamGia tao(String maNhap, boolean phanTram, long giaTri, LocalDate hanDung, String ghiChu) {
@@ -81,6 +100,11 @@ public class MaGiamGiaBUS {
         if (hanDung.isBefore(LocalDate.now())) throw new IllegalArgumentException("Hạn dùng không được ở quá khứ.");
         MaGiamGia m = new MaGiamGia(ma, phanTram, giaTri, hanDung, ghiChu);
         them(m);
+        try {
+            dao.them(m);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return m;
     }
 
@@ -105,7 +129,6 @@ public class MaGiamGiaBUS {
 
     /**
      * @return mã hợp lệ còn hạn.
-     * @throws IllegalArgumentException với nội dung lỗi hiển thị cho nhân viên.
      */
     public MaGiamGia kiemTra(String nhap) {
         String ma = nhap == null ? "" : nhap.trim().toUpperCase();

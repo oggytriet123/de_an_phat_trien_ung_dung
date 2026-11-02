@@ -1,15 +1,13 @@
 package GUI;
 
 import java.awt.*;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.border.LineBorder;
 import javax.swing.border.MatteBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
@@ -17,106 +15,55 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 
+import DAO.KhachHangDAO;
+import DAO.ThuCungDAO;
+import DAO.TiemPhongDAO;
+import Entity.KhachHang;
+import Entity.PhieuTiem;
+import Entity.ThuCung;
+
 /**
- * Màn hình Quản lý Tiêm phòng thú cưng:
- * - Tiếp nhận đăng ký tiêm vaccine
- * - Theo dõi lịch tiêm và lịch tiêm nhắc lại
- * - Cập nhật trạng thái mũi tiêm (Đã tiêm / Chờ tiêm / Quá hạn)
+ * Man hinh Quan ly Tiem phong Thu cung:
+ * Dong bo truc tiep co so du lieu SQL Server (bang TIEMPHONG, KHACHHANG, THUCUNG).
  */
 public class TiemPhongPanel extends JPanel implements Refreshable {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    public static class PhieuTiem {
-        private String maPhieu;
-        private String tenThuCung;
-        private String loaiThuCung;
-        private String tenChu;
-        private String sdt;
-        private String loaiVaccine;
-        private String ngayTiem;
-        private String ngayHenNhac;
-        private String bacSi;
-        private String trangThai; // "Đã tiêm", "Chờ tiêm", "Quá hạn"
-        private String ghiChu;
-
-        public PhieuTiem(String maPhieu, String tenThuCung, String loaiThuCung, String tenChu, String sdt,
-                         String loaiVaccine, String ngayTiem, String ngayHenNhac, String bacSi,
-                         String trangThai, String ghiChu) {
-            this.maPhieu = maPhieu;
-            this.tenThuCung = tenThuCung;
-            this.loaiThuCung = loaiThuCung;
-            this.tenChu = tenChu;
-            this.sdt = sdt;
-            this.loaiVaccine = loaiVaccine;
-            this.ngayTiem = ngayTiem;
-            this.ngayHenNhac = ngayHenNhac;
-            this.bacSi = bacSi;
-            this.trangThai = trangThai;
-            this.ghiChu = ghiChu;
-        }
-
-        public String getMaPhieu() { return maPhieu; }
-        public String getTenThuCung() { return tenThuCung; }
-        public String getLoaiThuCung() { return loaiThuCung; }
-        public String getTenChu() { return tenChu; }
-        public String getSdt() { return sdt; }
-        public String getLoaiVaccine() { return loaiVaccine; }
-        public String getNgayTiem() { return ngayTiem; }
-        public String getNgayHenNhac() { return ngayHenNhac; }
-        public String getBacSi() { return bacSi; }
-        public String getTrangThai() { return trangThai; }
-        public String getGhiChu() { return ghiChu; }
-
-        public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
-        public void setNgayTiem(String ngayTiem) { this.ngayTiem = ngayTiem; }
-        public void setNgayHenNhac(String ngayHenNhac) { this.ngayHenNhac = ngayHenNhac; }
-        public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
-    }
-
+    private final TiemPhongDAO dao = new TiemPhongDAO();
     private final List<PhieuTiem> danhSach = new ArrayList<>();
     private final List<PhieuTiem> daLoc = new ArrayList<>();
-    private final PhieuTiemTableModel model = new PhieuTiemTableModel();
+    private final TiemPhongTableModel model = new TiemPhongTableModel();
     private final JTable table = new JTable(model);
 
-    private final PlaceholderField tfTimKiem = new PlaceholderField("Tìm mã phiếu, tên thú cưng, chủ nuôi hoặc SĐT...");
-    private String trangThaiLoc = "Tất cả";
-    private int demMa = 100;
+    private final PlaceholderField tfTimKiem = new PlaceholderField("T\u00ecm m\u00e3 phi\u1ebfu, t\u00ean th\u00fa c\u01b0ng, ch\u1ee7 nu\u00f4i ho\u1eb7c S\u0110T...");
+    private String trangThaiLoc = "T\u1ea5t c\u1ea3";
 
     public TiemPhongPanel() {
         super(new BorderLayout(0, 16));
         setBackground(Theme.BG);
         setBorder(new EmptyBorder(24, 32, 24, 32));
 
-        khoiTaoDuLieuMau();
-        locDuLieu();
+        taiTuCSDL();
 
         add(buildHeader(), BorderLayout.NORTH);
         add(buildTableCard(), BorderLayout.CENTER);
     }
 
-    private void khoiTaoDuLieuMau() {
-        danhSach.add(new PhieuTiem("TP-001", "Lu Lu", "Chó (Poodle)", "Nguyễn Văn Hùng", "0908123456",
-                "Tiêm vaccine 7 bệnh chó", "24/10/2026", "24/11/2026", "BS. Minh Đức", "Đã tiêm", "Sức khỏe tốt, không sốt"));
-        danhSach.add(new PhieuTiem("TP-002", "Miu Miu", "Mèo (Anh lông ngắn)", "Trần Thị Mai", "0912345678",
-                "Tiêm vaccine 4 bệnh mèo", "26/10/2026", "26/11/2026", "BS. Hoàng Long", "Đã tiêm", "Hẹn tái chủng sau 1 tháng"));
-        danhSach.add(new PhieuTiem("TP-003", "Bông Bông", "Chó (Corgi)", "Lê Hoàng Nam", "0987654321",
-                "Tiêm vaccine phòng Dại (Rabies)", "27/10/2026", "27/10/2027", "BS. Minh Đức", "Chờ tiêm", "Chờ khám sàng lọc"));
-        danhSach.add(new PhieuTiem("TP-004", "Simba", "Mèo (Ba Tư)", "Phạm Quỳnh Chi", "0933445566",
-                "Tẩy giun sán định kỳ thú cưng", "27/10/2026", "27/01/2027", "BS. Thu Thảo", "Chờ tiêm", "Tiêm kèm ngừa nội ngoại ký sinh"));
-        danhSach.add(new PhieuTiem("TP-005", "Ki Ki", "Chó (Golden)", "Võ Thanh Tùng", "0977889900",
-                "Tiêm vaccine 5 bệnh chó", "15/09/2026", "15/10/2026", "BS. Hoàng Long", "Quá hạn", "Chưa đến tiêm nhắc lại mũi 2"));
+    public synchronized void taiTuCSDL() {
+        danhSach.clear();
+        danhSach.addAll(dao.layTatCa());
+        locDuLieu();
     }
 
     private JComponent buildHeader() {
         JPanel head = new JPanel(new BorderLayout(0, 14));
         head.setOpaque(false);
 
-        // Tiêu đề
-        JLabel title = new JLabel("Quản lý Tiêm phòng Vaccine");
+        JLabel title = new JLabel("Qu\u1ea3n l\u00fd Ti\u00eam ph\u00f2ng Th\u00fa c\u01b0ng");
         title.setFont(Theme.font(Font.BOLD, 24));
         title.setForeground(Theme.TEXT);
 
-        JLabel sub = new JLabel("Lập phiếu tiêm phòng, quản lý lịch tiêm chủng và theo dõi lịch tiêm nhắc lại của thú cưng.");
+        JLabel sub = new JLabel("Theo d\u00f5i l\u1ecbch tr\u00ecnh ti\u00eam ch\u1ee7ng, danh m\u1ee5c vaccine v\u00e0 ng\u00e0y h\u1eb9n nh\u1eafc ti\u00eam cho th\u00fa c\u01b0ng.");
         sub.setFont(Theme.font(Font.PLAIN, 13));
         sub.setForeground(Theme.MUTED);
 
@@ -127,126 +74,105 @@ public class TiemPhongPanel extends JPanel implements Refreshable {
         left.add(Box.createVerticalStrut(4));
         left.add(sub);
 
-        // Nút thêm mới
-        RoundedButton btnThem = new RoundedButton("+ Thêm phiếu tiêm", Theme.PRIMARY, Theme.PRIMARY_HOVER, Color.WHITE, null, 8);
-        btnThem.setPreferredSize(new Dimension(180, 42));
+        RoundedButton btnThem = new RoundedButton("\u0110\u0103ng k\u00fd m\u0169i ti\u00eam m\u1edbi", Theme.PRIMARY, Theme.PRIMARY_HOVER, Color.WHITE, null, 8).pad(16, 9);
+        btnThem.setFont(Theme.font(Font.BOLD, 13));
         btnThem.addActionListener(e -> moDialogThemPhieu());
 
         JPanel top = new JPanel(new BorderLayout());
         top.setOpaque(false);
         top.add(left, BorderLayout.WEST);
         top.add(btnThem, BorderLayout.EAST);
-        head.add(top, BorderLayout.NORTH);
-
-        // Thanh công cụ: tìm kiếm + chip lọc trạng thái
-        JPanel bar = new JPanel(new BorderLayout(14, 0));
-        bar.setOpaque(false);
-
-        FieldBox searchBox = new FieldBox(tfTimKiem, Color.WHITE, 40);
-        searchBox.setPreferredSize(new Dimension(380, 40));
-        tfTimKiem.getDocument().addDocumentListener(new DocumentListener() {
-            @Override public void insertUpdate(DocumentEvent e) { locDuLieu(); }
-            @Override public void removeUpdate(DocumentEvent e) { locDuLieu(); }
-            @Override public void changedUpdate(DocumentEvent e) { locDuLieu(); }
-        });
-        bar.add(searchBox, BorderLayout.WEST);
-
-        // Bộ lọc trạng thái
-        JPanel filters = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
-        filters.setOpaque(false);
-        String[] tabs = {"Tất cả", "Chờ tiêm", "Đã tiêm", "Quá hạn"};
-        ButtonGroup bg = new ButtonGroup();
-        for (String t : tabs) {
-            JToggleButton btn = new JToggleButton(t);
-            btn.setFont(Theme.font(Font.BOLD, 12));
-            btn.setFocusPainted(false);
-            btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            btn.setBackground(Color.WHITE);
-            btn.setForeground(Theme.MUTED);
-            btn.setBorder(BorderFactory.createCompoundBorder(
-                    new LineBorder(Theme.BORDER, 1, true),
-                    new EmptyBorder(7, 14, 7, 14)));
-            if (t.equals("Tất cả")) btn.setSelected(true);
-            btn.addActionListener(e -> {
-                trangThaiLoc = t;
-                locDuLieu();
-            });
-            bg.add(btn);
-            filters.add(btn);
-        }
-        bar.add(filters, BorderLayout.EAST);
-        head.add(bar, BorderLayout.SOUTH);
+        head.add(top, BorderLayout.CENTER);
 
         return head;
     }
 
     private JComponent buildTableCard() {
-        RoundedPanel card = new RoundedPanel(12, Color.WHITE, Theme.BORDER);
+        RoundedPanel card = new RoundedPanel(16, Color.WHITE, Theme.BORDER);
         card.setLayout(new BorderLayout());
+
+        JPanel toolbar = new JPanel(new BorderLayout(14, 0));
+        toolbar.setOpaque(false);
+        toolbar.setBorder(new EmptyBorder(16, 20, 16, 20));
+
+        tfTimKiem.setFont(Theme.font(Font.PLAIN, 13));
+        tfTimKiem.setPreferredSize(new Dimension(340, 36));
+        FieldBox searchBox = new FieldBox(tfTimKiem, Color.WHITE, 36);
+        tfTimKiem.getDocument().addDocumentListener(new DocumentListener() {
+            @Override public void insertUpdate(DocumentEvent e) { locDuLieu(); }
+            @Override public void removeUpdate(DocumentEvent e) { locDuLieu(); }
+            @Override public void changedUpdate(DocumentEvent e) { locDuLieu(); }
+        });
+        toolbar.add(searchBox, BorderLayout.WEST);
+
+        JPanel pnlFilters = new JPanel(new FlowLayout(FlowLayout.RIGHT, 8, 0));
+        pnlFilters.setOpaque(false);
+        String[] filters = {"T\u1ea5t c\u1ea3", "Ch\u1edd ti\u00eam", "\u0110\u00e3 ti\u00eam", "Qu\u00e1 h\u1ea1n"};
+        for (String f : filters) {
+            RoundedButton b = new RoundedButton(f, Color.WHITE, Theme.FIELD_BG, Theme.TEXT, Theme.BORDER, 8).pad(12, 6);
+            b.setFont(Theme.font(Font.PLAIN, 12));
+            b.addActionListener(e -> {
+                trangThaiLoc = f;
+                locDuLieu();
+            });
+            pnlFilters.add(b);
+        }
+
+        RoundedButton btnAction = new RoundedButton("X\u00e1c nh\u1eadn \u0111\u00e3 ti\u00eam", Theme.SUCCESS, Theme.SUCCESS_HOVER, Color.WHITE, null, 8).pad(14, 7);
+        btnAction.setFont(Theme.font(Font.BOLD, 12));
+        btnAction.addActionListener(e -> capNhatTiemNgay());
+        pnlFilters.add(btnAction);
+
+        RoundedButton btnXoa = new RoundedButton("X\u00f3a phi\u1ebfu", Theme.RED, new Color(0xB93A3A), Color.WHITE, null, 8).pad(14, 7);
+        btnXoa.setFont(Theme.font(Font.BOLD, 12));
+        btnXoa.addActionListener(e -> xoaPhieu());
+        pnlFilters.add(btnXoa);
+
+        toolbar.add(pnlFilters, BorderLayout.EAST);
+        card.add(toolbar, BorderLayout.NORTH);
 
         table.setRowHeight(44);
         table.setShowGrid(false);
         table.setIntercellSpacing(new Dimension(0, 0));
-        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        table.setSelectionBackground(new Color(0xF4F6F8));
+        table.setSelectionForeground(Theme.TEXT);
         table.setFont(Theme.font(Font.PLAIN, 13));
 
         JTableHeader th = table.getTableHeader();
-        th.setPreferredSize(new Dimension(0, 42));
-        th.setFont(Theme.font(Font.BOLD, 13));
-        th.setBackground(Theme.FIELD_BG);
+        th.setFont(Theme.font(Font.BOLD, 12));
         th.setForeground(Theme.TEXT);
+        th.setBackground(Color.WHITE);
+        th.setPreferredSize(new Dimension(0, 40));
         th.setBorder(new MatteBorder(0, 0, 1, 0, Theme.BORDER));
 
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
-            public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
-                                                           boolean hasFocus, int row, int col) {
-                Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, col);
-                setBorder(new EmptyBorder(0, 12, 0, 12));
-                if (isSelected) {
-                    c.setBackground(new Color(0xDCE8FA));
-                    c.setForeground(Theme.PRIMARY);
+            public Component getTableCellRendererComponent(JTable t, Object val, boolean isSel, boolean hasFoc, int row, int col) {
+                JLabel l = (JLabel) super.getTableCellRendererComponent(t, val, isSel, hasFoc, row, col);
+                l.setBorder(new EmptyBorder(0, 12, 0, 12));
+                l.setFont(Theme.font(Font.PLAIN, 13));
+
+                if (col == 0) {
+                    l.setFont(Theme.font(Font.BOLD, 13));
+                    l.setForeground(Theme.TEXT);
+                } else if (col == 7) {
+                    String st = String.valueOf(val);
+                    l.setFont(Theme.font(Font.BOLD, 12));
+                    if ("\u0110\u00e3 ti\u00eam".equalsIgnoreCase(st)) l.setForeground(Theme.GREEN);
+                    else if ("Ch\u1edd ti\u00eam".equalsIgnoreCase(st)) l.setForeground(Theme.ORANGE);
+                    else if ("Qu\u00e1 h\u1ea1n".equalsIgnoreCase(st)) l.setForeground(Theme.RED);
+                    else l.setForeground(Theme.TEXT);
                 } else {
-                    c.setBackground(row % 2 == 0 ? Color.WHITE : new Color(0xFAFBFD));
-                    c.setForeground(Theme.TEXT);
+                    l.setForeground(Theme.TEXT);
                 }
-                if (col == 7) { // Trạng thái
-                    String st = String.valueOf(value);
-                    if ("Đã tiêm".equals(st)) {
-                        setForeground(Theme.SUCCESS);
-                        setFont(Theme.font(Font.BOLD, 12));
-                    } else if ("Chờ tiêm".equals(st)) {
-                        setForeground(Theme.PRIMARY);
-                        setFont(Theme.font(Font.BOLD, 12));
-                    } else if ("Quá hạn".equals(st)) {
-                        setForeground(Theme.DANGER);
-                        setFont(Theme.font(Font.BOLD, 12));
-                    }
-                }
-                return c;
+                return l;
             }
         });
 
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createEmptyBorder());
         sp.getViewport().setBackground(Color.WHITE);
-        SlimScrollBarUI.apply(sp);
         card.add(sp, BorderLayout.CENTER);
-
-        // Thanh thao tác dưới bảng
-        JPanel foot = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
-        foot.setOpaque(false);
-        foot.setBorder(new MatteBorder(1, 0, 0, 0, Theme.BORDER));
-
-        RoundedButton btnTiemNgay = new RoundedButton("Xác nhận đã tiêm", Theme.SUCCESS, new Color(0x27AE60), Color.WHITE, null, 8);
-        btnTiemNgay.addActionListener(e -> capNhatTiemNgay());
-
-        RoundedButton btnXoa = new RoundedButton("Xóa phiếu", Color.WHITE, Theme.FIELD_BG, Theme.DANGER, Theme.BORDER, 8);
-        btnXoa.addActionListener(e -> xoaPhieu());
-
-        foot.add(btnTiemNgay);
-        foot.add(btnXoa);
-        card.add(foot, BorderLayout.SOUTH);
 
         return card;
     }
@@ -255,10 +181,10 @@ public class TiemPhongPanel extends JPanel implements Refreshable {
         daLoc.clear();
         String kw = tfTimKiem.getText().trim().toLowerCase();
         for (PhieuTiem p : danhSach) {
-            if (!"Tất cả".equals(trangThaiLoc) && !p.getTrangThai().equals(trangThaiLoc)) continue;
+            if (!trangThaiLoc.equals("T\u1ea5t c\u1ea3") && !p.getTrangThai().equalsIgnoreCase(trangThaiLoc)) continue;
             if (!kw.isEmpty()) {
                 String full = (p.getMaPhieu() + " " + p.getTenThuCung() + " " + p.getTenChu() + " "
-                        + p.getSdt() + " " + p.getLoaiVaccine()).toLowerCase();
+                        + p.getSdt() + " " + p.getLoaiVaccine() + " " + p.getBacSi()).toLowerCase();
                 if (!full.contains(kw)) continue;
             }
             daLoc.add(p);
@@ -267,72 +193,154 @@ public class TiemPhongPanel extends JPanel implements Refreshable {
     }
 
     private void moDialogThemPhieu() {
-        JDialog dlg = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "Lập phiếu tiêm phòng mới", true);
-        dlg.setLayout(new BorderLayout());
-        dlg.setSize(520, 560);
+        JDialog dlg = new JDialog((Frame) SwingUtilities.getWindowAncestor(this), "\u0110\u0103ng k\u00fd phi\u1ebfu ti\u00eam ph\u00f2ng", true);
+        dlg.setSize(520, 660);
         dlg.setLocationRelativeTo(this);
+        dlg.setLayout(new BorderLayout());
 
-        JPanel p = new JPanel(new GridLayout(0, 1, 6, 6));
-        p.setBorder(new EmptyBorder(20, 24, 20, 24));
-        p.setBackground(Color.WHITE);
+        JPanel form = new JPanel();
+        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+        form.setBorder(new EmptyBorder(20, 24, 20, 24));
+        form.setBackground(Color.WHITE);
 
-        PlaceholderField txtTenTc = new PlaceholderField("Tên thú cưng (ví dụ: Lu Lu)");
-        PlaceholderField txtLoai = new PlaceholderField("Loài (Chó / Mèo...)");
-        PlaceholderField txtTenChu = new PlaceholderField("Họ tên chủ nuôi");
-        PlaceholderField txtSdt = new PlaceholderField("Số điện thoại liên hệ");
-        JComboBox<String> cbVaccine = new JComboBox<>(new String[] {
-                "Tiêm vaccine phòng Dại (Rabies)",
-                "Tiêm vaccine 5 bệnh chó",
-                "Tiêm vaccine 7 bệnh chó",
-                "Tiêm vaccine 4 bệnh mèo",
-                "Tiêm phòng ngừa xoắn khuẩn Lepto",
-                "Tẩy giun sán định kỳ thú cưng"
+        List<KhachHang> dsKh = new ArrayList<>();
+        List<ThuCung> dsTc = new ArrayList<>();
+        try {
+            dsKh = new KhachHangDAO().layTatCa();
+            dsTc = new ThuCungDAO().layTatCa();
+        } catch (Exception ignored) {}
+
+        JComboBox<String> cbKh = new JComboBox<>();
+        cbKh.setFont(Theme.font(Font.PLAIN, 13));
+        cbKh.setBackground(Color.WHITE);
+        cbKh.setEditable(true);
+        cbKh.addItem("-- Ch\u1ecdn kh\u00e1ch h\u00e0ng c\u00f3 s\u1eb5n --");
+        for (KhachHang kh : dsKh) {
+            cbKh.addItem(kh.getHoTen() + " (" + kh.getSoDienThoai() + ")");
+        }
+
+        JTextField txtSdt = new JTextField();
+        txtSdt.setFont(Theme.font(Font.PLAIN, 13));
+
+        JComboBox<String> cbThuCung = new JComboBox<>();
+        cbThuCung.setFont(Theme.font(Font.PLAIN, 13));
+        cbThuCung.setBackground(Color.WHITE);
+        cbThuCung.setEditable(true);
+        cbThuCung.addItem("-- Ch\u1ecdn th\u00fa c\u01b0ng --");
+
+        JTextField txtLoai = new JTextField();
+        txtLoai.setFont(Theme.font(Font.PLAIN, 13));
+
+        final List<KhachHang> finalKhList = dsKh;
+        final List<ThuCung> finalTcList = dsTc;
+
+        cbKh.addActionListener(e -> {
+            int idx = cbKh.getSelectedIndex();
+            if (idx > 0 && idx - 1 < finalKhList.size()) {
+                KhachHang kh = finalKhList.get(idx - 1);
+                txtSdt.setText(kh.getSoDienThoai());
+                cbThuCung.removeAllItems();
+                boolean coPet = false;
+                for (ThuCung tc : finalTcList) {
+                    if (tc.getMaKH() != null && tc.getMaKH().equalsIgnoreCase(kh.getMaKH())) {
+                        cbThuCung.addItem(tc.getTen() + " (" + tc.getGiong() + ")");
+                        coPet = true;
+                    }
+                }
+                if (!coPet) {
+                    cbThuCung.addItem("Ch\u01b0a c\u00f3 th\u00fa c\u01b0ng (nh\u1eadp m\u1edbi)");
+                }
+            }
+        });
+
+        cbThuCung.addActionListener(e -> {
+            Object sel = cbThuCung.getSelectedItem();
+            if (sel != null) {
+                String str = sel.toString();
+                for (ThuCung tc : finalTcList) {
+                    if (str.startsWith(tc.getTen())) {
+                        txtLoai.setText(tc.getLoai() + " - " + tc.getGiong());
+                        break;
+                    }
+                }
+            }
+        });
+
+        JComboBox<String> cbVaccine = new JComboBox<>(new String[]{
+                "Ti\u00eam vaccine ph\u00f2ng D\u1ea1i (Rabies)",
+                "Ti\u00eam vaccine 4 b\u1ec7nh m\u00e8o (Nobivac Ducat)",
+                "Ti\u00eam vaccine 5 b\u1ec7nh ch\u00f3",
+                "Ti\u00eam vaccine 7 b\u1ec7nh ch\u00f3 (Vanguard Plus 5/L4)"
         });
         cbVaccine.setFont(Theme.font(Font.PLAIN, 13));
         cbVaccine.setBackground(Color.WHITE);
 
-        PlaceholderField txtBacSi = new PlaceholderField("Bác sĩ tiêm (ví dụ: BS. Minh Đức)");
-        PlaceholderField txtGhiChu = new PlaceholderField("Ghi chú theo dõi sức khỏe");
+        JComboBox<String> cbBacSi = new JComboBox<>(new String[]{
+                "BS. Nguy\u1ec5n Ho\u00e0i Anh",
+                "BS. V\u00f5 Thanh H\u00f9ng",
+                "BS. Ng\u00f4 Gia B\u1ea3o"
+        });
+        cbBacSi.setFont(Theme.font(Font.PLAIN, 13));
+        cbBacSi.setBackground(Color.WHITE);
 
-        p.add(new JLabel("Tên thú cưng:"));
-        p.add(new FieldBox(txtTenTc, Color.WHITE, 38));
-        p.add(new JLabel("Loài thú cưng:"));
-        p.add(new FieldBox(txtLoai, Color.WHITE, 38));
-        p.add(new JLabel("Họ tên chủ nuôi:"));
-        p.add(new FieldBox(txtTenChu, Color.WHITE, 38));
-        p.add(new JLabel("Số điện thoại:"));
-        p.add(new FieldBox(txtSdt, Color.WHITE, 38));
-        p.add(new JLabel("Loại Vaccine:"));
-        p.add(cbVaccine);
-        p.add(new JLabel("Bác sĩ phụ trách:"));
-        p.add(new FieldBox(txtBacSi, Color.WHITE, 38));
-        p.add(new JLabel("Ghi chú:"));
-        p.add(new FieldBox(txtGhiChu, Color.WHITE, 38));
+        JTextField txtGhiChu = new JTextField();
+        txtGhiChu.setFont(Theme.font(Font.PLAIN, 13));
 
-        dlg.add(p, BorderLayout.CENTER);
+        addFormRow(form, "Kh\u00e1ch h\u00e0ng / Ch\u1ee7 nu\u00f4i:", cbKh);
+        addFormRow(form, "S\u1ed1 \u0111i\u1ec7n tho\u1ea1i:", txtSdt);
+        addFormRow(form, "Th\u00fa c\u01b0ng:", cbThuCung);
+        addFormRow(form, "Gi\u1ed1ng lo\u00e0i:", txtLoai);
+        addFormRow(form, "Lo\u1ea1i vaccine ti\u00eam:", cbVaccine);
+        addFormRow(form, "B\u00e1c s\u0129 ph\u1ee5 tr\u00e1ch:", cbBacSi);
+        addFormRow(form, "Ghi ch\u00fa / Ti\u1ec1n s\u1eed d\u1ecb \u1ee9ng:", txtGhiChu);
+
+        dlg.add(new JScrollPane(form), BorderLayout.CENTER);
 
         JPanel act = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 12));
-        act.setBackground(Theme.FIELD_BG);
-        RoundedButton btnLuu = new RoundedButton("Lưu phiếu", Theme.PRIMARY, Theme.PRIMARY_HOVER, Color.WHITE, null, 8);
-        RoundedButton btnHuy = new RoundedButton("Hủy", Color.WHITE, Theme.FIELD_BG, Theme.TEXT, Theme.BORDER, 8);
+        act.setBackground(Color.WHITE);
+        act.setBorder(new MatteBorder(1, 0, 0, 0, Theme.BORDER));
+
+        RoundedButton btnHuy = new RoundedButton("H\u1ee7y", Color.WHITE, Theme.FIELD_BG, Theme.TEXT, Theme.BORDER, 8).pad(14, 7);
+        RoundedButton btnLuu = new RoundedButton("\u0110\u0103ng k\u00fd ti\u00eam", Theme.PRIMARY, Theme.PRIMARY_HOVER, Color.WHITE, null, 8).pad(16, 7);
 
         btnLuu.addActionListener(e -> {
-            String tenTc = txtTenTc.getText().trim();
-            String tenC = txtTenChu.getText().trim();
+            Object cObj = cbKh.getSelectedItem();
+            String tenC = (cObj != null) ? cObj.toString().trim() : "";
+            if (tenC.contains("(") && tenC.endsWith(")")) {
+                tenC = tenC.substring(0, tenC.lastIndexOf('(')).trim();
+            }
+            if (tenC.startsWith("-- Ch\u1ecdn")) tenC = "";
+
+            Object tcObj = cbThuCung.getSelectedItem();
+            String tenTc = (tcObj != null) ? tcObj.toString().trim() : "";
+            if (tenTc.contains("(") && tenTc.endsWith(")")) {
+                tenTc = tenTc.substring(0, tenTc.lastIndexOf('(')).trim();
+            }
+            if (tenTc.startsWith("-- Ch\u1ecdn") || tenTc.startsWith("Ch\u01b0a c\u00f3")) tenTc = "";
+
             if (tenTc.isEmpty() || tenC.isEmpty()) {
-                JOptionPane.showMessageDialog(dlg, "Vui lòng nhập tên thú cưng và tên chủ nuôi!", "Lỗi nhập liệu", JOptionPane.WARNING_MESSAGE);
+                JOptionPane.showMessageDialog(dlg, "Vui l\u00f2ng ch\u1ecdn ho\u1eb7c nh\u1eadp t\u00ean th\u00fa c\u01b0ng v\u00e0 t\u00ean ch\u1ee7 nu\u00f4i!", "L\u1ed7i nh\u1eadp li\u1ec7u", JOptionPane.WARNING_MESSAGE);
                 return;
             }
-            String ma = "TP-" + (++demMa);
+
+            String ma = dao.maTiepTheo();
             String homNay = LocalDate.now().format(DATE_FMT);
-            String nhacLai = LocalDate.now().plusMonths(1).format(DATE_FMT);
-            danhSach.add(0, new PhieuTiem(ma, tenTc, txtLoai.getText().trim(), tenC, txtSdt.getText().trim(),
-                    (String) cbVaccine.getSelectedItem(), homNay, nhacLai,
-                    txtBacSi.getText().trim().isEmpty() ? "BS. Trực ca" : txtBacSi.getText().trim(),
-                    "Chờ tiêm", txtGhiChu.getText().trim()));
+            String nhacLai = LocalDate.now().plusMonths(12).format(DATE_FMT);
+            String bs = (String) cbBacSi.getSelectedItem();
+
+            PhieuTiem pt = new PhieuTiem(ma, tenTc, txtLoai.getText().trim(), tenC, txtSdt.getText().trim(),
+                    (String) cbVaccine.getSelectedItem(), homNay, nhacLai, bs,
+                    "Ch\u1edd ti\u00eam", txtGhiChu.getText().trim());
+
+            try {
+                dao.them(pt);
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
+            danhSach.add(0, pt);
             locDuLieu();
             dlg.dispose();
-            JOptionPane.showMessageDialog(this, "Đã tạo phiếu tiêm phòng " + ma + " thành công!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "\u0110\u00e3 t\u1ea1o phi\u1ebfu ti\u00eam ph\u00f2ng " + ma + " th\u00e0nh c\u00f4ng!", "Th\u00f4ng b\u00e1o", JOptionPane.INFORMATION_MESSAGE);
         });
         btnHuy.addActionListener(e -> dlg.dispose());
 
@@ -343,42 +351,64 @@ public class TiemPhongPanel extends JPanel implements Refreshable {
         dlg.setVisible(true);
     }
 
+    private void addFormRow(JPanel form, String label, JComponent field) {
+        JLabel lbl = new JLabel(label);
+        lbl.setFont(Theme.font(Font.PLAIN, 13));
+        lbl.setAlignmentX(Component.LEFT_ALIGNMENT);
+        form.add(lbl);
+        form.add(Box.createVerticalStrut(4));
+        field.setAlignmentX(Component.LEFT_ALIGNMENT);
+        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+        form.add(field);
+        form.add(Box.createVerticalStrut(10));
+    }
+
     private void capNhatTiemNgay() {
         int row = table.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn một phiếu tiêm trong bảng để cập nhật!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Vui l\u00f2ng ch\u1ecdn phi\u1ebfu ti\u00eam c\u1ea7n x\u00e1c nh\u1eadn!", "Th\u00f4ng b\u00e1o", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         PhieuTiem pt = daLoc.get(row);
-        pt.setTrangThai("Đã tiêm");
+        pt.setTrangThai("\u0110\u00e3 ti\u00eam");
         pt.setNgayTiem(LocalDate.now().format(DATE_FMT));
-        pt.setNgayHenNhac(LocalDate.now().plusMonths(1).format(DATE_FMT));
+        pt.setNgayHenNhac(LocalDate.now().plusMonths(12).format(DATE_FMT));
+        try {
+            dao.capNhat(pt);
+        } catch (SQLException ex) {
+            ex.printStackTrace();
+        }
         locDuLieu();
-        JOptionPane.showMessageDialog(this, "Đã xác nhận tiêm chủng cho bé " + pt.getTenThuCung() + " thành công!", "Hoàn tất", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, "\u0110\u00e3 x\u00e1c nh\u1eadn ti\u00eam th\u00e0nh c\u00f4ng cho b\u00e9 " + pt.getTenThuCung() + "!", "Th\u00e0nh c\u00f4ng", JOptionPane.INFORMATION_MESSAGE);
     }
 
     private void xoaPhieu() {
         int row = table.getSelectedRow();
         if (row < 0) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn phiếu tiêm cần xóa!", "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Vui l\u00f2ng ch\u1ecdn phi\u1ebfu c\u1ea7n x\u00f3a!", "Th\u00f4ng b\u00e1o", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         PhieuTiem pt = daLoc.get(row);
-        int cf = JOptionPane.showConfirmDialog(this, "Bạn có chắc chắn muốn xóa phiếu tiêm " + pt.getMaPhieu() + " của bé " + pt.getTenThuCung() + "?", "Xác nhận xóa", JOptionPane.YES_NO_OPTION);
+        int cf = JOptionPane.showConfirmDialog(this, "B\u1ea1n c\u00f3 ch\u1eafc ch\u1eafn mu\u1ed1n x\u00f3a phi\u1ebfu ti\u00eam " + pt.getMaPhieu() + "?", "X\u00e1c nh\u1eadn x\u00f3a", JOptionPane.YES_NO_OPTION);
         if (cf == JOptionPane.YES_OPTION) {
             danhSach.remove(pt);
+            try {
+                dao.xoa(pt.getMaPhieu());
+            } catch (SQLException ex) {
+                ex.printStackTrace();
+            }
             locDuLieu();
         }
     }
 
     @Override
     public void lamMoi() {
-        locDuLieu();
+        taiTuCSDL();
     }
 
-    private class PhieuTiemTableModel extends AbstractTableModel {
+    private class TiemPhongTableModel extends AbstractTableModel {
         private final String[] COLS = {
-                "Mã phiếu", "Tên thú cưng", "Loài", "Chủ nuôi", "Số ĐT", "Loại Vaccine", "Ngày tiêm", "Trạng thái", "Bác sĩ"
+                "M\u00e3 phi\u1ebfu", "T\u00ean th\u00fa c\u01b0ng", "Lo\u00e0i", "Ch\u1ee7 nu\u00f4i", "S\u1ed1 \u0110T", "Lo\u1ea1i Vaccine", "Ng\u00e0y ti\u00eam", "Tr\u1ea1ng th\u00e1i", "B\u00e1c s\u0129"
         };
 
         @Override public int getRowCount() { return daLoc.size(); }

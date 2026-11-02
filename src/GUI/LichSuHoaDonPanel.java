@@ -71,6 +71,7 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
     }
 
     @Override public void lamMoi() {
+        bus.taiTuCSDL();
         refresh();
     }
 

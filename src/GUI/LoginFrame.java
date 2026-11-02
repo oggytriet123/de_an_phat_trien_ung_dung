@@ -3,6 +3,8 @@ package GUI;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import javax.swing.*;
@@ -25,6 +27,7 @@ public class LoginFrame extends JFrame {
     private final JPasswordField txtMatKhau = new JPasswordField();
     private final JCheckBox chkHien = new JCheckBox("Hiện mật khẩu");
     private final JLabel lblLoi = new JLabel(" ");
+    private final JLabel lblQuen = new JLabel("Quên mật khẩu?", SwingConstants.CENTER);
     private final RoundedButton btnDangNhap =
             new RoundedButton("ĐĂNG NHẬP", Theme.DARK, Theme.ACCENT, Color.WHITE, null, 14);
     private final RoundedButton btnThoat =
@@ -49,7 +52,7 @@ public class LoginFrame extends JFrame {
         setSize(1100, 690);
         setMinimumSize(new Dimension(900, 640));
         setLocationRelativeTo(null);
-        setExtendedState(JFrame.MAXIMIZED_BOTH);
+        setExtendedState(JFrame.MAXIMIZED_BOTH); // mở toàn màn hình
         getRootPane().setDefaultButton(btnDangNhap);
     }
 
@@ -125,7 +128,7 @@ public class LoginFrame extends JFrame {
         JLabel title = new JLabel("ĐĂNG NHẬP", SwingConstants.CENTER);
         title.setFont(Theme.font(Font.BOLD, 34));
         title.setForeground(Color.BLACK);
-        JLabel sub = new JLabel("Vui lòng đăng nhập để tiếp tục (Tài khoản mẫu: admin / 123456)", SwingConstants.CENTER);
+        JLabel sub = new JLabel("Vui lòng đăng nhập để tiếp tục", SwingConstants.CENTER);
         sub.setFont(Theme.font(Font.PLAIN, 16));
         sub.setForeground(new Color(0x98A3AC));
 
@@ -155,7 +158,8 @@ public class LoginFrame extends JFrame {
         add(form, c, 6, chkHien, 6);
         add(form, c, 7, lblLoi, 14);
         add(form, c, 8, btnDangNhap, 12);
-        add(form, c, 9, btnThoat, 0);
+        add(form, c, 9, btnThoat, 16);
+        add(form, c, 10, lblQuen, 0);
 
         JPanel center = new JPanel(new GridBagLayout());
         center.setOpaque(false);
@@ -203,6 +207,14 @@ public class LoginFrame extends JFrame {
     private void wireEvents() {
         btnDangNhap.addActionListener(e -> dangNhap());
         btnThoat.addActionListener(e -> thoat());
+        lblQuen.setFont(Theme.font(Font.BOLD, 14));
+        lblQuen.setForeground(Theme.PRIMARY);
+        lblQuen.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        lblQuen.addMouseListener(new MouseAdapter() {
+            @Override public void mouseClicked(MouseEvent e) { moQuenMatKhau(); }
+            @Override public void mouseEntered(MouseEvent e) { lblQuen.setText("<html><u>Quên mật khẩu?</u></html>"); }
+            @Override public void mouseExited(MouseEvent e) { lblQuen.setText("Quên mật khẩu?"); }
+        });
         chkHien.addActionListener(e -> txtMatKhau.setEchoChar(chkHien.isSelected() ? (char) 0 : ECHO));
 
         DocumentListener clear = new DocumentListener() {
@@ -215,6 +227,83 @@ public class LoginFrame extends JFrame {
 
         // Enter ở ô tài khoản -> chuyển xuống ô mật khẩu
         txtTaiKhoan.addActionListener(e -> txtMatKhau.requestFocusInWindow());
+    }
+
+    /** Hộp thoại Quên mật khẩu: nhập tài khoản + SĐT/email đã đăng ký, rồi đặt mật khẩu mới. */
+    private void moQuenMatKhau() {
+        JDialog dlg = new JDialog(this, "Quên mật khẩu", true);
+        JTextField txtId = new JTextField(txtTaiKhoan.getText().trim());
+        JTextField txtLh = new JTextField();
+        JPasswordField txtMoi = new JPasswordField();
+        JPasswordField txtNhapLai = new JPasswordField();
+        for (JTextField f : new JTextField[] {txtId, txtLh, txtMoi, txtNhapLai}) styleField(f);
+        for (JTextField f : new JTextField[] {txtId, txtLh, txtMoi, txtNhapLai}) f.setPreferredSize(new Dimension(380, 40));
+
+        JLabel lblMoTa = new JLabel("<html>Nhập mã tài khoản (hoặc tên đăng nhập) và <b>số điện thoại hoặc email đã đăng ký</b> "
+                + "để đặt lại mật khẩu.</html>");
+        lblMoTa.setFont(Theme.font(Font.PLAIN, 13));
+        lblMoTa.setForeground(Theme.MUTED);
+        JLabel lblKq = new JLabel(" ");
+        lblKq.setFont(Theme.font(Font.PLAIN, 13));
+        lblKq.setForeground(Theme.RED);
+
+        JPanel form = new JPanel();
+        form.setLayout(new BoxLayout(form, BoxLayout.Y_AXIS));
+        form.setBorder(new EmptyBorder(22, 28, 8, 28));
+        form.add(lblMoTa);
+        form.add(Box.createVerticalStrut(14));
+        String[] nhan = {"Mã tài khoản / Tên đăng nhập:", "Số điện thoại hoặc Email đã đăng ký:", "Mật khẩu mới:", "Nhập lại mật khẩu mới:"};
+        JTextField[] cac = {txtId, txtLh, txtMoi, txtNhapLai};
+        for (int i = 0; i < 4; i++) {
+            JLabel l = boldLabel(nhan[i]);
+            l.setAlignmentX(Component.LEFT_ALIGNMENT);
+            cac[i].setAlignmentX(Component.LEFT_ALIGNMENT);
+            form.add(l);
+            form.add(Box.createVerticalStrut(5));
+            form.add(cac[i]);
+            form.add(Box.createVerticalStrut(10));
+        }
+        lblMoTa.setAlignmentX(Component.LEFT_ALIGNMENT);
+        lblKq.setAlignmentX(Component.LEFT_ALIGNMENT);
+        form.add(lblKq);
+
+        RoundedButton btnDat = new RoundedButton("ĐẶT LẠI MẬT KHẨU", Theme.DARK, Theme.ACCENT_HOVER, Color.WHITE, null, 14);
+        RoundedButton btnHuy = new RoundedButton("HỦY", new Color(0xE4E8EB), new Color(0xD5DBE0), Theme.TEXT, null, 14);
+        btnHuy.addActionListener(e -> dlg.dispose());
+        final int[] lanSai = {0};
+        btnDat.addActionListener(e -> {
+            String loi = bus.quenMatKhau(txtId.getText(), txtLh.getText(),
+                    new String(txtMoi.getPassword()), new String(txtNhapLai.getPassword()));
+            if (loi == null) {
+                JOptionPane.showMessageDialog(dlg, "Đặt lại mật khẩu thành công. Vui lòng đăng nhập bằng mật khẩu mới.",
+                        "Thành công", JOptionPane.INFORMATION_MESSAGE);
+                txtTaiKhoan.setText(txtId.getText().trim());
+                txtMatKhau.setText("");
+                dlg.dispose();
+                txtMatKhau.requestFocusInWindow();
+            } else {
+                lblKq.setText("<html>" + loi + "</html>");
+                if (loi.startsWith("Thông tin không khớp") && ++lanSai[0] >= 5) {
+                    JOptionPane.showMessageDialog(dlg, "Bạn đã nhập sai quá 5 lần. Vui lòng thử lại sau.",
+                            "Tạm khóa", JOptionPane.WARNING_MESSAGE);
+                    dlg.dispose();
+                }
+            }
+        });
+        JPanel foot = new JPanel(new GridLayout(1, 2, 10, 0));
+        foot.setBorder(new EmptyBorder(6, 28, 22, 28));
+        btnDat.setPreferredSize(new Dimension(190, 40));
+        btnHuy.setPreferredSize(new Dimension(190, 40));
+        foot.add(btnHuy);
+        foot.add(btnDat);
+
+        dlg.setLayout(new BorderLayout());
+        dlg.add(form, BorderLayout.CENTER);
+        dlg.add(foot, BorderLayout.SOUTH);
+        dlg.getRootPane().setDefaultButton(btnDat);
+        dlg.pack();
+        dlg.setLocationRelativeTo(this);
+        dlg.setVisible(true);
     }
 
     private void dangNhap() {

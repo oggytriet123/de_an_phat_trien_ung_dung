@@ -103,6 +103,9 @@ public class HoaDon {
     public void setMaKH(String v) { this.maKH = v == null ? "" : v; }
     public void setMaGiamGia(MaGiamGia m) { this.maGiamGia = m; }
     public void setNgayTao(LocalDateTime t) { this.ngayTao = t; }
+    public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
+    public void setPhuongThuc(String phuongThuc) { this.phuongThuc = phuongThuc; }
+    public void setNgayThanhToan(LocalDateTime ngayThanhToan) { this.ngayThanhToan = ngayThanhToan; }
 
     public void danhDauDaThanhToan(String phuongThuc, LocalDateTime luc) {
         this.trangThai = DA_THANH_TOAN;

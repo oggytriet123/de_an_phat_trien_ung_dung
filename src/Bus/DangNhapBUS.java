@@ -6,56 +6,41 @@ import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
 
 import DAO.TaiKhoanDAO;
-import Entity.ChucNang;
 import Entity.TaiKhoan;
 
 public class DangNhapBUS {
-    /**
-     * true  = nếu không kết nối được SQL Server (hoặc không khớp trong CSDL) thì cho phép
-     *         đăng nhập bằng tài khoản mẫu bên dưới để chạy thử giao diện.
-     * false = chỉ đăng nhập bằng CSDL. NHỚ ĐẶT false khi triển khai thật.
-     */
-    private static final boolean CHO_PHEP_TAI_KHOAN_MAU = true;
-
     private final TaiKhoanDAO dao = new TaiKhoanDAO();
 
-    /** @return tài khoản nếu đúng, null nếu sai thông tin. */
+    /** @return tài khoản nếu đúng, null nếu sai thông tin hoặc không kết nối được CSDL. */
     public TaiKhoan dangNhap(String maHoacSdt, String matKhau) {
-        // Ưu tiên vào thẳng ngay lập tức với tài khoản chạy thử, không cần chờ kết nối SQL
-        if (CHO_PHEP_TAI_KHOAN_MAU) {
-            TaiKhoan tkMau = taiKhoanMau(maHoacSdt, matKhau);
-            if (tkMau != null) return tkMau;
-        }
-
+        if (maHoacSdt == null || maHoacSdt.trim().isEmpty() || matKhau == null || matKhau.isEmpty()) return null;
         try {
-            TaiKhoan tk = dao.timTheoDangNhap(maHoacSdt, bamSha256(matKhau));
-            return tk; // sai mật khẩu/không có tài khoản -> null
+            return dao.timTheoDangNhap(maHoacSdt.trim(), bamSha256(matKhau)); // sai mật khẩu/không có tài khoản -> null
         } catch (SQLException e) {
             System.err.println("[DangNhapBUS] Không truy vấn được CSDL: " + e.getMessage());
+            return null;
         }
-        // Chỉ dùng tài khoản mẫu khi không kết nối được CSDL
-        return CHO_PHEP_TAI_KHOAN_MAU ? taiKhoanMau(maHoacSdt, matKhau) : null;
     }
 
-    /** Tài khoản mẫu (chạy thử, không có trong CSDL). */
-    public static boolean laTaiKhoanMau(TaiKhoan tk) {
-        return tk != null && (tk.getMaTaiKhoan().equals("QL001") || tk.getMaTaiKhoan().equals("NV01"));
-    }
-
-    private TaiKhoan taiKhoanMau(String id, String matKhau) {
-        if (!"123456".equals(matKhau) && !"admin".equalsIgnoreCase(matKhau)) return null;
-        if (id.equalsIgnoreCase("admin") || id.equalsIgnoreCase("QL001") || id.equals("0901234567") || id.isEmpty())
-            return mau(new TaiKhoan("QL001", "admin", "Hữu Thịnh", "Quản lý", ChucNang.macDinh("Quản lý"),
-                    "0901234567", java.time.LocalDate.of(1995, 5, 20), "thinh@petstation.vn"));
-        if (id.equalsIgnoreCase("nv01") || id.equals("0902345678"))
-            return mau(new TaiKhoan("NV01", "nv01", "Thu Trang", "Bán hàng", ChucNang.macDinh("Bán hàng"),
-                    "0902345678", java.time.LocalDate.of(1998, 11, 3), "trang@petstation.vn"));
-        return null;
-    }
-
-    private static TaiKhoan mau(TaiKhoan tk) {
-        tk.setThongTinCongViec(java.time.LocalDate.of(2024, 1, 15), "Toàn thời gian", "Đang làm việc");
-        return tk;
+    /**
+     * Quên mật khẩu: đặt mật khẩu mới khi nhập đúng SĐT hoặc email đã đăng ký của tài khoản (kiểm tra trong CSDL).
+     * @return null nếu thành công, ngược lại là thông báo lỗi.
+     */
+    public String quenMatKhau(String maHoacTenDN, String lienHe, String moi, String nhapLai) {
+        String id = maHoacTenDN == null ? "" : maHoacTenDN.trim();
+        String lh = lienHe == null ? "" : lienHe.trim();
+        if (id.isEmpty()) return "Vui lòng nhập mã tài khoản hoặc tên đăng nhập.";
+        if (lh.isEmpty()) return "Vui lòng nhập số điện thoại hoặc email đã đăng ký.";
+        if (moi == null || moi.length() < 6) return "Mật khẩu mới phải có ít nhất 6 ký tự.";
+        if (moi.contains(" ")) return "Mật khẩu mới không được chứa khoảng trắng.";
+        if (!moi.equals(nhapLai)) return "Mật khẩu nhập lại không khớp.";
+        try {
+            if (dao.datLaiMatKhau(id, lh, bamSha256(moi)) > 0) return null;
+            return "Thông tin không khớp với tài khoản đã đăng ký.";
+        } catch (SQLException e) {
+            System.err.println("[DangNhapBUS] Không đặt lại được mật khẩu: " + e.getMessage());
+            return "Không kết nối được cơ sở dữ liệu. Vui lòng thử lại sau.";
+        }
     }
 
     public static String bamSha256(String s) {

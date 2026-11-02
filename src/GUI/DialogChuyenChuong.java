@@ -100,38 +100,39 @@ public class DialogChuyenChuong extends JDialog {
         txtTim.addActionListener(e -> loadDanhSachTrong(txtTim.getText().trim()));
         pnlBar.add(txtTim);
 
-        RoundedButton btnTim = new RoundedButton("Tìm", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 6).pad(10, 4);
+        RoundedButton btnTim = new RoundedButton("Tìm", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(12, 5);
         btnTim.addActionListener(e -> loadDanhSachTrong(txtTim.getText().trim()));
         pnlBar.add(btnTim);
 
         center.add(pnlBar, BorderLayout.NORTH);
 
         // Bảng danh sách các lồng còn trống
-        String[] cols = {"Mã Lồng", "Tên Lồng", "Kích Cỡ", "Khu Vực", "Giá / Ngày", "Loại Lồng"};
+        String[] cols = {"Mã lồng", "Tên lồng", "Kích cỡ", "Khu vực", "Đơn giá/ngày", "Tiện ích"};
         modelTrong = new DefaultTableModel(cols, 0) {
-            @Override public boolean isCellEditable(int r, int c) { return false; }
+            @Override
+            public boolean isCellEditable(int row, int col) { return false; }
         };
+
         tblTrong = new JTable(modelTrong);
-        JScrollPane sp = new JScrollPane(tblTrong);
-        Theme.styleTable(tblTrong, sp, 32);
-        tblTrong.getColumnModel().getColumn(0).setPreferredWidth(70);
-        tblTrong.getColumnModel().getColumn(0).setCellRenderer(Theme.cellCenter());
-        tblTrong.getColumnModel().getColumn(2).setCellRenderer(Theme.cellCenter());
-        tblTrong.getColumnModel().getColumn(3).setCellRenderer(Theme.cellCenter());
-        tblTrong.getColumnModel().getColumn(4).setCellRenderer(Theme.cellRight());
-        tblTrong.getColumnModel().getColumn(5).setCellRenderer(Theme.cellCenter());
+        tblTrong.setFont(Theme.font(Font.PLAIN, 13));
+        tblTrong.setRowHeight(32);
+        tblTrong.getTableHeader().setFont(Theme.font(Font.BOLD, 13));
+        tblTrong.getTableHeader().setBackground(Theme.SIDEBAR);
+        tblTrong.getTableHeader().setForeground(Color.WHITE);
+        tblTrong.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
         tblTrong.getSelectionModel().addListSelectionListener(e -> {
             int row = tblTrong.getSelectedRow();
-            if (row != -1) {
+            if (row >= 0) {
                 maChuongMoiDuocChon = (String) modelTrong.getValueAt(row, 0);
-                String tenMoi = (String) modelTrong.getValueAt(row, 1);
-                String sz = (String) modelTrong.getValueAt(row, 2);
-                lblMoi.setText(maChuongMoiDuocChon + " - " + tenMoi + " (" + sz + ")");
+                String ten = (String) modelTrong.getValueAt(row, 1);
+                lblMoi.setText(maChuongMoiDuocChon + " (" + ten + ")");
             }
         });
 
-        center.add(sp, BorderLayout.CENTER);
+        JScrollPane scroll = new JScrollPane(tblTrong);
+        scroll.setBorder(new LineBorder(Theme.BORDER, 1));
+        center.add(scroll, BorderLayout.CENTER);
 
         return center;
     }
@@ -141,10 +142,10 @@ public class DialogChuyenChuong extends JDialog {
         foot.setBackground(Color.WHITE);
         foot.setBorder(new LineBorder(Theme.BORDER, 1));
 
-        RoundedButton btnDong = new RoundedButton("Đóng", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(16, 8);
-        RoundedButton btnChuyen = new RoundedButton("✓ Xác Nhận Chuyển Lồng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
-
+        RoundedButton btnDong = new RoundedButton("Hủy bỏ", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(16, 8);
         btnDong.addActionListener(e -> dispose());
+
+        RoundedButton btnChuyen = new RoundedButton("Xác Nhận Chuyển Lồng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
         btnChuyen.addActionListener(e -> thucHienChuyen());
 
         foot.add(btnDong);
@@ -182,6 +183,28 @@ public class DialogChuyenChuong extends JDialog {
         }
 
         Chuong cu = bus.timTheoMa(maChuongCu);
+        Chuong moi = bus.timTheoMa(maChuongMoiDuocChon);
+        if (cu != null && moi != null) {
+            String loai = cu.getLoaiPet() != null ? cu.getLoaiPet() : "";
+            String kvMoi = moi.getKhuVuc() != null ? moi.getKhuVuc() : "";
+            if (kvMoi.equalsIgnoreCase("Khu Mèo") && !loai.equalsIgnoreCase("Mèo")) {
+                JOptionPane.showMessageDialog(this, "Không thể chuyển! Lồng đích thuộc Khu Mèo chỉ dành riêng cho Mèo (bé này là " + loai + ").", "Ràng buộc khu vực", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if ((kvMoi.equalsIgnoreCase("Khu Chó Nhỏ") || kvMoi.equalsIgnoreCase("Khu Chó Lớn")) && !loai.equalsIgnoreCase("Chó")) {
+                JOptionPane.showMessageDialog(this, "Không thể chuyển! Lồng đích thuộc Khu Chó chỉ dành riêng cho Chó (bé này là " + loai + ").", "Ràng buộc khu vực", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (kvMoi.equalsIgnoreCase("Khu Loài Khác") && (loai.equalsIgnoreCase("Chó") || loai.equalsIgnoreCase("Mèo"))) {
+                JOptionPane.showMessageDialog(this, "Không thể chuyển! Lồng đích thuộc Khu Loài Khác dành cho loài khác (thỏ, chim,...).", "Ràng buộc khu vực", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+            if (moi.getCanNangToiDa() > 0 && cu.getCanNang() > moi.getCanNangToiDa()) {
+                JOptionPane.showMessageDialog(this, "Cân nặng bé (" + cu.getCanNang() + " kg) vượt quá tải trọng của lồng đích (" + moi.getCanNangToiDa() + " kg)!", "Cảnh báo tải trọng", JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+        }
+
         String petName = (cu != null && cu.getTenPet() != null) ? "cho bé " + cu.getTenPet() : "";
 
         int r = JOptionPane.showConfirmDialog(this,

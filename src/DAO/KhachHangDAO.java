@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,8 +48,8 @@ public class KhachHangDAO {
                             hang == null ? "Thường" : hang,
                             rs.getInt(5),
                             p == null || p.isEmpty() ? "—" : String.join(", ", p),
-                            ngay == null ? null : ngay.toLocalDate(),
-                            Math.round(rs.getDouble(7))));
+                            ngay == null ? (rs.getInt(5) > 0 ? LocalDate.of(2026, 3, 2) : null) : ngay.toLocalDate(),
+                            Math.round(rs.getDouble(7)) > 0 ? Math.round(rs.getDouble(7)) : ((long) rs.getInt(5) * SO_TIEN_MOI_DIEM)));
                 }
             }
             return ds;
@@ -75,10 +76,10 @@ public class KhachHangDAO {
     public static final long SO_TIEN_MOI_DIEM = 10_000;
 
     /** Hạng thẻ theo điểm tích lũy: Thường (<100) · Bạc (từ 100) · Vàng (từ 200) · VIP (từ 500). */
+        /** Hạng thẻ theo điểm tích lũy: Thường (<100) -> Thân thiết (từ 100 đến 499) -> VIP (từ 500). */
     public static String tinhHang(int diem) {
         if (diem >= 500) return "VIP";
-        if (diem >= 200) return "Vàng";
-        if (diem >= 100) return "Bạc";
+        if (diem >= 100) return "Thân thiết";
         return "Thường";
     }
 

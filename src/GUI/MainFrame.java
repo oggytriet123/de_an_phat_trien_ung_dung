@@ -52,7 +52,7 @@ public class MainFrame extends JFrame {
             Item.leaf("Thú Cưng", "paw", "Hồ sơ thú cưng: giống, tuổi, tiêm chủng", ChucNang.THU_CUNG),
             Item.leaf("Nhân Viên", "person", "Danh sách nhân viên cửa hàng", ChucNang.NHAN_VIEN),
             Item.leaf("Sản Phẩm", "box", "Thức ăn, phụ kiện, tồn kho", ChucNang.SAN_PHAM),
-            Item.leaf("Kho Hàng", "box", "Quản lý kho hàng và tồn kho", ChucNang.SAN_PHAM),
+            Item.leaf("Kho Hàng", "box", "Quản lý kho hàng và tồn kho", ChucNang.KHO_HANG),
             Item.leaf("Danh Mục Bệnh", "list", "Danh mục bệnh và hướng điều trị", ChucNang.DANH_MUC_BENH),
             Item.leaf("Khuyến Mãi", "tag", "Chương trình khuyến mãi và ưu đãi", ChucNang.KHUYEN_MAI)),
         new Item("Xử Lý", "sync", null, null,
@@ -69,16 +69,14 @@ public class MainFrame extends JFrame {
                 Item.leaf("Đổi lịch hẹn", "sync", "Thay đổi ngày giờ hẹn theo yêu cầu", ChucNang.LICH_HEN),
                 Item.leaf("Xác nhận lịch hẹn", "check", "Xác nhận các lịch hẹn đang chờ", ChucNang.LICH_HEN),
                 Item.leaf("Hủy lịch hẹn", "close", "Hủy lịch hẹn và ghi nhận lý do", ChucNang.LICH_HEN)),
-            Item.leaf("Lịch Sử Nhập / Xuất Kho", "eye", "Lịch sử nhập xuất kho hàng",                   ChucNang.SAN_PHAM)),
+            Item.leaf("Lịch Sử Nhập / Xuất Kho", "eye", "Lịch sử nhập xuất kho hàng",                   ChucNang.KHO_HANG)),
         new Item("Điều Trị & Đơn Thuốc", "medical", null, null,
-            Item.leaf("Quản lý Đơn thuốc", "prescription", "Kê đơn và quản lý đơn thuốc", ChucNang.DICH_VU),
-            Item.leaf("Phác đồ Điều trị", "protocol", "Thiết lập và theo dõi phác đồ điều trị", ChucNang.DICH_VU)),
+            Item.leaf("Quản lý Đơn thuốc", "prescription", "Kê đơn và quản lý đơn thuốc", ChucNang.DON_THUOC),
+            Item.leaf("Phác đồ Điều trị", "protocol", "Thiết lập và theo dõi phác đồ điều trị", ChucNang.PHAC_DO)),
         new Item("Tìm Kiếm", "search", null, null,
-            Item.leaf("Tìm Nhân Viên", "person", "Tra cứu nhân viên", ChucNang.TIM_KIEM),
-            Item.leaf("Tìm Khách Hàng", "customers", "Tra cứu khách hàng", ChucNang.TIM_KIEM),
-            Item.leaf("Tìm Thú Cưng", "paw", "Tra cứu thú cưng", ChucNang.TIM_KIEM),
-            Item.leaf("Phiếu Đặt Lịch", "calendar", "Tra cứu phiếu đặt lịch hẹn", ChucNang.TIM_KIEM),
-            Item.leaf("Tìm Hoá Đơn", "invoice", "Tra cứu hoá đơn", ChucNang.TIM_KIEM)),
+            Item.leaf("Tìm Nhân Viên", "person", "Tra cứu hồ sơ nhân viên", ChucNang.NHAN_VIEN),
+            Item.leaf("Tìm Khách Hàng", "customers", "Tra cứu hồ sơ và thẻ khách hàng", ChucNang.KHACH_HANG),
+            Item.leaf("Tìm Thú Cưng", "paw", "Tra cứu hồ sơ thú cưng", ChucNang.THU_CUNG)),
         new Item("Thống Kê", "bar-chart", null, null,
             new Item("Doanh Thu", "bar-chart", null, null,
                 Item.leaf("Theo Ngày", "calendar", "Doanh thu và hoá đơn theo từng khung giờ trong ngày.", ChucNang.TK_DOANH_THU),
@@ -140,6 +138,8 @@ public class MainFrame extends JFrame {
     private LichSuNhapXuatPanel pnlLichSuKho;
     private ThuCungPanel pnlThuCung;
     private KhachHangPanel pnlKhachHang;
+    private DanhMucBenhPanel pnlDanhMucBenh;
+    private NhanVienPanel pnlNhanVien;
     private LichHenPanel pnlHoSoLichHen, pnlQuanLyLichHen, pnlDoiLichHen, pnlXacNhanLichHen, pnlHuyLichHen;
     private DonThuocPanel pnlDonThuoc;
     private PhacDoPanel pnlPhacDo;
@@ -267,7 +267,7 @@ public class MainFrame extends JFrame {
                     + "• Xử Lý: lập hoá đơn, lịch sử hoá đơn, dịch vụ, tiêm phòng, phẫu thuật, lồng chuồng, đặt lịch hẹn, lịch sử kho\n"
                     + "• Điều Trị & Đơn Thuốc: quản lý đơn thuốc, phác đồ điều trị\n"
                     + "• Quản Lý Lịch Hẹn: hồ sơ, quản lý, đổi, xác nhận và hủy lịch hẹn\n"
-                    + "• Tìm Kiếm: tra cứu nhanh thông tin\n"
+                    + "• Tìm Kiếm: tra cứu nhanh thông tin nhân viên, khách hàng, thú cưng\n"
                     + "• Thống Kê: báo cáo doanh thu, khách hàng, thú cưng",
                     "Trợ Giúp", JOptionPane.INFORMATION_MESSAGE);
             default -> hienTrang(tab, it);
@@ -310,6 +310,13 @@ public class MainFrame extends JFrame {
     }
 
     /** Hiển thị trang tương ứng mục menu (tạo lần đầu khi cần). */
+    private static String norm(String s) {
+        if (s == null) return "";
+        return java.text.Normalizer.normalize(s, java.text.Normalizer.Form.NFD)
+                .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
+                .toLowerCase().trim();
+    }
+
     private void hienTrang(String tab, Item it) {
         if (!taiKhoan.coQuyen(it.cn)) {
             JOptionPane.showMessageDialog(this, "Bạn không có quyền sử dụng chức năng \"" + it.label + "\".",
@@ -317,20 +324,32 @@ public class MainFrame extends JFrame {
             return;
         }
         String key = tab + "/" + it.label;
+        if (it.label.equals("Tìm Khách Hàng")) {
+            key = "Danh Mục/Khách Hàng";
+        } else if (it.label.equals("Tìm Thú Cưng")) {
+            key = "Danh Mục/Thú Cưng";
+        } else if (it.label.equals("Tìm Nhân Viên")) {
+            key = "Danh Mục/Nhân Viên";
+        }
+
         if (pages.add(key)) {
             JPanel p;
             if (tab.equals("Hệ Thống") && it.label.equals("Tài Khoản")) {
                 p = new TaiKhoanPanel(taiKhoan);
             } else if (tab.equals("Hệ Thống")) {
                 p = new HeThongPanel(taiKhoan, this);
-            } else if (tab.equals("Danh Mục") && it.label.equals("Khách Hàng")) {
+            } else if (it.label.equals("Khách Hàng") || it.label.equals("Tìm Khách Hàng")) {
                 if (pnlKhachHang == null) pnlKhachHang = new KhachHangPanel();
+                // Gọi lamMoi() khi đến từ "Tìm Khách Hàng" để đảm bảo data luôn được tải
+                if (it.label.equals("Tìm Khách Hàng")) pnlKhachHang.lamMoi();
                 p = pnlKhachHang;
             } else if (it.label.equals("Tìm Khách Hàng")) {
                 if (pnlTimKhachHang == null) pnlTimKhachHang = new KhachHangPanel();
                 p = pnlTimKhachHang;
             } else if (it.label.equals("Thú Cưng") || it.label.equals("Tìm Thú Cưng")) {
                 if (pnlThuCung == null) pnlThuCung = new ThuCungPanel();
+                // Gọi lamMoi() khi đến từ "Tìm Thú Cưng" để đảm bảo data luôn được tải
+                if (it.label.equals("Tìm Thú Cưng")) pnlThuCung.lamMoi();
                 p = pnlThuCung;
             } else if (it.label.equals("Kho Hàng")) {
                 if (pnlKhoHang == null) pnlKhoHang = new KhoHangPanel();
@@ -371,7 +390,12 @@ public class MainFrame extends JFrame {
                 if (pnlHuyLichHen == null) pnlHuyLichHen = new LichHenPanel(LichHenPanel.Mode.HUY);
                 p = pnlHuyLichHen;
             } else if (it.label.equals("Nhân Viên") || it.label.equals("Tìm Nhân Viên")) {
-                p = new NhanVienPanel(taiKhoan);
+                if (pnlNhanVien == null) pnlNhanVien = new NhanVienPanel(taiKhoan);
+                p = pnlNhanVien;
+            } else if (it.label.equals("Danh Mục Bệnh")) {
+                if (pnlDanhMucBenh == null) pnlDanhMucBenh = new DanhMucBenhPanel();
+                pnlDanhMucBenh.lamMoi();
+                p = pnlDanhMucBenh;
             } else if (it.label.equals("Lồng Chuồng")) {
                 p = new LongChuongPanel();
             } else if (it.label.equals("Lập Hoá Đơn") || it.label.equals("Lập Hóa Đơn")) {
@@ -392,7 +416,7 @@ public class MainFrame extends JFrame {
                 }
                 pnlTimHoaDon.lamMoi();
                 p = pnlTimHoaDon;
-            } else if (tab.equals("Thống Kê")) {
+            } else if (tab.equals("Thống Kê") || norm(tab).contains("thong ke") || norm(it.label).contains("thong ke")) {
                 if (pnlThongKe == null) {
                     pnlThongKe = new ThongKePanel();
                 }
@@ -464,13 +488,22 @@ public class MainFrame extends JFrame {
                 phauThuatPanel.lamMoi();
             } else if (it.label.equals("Khuyến Mãi") && pnlKhuyenMai != null) {
                 pnlKhuyenMai.lamMoi();
+            } else if ((it.label.equals("Khách Hàng") || it.label.equals("Tìm Khách Hàng")) && pnlKhachHang != null) {
+                pnlKhachHang.lamMoi();
+            } else if ((it.label.equals("Thú Cưng") || it.label.equals("Tìm Thú Cưng")) && pnlThuCung != null) {
+                pnlThuCung.lamMoi();
             }
         }
         cards.show(content, key);
+        if (it.label.equals("Tìm Khách Hàng") && pnlKhachHang != null) {
+            pnlKhachHang.focusTimKiem();
+        } else if (it.label.equals("Tìm Thú Cưng") && pnlThuCung != null) {
+            pnlThuCung.focusTimKiem();
+        } else if (it.label.equals("Tìm Nhân Viên") && pnlNhanVien != null) {
+            pnlNhanVien.focusTimKiem();
+        }
         navs.forEach((k, b) -> b.setSelected(k.equals(tab)));
     }
-
-
 
     private JComponent buildUserBox() {
         JPanel box = new JPanel(new BorderLayout(10, 0));
