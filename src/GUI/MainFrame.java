@@ -82,6 +82,7 @@ public class MainFrame extends JFrame {
                 Item.leaf("Theo Ngày", "calendar", "Doanh thu và hoá đơn theo từng khung giờ trong ngày.", ChucNang.TK_DOANH_THU),
                 Item.leaf("Theo Tháng", "calendar", "Doanh thu và hoá đơn theo từng ngày trong tháng.", ChucNang.TK_DOANH_THU),
                 Item.leaf("Theo Năm", "calendar", "Doanh thu và hoá đơn theo từng tháng trong năm.", ChucNang.TK_DOANH_THU)),
+            Item.leaf("Sản Phẩm Bán Chạy", "tag", "Thống kê top sản phẩm bán chạy nhất", ChucNang.TK_DOANH_THU),
             Item.leaf("Tồn Kho & Mặt Hàng", "box", "Thống kê tồn kho, mặt hàng sắp hết", ChucNang.TK_DOANH_THU),
             Item.leaf("Khách Hàng", "customers", "Thống kê khách hàng thân thiết, khách mới", ChucNang.TK_KHACH_HANG),
             Item.leaf("Thú Cưng", "paw", "Thống kê thú cưng theo loài, giống", ChucNang.TK_THU_CUNG)),
@@ -426,6 +427,8 @@ public class MainFrame extends JFrame {
                     pnlThongKe.chonTab("Khách hàng & Thú cưng");
                 } else if ("Thú Cưng".equalsIgnoreCase(it.label)) {
                     pnlThongKe.chonTab("Khách hàng & Thú cưng");
+                } else if ("Sản Phẩm Bán Chạy".equalsIgnoreCase(it.label) || "Bán Chạy".equalsIgnoreCase(it.label)) {
+                    pnlThongKe.chonTab("Sản phẩm bán chạy");
                 } else if ("Tồn Kho & Mặt Hàng".equalsIgnoreCase(it.label) || "Tồn Kho".equalsIgnoreCase(it.label) || "Sản Phẩm".equalsIgnoreCase(it.label)) {
                     pnlThongKe.chonTab("Tồn kho & Mặt hàng");
                 }
