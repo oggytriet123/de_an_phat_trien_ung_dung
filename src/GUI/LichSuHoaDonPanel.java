@@ -51,9 +51,18 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
     private final CardLayout tableCards = new CardLayout();
     private final JPanel tableArea = new JPanel(tableCards);
 
+    private final String tieuDe;
+    private final String moTa;
+
     public LichSuHoaDonPanel(HoaDonBUS bus) {
+        this(bus, "Lịch sử hóa đơn", "Tra cứu các hóa đơn đã thanh toán thành công.");
+    }
+
+    public LichSuHoaDonPanel(HoaDonBUS bus, String tieuDe, String moTa) {
         super(new BorderLayout(0, 18));
         this.bus = bus;
+        this.tieuDe = tieuDe != null ? tieuDe : "Lịch sử hóa đơn";
+        this.moTa = moTa != null ? moTa : "Tra cứu các hóa đơn đã thanh toán thành công.";
         setBackground(Theme.BG);
         setBorder(new EmptyBorder(26, 28, 24, 28));
         add(buildHeader(), BorderLayout.NORTH);
@@ -68,10 +77,10 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
 
     // ---------------- Tiêu đề ----------------
     private JComponent buildHeader() {
-        JLabel t = new JLabel("Lịch sử hóa đơn");
+        JLabel t = new JLabel(tieuDe);
         t.setFont(Theme.font(Font.BOLD, 26));
         t.setForeground(Theme.TEXT);
-        JLabel s = new JLabel("Tra cứu các hóa đơn đã thanh toán thành công.");
+        JLabel s = new JLabel(moTa);
         s.setFont(Theme.font(Font.PLAIN, 13));
         s.setForeground(Theme.MUTED);
         JPanel head = new JPanel();
