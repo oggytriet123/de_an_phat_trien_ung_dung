@@ -65,7 +65,38 @@ public class PhacDoPanel extends JPanel {
     private final List<RoundedButton> chips = new ArrayList<>();
     private final JComboBox<String> cbMucDoFilter = new JComboBox<>(SEVERITIES);
     private final PageModel model = new PageModel();
-    private final JTable table = new JTable(model);
+    private static final int ACT_ICON_SIZE = 16;
+    private static final int ACT_ICON_GAP = 10;
+
+    private int actionAt(MouseEvent e) {
+        int row = table.rowAtPoint(e.getPoint());
+        int col = table.columnAtPoint(e.getPoint());
+        if (row < 0 || col != 8) return -1;
+        Rectangle r = table.getCellRect(row, 8, false);
+        int total = 5 * ACT_ICON_SIZE + 4 * ACT_ICON_GAP;
+        int startX = r.x + (r.width - total) / 2;
+        int rel = e.getX() - startX;
+        if (rel < -4 || rel >= total + 4) return -1;
+        int step = ACT_ICON_SIZE + ACT_ICON_GAP;
+        return Math.max(0, Math.min(4, (rel + ACT_ICON_GAP / 2) / step));
+    }
+
+    private final JTable table = new JTable(model) {
+        @Override public String getToolTipText(MouseEvent e) {
+            int a = actionAt(e);
+            if (a >= 0) {
+                return switch (a) {
+                    case 0 -> "Xem chi tiết phác đồ";
+                    case 1 -> "Chỉnh sửa phác đồ";
+                    case 2 -> "Cập nhật tiến độ & Nhật ký";
+                    case 3 -> "In phác đồ";
+                    case 4 -> "Xóa phác đồ";
+                    default -> null;
+                };
+            }
+            return super.getToolTipText(e);
+        }
+    };
     private final JLabel lblFooter = new JLabel();
     private final JPanel pnlPages = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
 
@@ -290,24 +321,31 @@ public class PhacDoPanel extends JPanel {
         table.getColumnModel().getColumn(5).setCellRenderer(new PeriodCell());
         table.getColumnModel().getColumn(6).setCellRenderer(new ProgressCell());
         table.getColumnModel().getColumn(7).setCellRenderer(new StatusCell());
+                table.getColumnModel().getColumn(8).setMinWidth(135);
+        table.getColumnModel().getColumn(8).setMaxWidth(160);
         table.getColumnModel().getColumn(8).setCellRenderer(new ActionCell());
 
         table.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
+                int a = actionAt(e);
+                if (a < 0) return;
                 int row = table.rowAtPoint(e.getPoint());
-                int col = table.columnAtPoint(e.getPoint());
-                if (row >= 0 && col == 8) {
-                    PhacDoDieuTri pd = (PhacDoDieuTri) model.getValueAt(row, 0);
-                    int xInCell = e.getX() - table.getCellRect(row, col, false).x;
-                    int slot = Math.min(4, Math.max(0, xInCell / 28));
-                    switch (slot) {
-                        case 0 -> xemChiTiet(pd);
-                        case 1 -> moDialogLapPhacDo(pd, null);
-                        case 2 -> moDialogTheoDoiTienDo(pd);
-                        case 3 -> inPhacDo(pd);
-                        case 4 -> xoaPhacDo(pd);
-                    }
+                if (row < 0 || row >= model.getRowCount()) return;
+                PhacDoDieuTri pd = (PhacDoDieuTri) model.getValueAt(row, 0);
+                switch (a) {
+                    case 0 -> xemChiTiet(pd);
+                    case 1 -> moDialogLapPhacDo(pd, null);
+                    case 2 -> moDialogTheoDoiTienDo(pd);
+                    case 3 -> inPhacDo(pd);
+                    case 4 -> xoaPhacDo(pd);
                 }
+            }
+        });
+
+        table.addMouseMotionListener(new MouseAdapter() {
+            @Override public void mouseMoved(MouseEvent e) {
+                int a = actionAt(e);
+                table.setCursor(Cursor.getPredefinedCursor(a >= 0 ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
             }
         });
 
@@ -1452,7 +1490,7 @@ public class PhacDoPanel extends JPanel {
             setText(String.valueOf(v));
             setHorizontalAlignment(c == 8 || c == 4 || c == 6 ? SwingConstants.CENTER : SwingConstants.LEFT);
             setBorder(new CompoundBorder(new MatteBorder(1, 0, 1, 0, Theme.ROW_LINE),
-                    new EmptyBorder(0, c == 0 ? 14 : 8, 0, c == 8 ? 14 : 8)));
+                    new EmptyBorder(0, c == 0 ? 14 : (c == 8 ? 0 : 8), 0, c == 8 ? 0 : 8)));
             return this;
         }
     }
@@ -1654,32 +1692,39 @@ public class PhacDoPanel extends JPanel {
         }
     }
 
-    private static class ActionCell extends Cell {
-        private final JLabel btnEye = new JLabel(Icons.of("eye", 16, Theme.ACTION_ICON));
-        private final JLabel btnEdit = new JLabel(Icons.of("edit", 16, Theme.ACTION_ICON));
-        private final JLabel btnChart = new JLabel(Icons.of("chart", 16, Theme.ACCENT));
-        private final JLabel btnPrint = new JLabel(Icons.of("print", 16, Theme.ACTION_ICON));
-        private final JLabel btnDel = new JLabel(Icons.of("trash", 16, Theme.RED));
-
+        private static class ActionCell extends Cell {
         ActionCell() {
-            btnEye.setToolTipText("Xem chi tiết phác đồ");
-            btnEdit.setToolTipText("Chỉnh sửa phác đồ");
-            btnChart.setToolTipText("Cập nhật tiến độ & Nhật ký");
-            btnPrint.setToolTipText("In phác đồ");
-            btnDel.setToolTipText("Xóa phác đồ");
-
-            JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 14));
-            p.setOpaque(false);
-            p.add(btnEye);
-            p.add(btnEdit);
-            p.add(btnChart);
-            p.add(btnPrint);
-            p.add(btnDel);
-            add(p, BorderLayout.CENTER);
+            setOpaque(true);
         }
+
         @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean f, int r, int c) {
             prep(t, sel, c);
+            setBorder(new MatteBorder(0, 0, 1, 0, Theme.ROW_LINE));
             return this;
+        }
+
+        @Override protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int total = 5 * ACT_ICON_SIZE + 4 * ACT_ICON_GAP;
+            int x = (getWidth() - total) / 2;
+            int y = (getHeight() - ACT_ICON_SIZE) / 2;
+
+            Icons.draw(g2, "eye", x, y, ACT_ICON_SIZE, Theme.ACTION_ICON, false);
+            x += ACT_ICON_SIZE + ACT_ICON_GAP;
+
+            Icons.draw(g2, "edit", x, y, ACT_ICON_SIZE, Theme.ACTION_ICON, false);
+            x += ACT_ICON_SIZE + ACT_ICON_GAP;
+
+            Icons.draw(g2, "chart", x, y, ACT_ICON_SIZE, Theme.ACCENT, false);
+            x += ACT_ICON_SIZE + ACT_ICON_GAP;
+
+            Icons.draw(g2, "print", x, y, ACT_ICON_SIZE, Theme.ACTION_ICON, false);
+            x += ACT_ICON_SIZE + ACT_ICON_GAP;
+
+            Icons.draw(g2, "trash", x, y, ACT_ICON_SIZE, Theme.RED, false);
+            g2.dispose();
         }
     }
 }

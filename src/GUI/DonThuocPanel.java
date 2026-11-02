@@ -61,7 +61,44 @@ public class DonThuocPanel extends JPanel {
     private final PlaceholderField txtTim = new PlaceholderField("Tìm mã đơn, thú cưng, chủ nuôi, bác sĩ, chẩn đoán, tên thuốc...");
     private final List<RoundedButton> chips = new ArrayList<>();
     private final PageModel model = new PageModel();
-    private final JTable table = new JTable(model);
+    private static final int ACT_ICON_SIZE = 16;
+    private static final int ACT_ICON_GAP = 10;
+
+    private int actionAt(MouseEvent e) {
+        int row = table.rowAtPoint(e.getPoint());
+        int col = table.columnAtPoint(e.getPoint());
+        if (row < 0 || col != 8) return -1;
+        Rectangle r = table.getCellRect(row, 8, false);
+        int total = 5 * ACT_ICON_SIZE + 4 * ACT_ICON_GAP;
+        int startX = r.x + (r.width - total) / 2;
+        int rel = e.getX() - startX;
+        if (rel < -4 || rel >= total + 4) return -1;
+        int step = ACT_ICON_SIZE + ACT_ICON_GAP;
+        return Math.max(0, Math.min(4, (rel + ACT_ICON_GAP / 2) / step));
+    }
+
+    private final JTable table = new JTable(model) {
+        @Override public String getToolTipText(MouseEvent e) {
+            int a = actionAt(e);
+            if (a >= 0) {
+                int row = rowAtPoint(e.getPoint());
+                if (row >= 0 && row < model.getRowCount()) {
+                    DonThuoc dt = (DonThuoc) model.getValueAt(row, 0);
+                    return switch (a) {
+                        case 0 -> "Xem chi tiết đơn thuốc";
+                        case 1 -> DonThuoc.CHO_CAP_THUOC.equals(dt.getTrangThai())
+                                ? "Cấp phát thuốc (Xuất kho)"
+                                : "Đã cấp phát / " + dt.getTrangThai();
+                        case 2 -> "Chỉnh sửa đơn thuốc";
+                        case 3 -> "In đơn thuốc";
+                        case 4 -> "Xóa đơn thuốc";
+                        default -> null;
+                    };
+                }
+            }
+            return super.getToolTipText(e);
+        }
+    };
     private final JLabel lblFooter = new JLabel();
     private final JPanel pnlPages = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
 
@@ -268,6 +305,8 @@ public class DonThuocPanel extends JPanel {
 
         int[] widths = {85, 95, 165, 140, 160, 75, 110, 115, 140};
         for (int i = 0; i < widths.length; i++) table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
+        table.getColumnModel().getColumn(8).setMinWidth(135);
+        table.getColumnModel().getColumn(8).setMaxWidth(160);
 
         table.getColumnModel().getColumn(0).setCellRenderer(new CodeCell());
         table.getColumnModel().getColumn(1).setCellRenderer(new DateCell());
@@ -281,28 +320,33 @@ public class DonThuocPanel extends JPanel {
 
         table.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
+                int a = actionAt(e);
+                if (a < 0) return;
                 int row = table.rowAtPoint(e.getPoint());
-                int col = table.columnAtPoint(e.getPoint());
-                if (row >= 0 && col == 8) {
-                    DonThuoc dt = (DonThuoc) model.getValueAt(row, 0);
-                    int xInCell = e.getX() - table.getCellRect(row, col, false).x;
-                    int slot = Math.min(4, Math.max(0, xInCell / 28));
-                    switch (slot) {
-                        case 0 -> xemChiTiet(dt);
-                        case 1 -> {
-                            if (DonThuoc.CHO_CAP_THUOC.equals(dt.getTrangThai())) {
-                                capPhatThuoc(dt);
-                            } else {
-                                JOptionPane.showMessageDialog(DonThuocPanel.this,
-                                        "Đơn thuốc " + dt.getMaDonThuoc() + " đang ở trạng thái '" + dt.getTrangThai() + "'.\nChỉ đơn thuốc 'Chờ cấp thuốc' mới cần cấp phát.",
-                                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
-                            }
+                if (row < 0 || row >= model.getRowCount()) return;
+                DonThuoc dt = (DonThuoc) model.getValueAt(row, 0);
+                switch (a) {
+                    case 0 -> xemChiTiet(dt);
+                    case 1 -> {
+                        if (DonThuoc.CHO_CAP_THUOC.equals(dt.getTrangThai())) {
+                            capPhatThuoc(dt);
+                        } else {
+                            JOptionPane.showMessageDialog(DonThuocPanel.this,
+                                    "Đơn thuốc " + dt.getMaDonThuoc() + " đang ở trạng thái '" + dt.getTrangThai() + "'.\nChỉ đơn thuốc 'Chờ cấp thuốc' mới cần cấp phát.",
+                                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
                         }
-                        case 2 -> moDialogKeDon(dt, null);
-                        case 3 -> inDonThuoc(dt);
-                        case 4 -> xoaDon(dt);
                     }
+                    case 2 -> moDialogKeDon(dt, null);
+                    case 3 -> inDonThuoc(dt);
+                    case 4 -> xoaDon(dt);
                 }
+            }
+        });
+
+        table.addMouseMotionListener(new MouseAdapter() {
+            @Override public void mouseMoved(MouseEvent e) {
+                int a = actionAt(e);
+                table.setCursor(Cursor.getPredefinedCursor(a >= 0 ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
             }
         });
 
@@ -1141,7 +1185,7 @@ public class DonThuocPanel extends JPanel {
             setText(String.valueOf(v));
             setHorizontalAlignment(c == 8 || c == 5 ? SwingConstants.CENTER : (c == 6 ? SwingConstants.RIGHT : SwingConstants.LEFT));
             setBorder(new CompoundBorder(new MatteBorder(1, 0, 1, 0, Theme.ROW_LINE),
-                    new EmptyBorder(0, c == 0 ? 14 : 8, 0, c == 8 ? 14 : 8)));
+                    new EmptyBorder(0, c == 0 ? 14 : (c == 8 ? 0 : 8), 0, c == 8 ? 0 : 8)));
             return this;
         }
     }
@@ -1295,36 +1339,43 @@ public class DonThuocPanel extends JPanel {
         }
     }
 
-    private static class ActionCell extends Cell {
-        private final JLabel btnEye = new JLabel(Icons.of("eye", 16, Theme.ACTION_ICON));
-        private final JLabel btnCheck = new JLabel(Icons.of("check", 16, Theme.GREEN));
-        private final JLabel btnEdit = new JLabel(Icons.of("edit", 16, Theme.ACTION_ICON));
-        private final JLabel btnPrint = new JLabel(Icons.of("print", 16, Theme.ACTION_ICON));
-        private final JLabel btnDel = new JLabel(Icons.of("trash", 16, Theme.RED));
+        private static class ActionCell extends Cell {
+        private boolean choCap = false;
 
         ActionCell() {
-            btnEye.setToolTipText("Xem chi tiết đơn thuốc");
-            btnCheck.setToolTipText("Cấp phát thuốc");
-            btnEdit.setToolTipText("Chỉnh sửa đơn thuốc");
-            btnPrint.setToolTipText("In đơn thuốc");
-            btnDel.setToolTipText("Xóa đơn thuốc");
-
-            JPanel p = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 12));
-            p.setOpaque(false);
-            p.add(btnEye);
-            p.add(btnCheck);
-            p.add(btnEdit);
-            p.add(btnPrint);
-            p.add(btnDel);
-            add(p, BorderLayout.CENTER);
+            setOpaque(true);
         }
+
         @Override public Component getTableCellRendererComponent(JTable t, Object v, boolean sel, boolean f, int r, int c) {
             prep(t, sel, c);
+            setBorder(new MatteBorder(0, 0, 1, 0, Theme.ROW_LINE));
             DonThuoc dt = (DonThuoc) v;
-            boolean choCap = DonThuoc.CHO_CAP_THUOC.equals(dt.getTrangThai());
-            btnCheck.setIcon(Icons.of("check", 16, choCap ? Theme.GREEN : new Color(0xCBD5E1)));
-            btnCheck.setToolTipText(choCap ? "Cấp phát thuốc (Xuất kho)" : "Đã cấp phát / " + dt.getTrangThai());
+            choCap = (dt != null && DonThuoc.CHO_CAP_THUOC.equals(dt.getTrangThai()));
             return this;
+        }
+
+        @Override protected void paintComponent(Graphics g) {
+            super.paintComponent(g);
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            int total = 5 * ACT_ICON_SIZE + 4 * ACT_ICON_GAP;
+            int x = (getWidth() - total) / 2;
+            int y = (getHeight() - ACT_ICON_SIZE) / 2;
+
+            Icons.draw(g2, "eye", x, y, ACT_ICON_SIZE, Theme.ACTION_ICON, false);
+            x += ACT_ICON_SIZE + ACT_ICON_GAP;
+
+            Icons.draw(g2, "check", x, y, ACT_ICON_SIZE, choCap ? Theme.GREEN : new Color(0xCBD5E1), false);
+            x += ACT_ICON_SIZE + ACT_ICON_GAP;
+
+            Icons.draw(g2, "edit", x, y, ACT_ICON_SIZE, Theme.ACTION_ICON, false);
+            x += ACT_ICON_SIZE + ACT_ICON_GAP;
+
+            Icons.draw(g2, "print", x, y, ACT_ICON_SIZE, Theme.ACTION_ICON, false);
+            x += ACT_ICON_SIZE + ACT_ICON_GAP;
+
+            Icons.draw(g2, "trash", x, y, ACT_ICON_SIZE, Theme.RED, false);
+            g2.dispose();
         }
     }
 }

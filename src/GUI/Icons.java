@@ -27,7 +27,10 @@ public final class Icons {
             case "list": return new Color(0x2196F3);
             case "sync": return new Color(0x9C27B0);
             case "search": return new Color(0x1E88E5);
-            case "bar-chart": return new Color(0x00ACC1);
+            case "bar-chart":
+            case "chart": return new Color(0x00ACC1);
+            case "edit": return new Color(0x1F3A5F);
+            case "eye": return new Color(0x546E7A);
             case "home": return new Color(0xE53935);
             case "person": return new Color(0x1F3A5F);
             case "help": return new Color(0x1E88E5);
@@ -137,7 +140,7 @@ public final class Icons {
                 g.draw(new Line2D.Double(18, 12, 21, 9));
                 g.draw(new Line2D.Double(18, 12, 15, 9));
             }
-            case "bar-chart" -> {
+            case "bar-chart", "chart" -> {
                 g.draw(new Line2D.Double(4, 20, 20, 20));
                 g.draw(new RoundRectangle2D.Double(6, 12, 3, 8, 1, 1));
                 g.draw(new RoundRectangle2D.Double(11, 6, 3, 14, 1, 1));
@@ -285,6 +288,53 @@ public final class Icons {
                 g.draw(new Line2D.Double(17, 14, 17, 21));
                 g.draw(new Line2D.Double(7, 21, 17, 21));
                 g.draw(new Line2D.Double(7, 17.5, 17, 17.5));
+            }
+                        case "eye" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(2, 12);
+                p.curveTo(6, 5, 18, 5, 22, 12);
+                p.curveTo(18, 19, 6, 19, 2, 12);
+                p.closePath();
+                g.draw(p);
+                g.draw(new Ellipse2D.Double(9, 9, 6, 6));
+                g.fill(new Ellipse2D.Double(10.5, 10.5, 3, 3));
+            }
+            case "edit" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(17, 3);
+                p.lineTo(21, 7);
+                p.lineTo(7, 21);
+                p.lineTo(3, 21);
+                p.lineTo(3, 17);
+                p.closePath();
+                g.draw(p);
+                g.draw(new Line2D.Double(14, 6, 18, 10));
+            }
+            case "more" -> {
+                g.fill(new Ellipse2D.Double(4, 10.5, 3, 3));
+                g.fill(new Ellipse2D.Double(10.5, 10.5, 3, 3));
+                g.fill(new Ellipse2D.Double(17, 10.5, 3, 3));
+            }
+            case "plus" -> {
+                g.draw(new Line2D.Double(12, 5, 12, 19));
+                g.draw(new Line2D.Double(5, 12, 19, 12));
+            }
+            case "warning" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(12, 3); p.lineTo(21, 20); p.lineTo(3, 20); p.closePath();
+                g.draw(p);
+                g.draw(new Line2D.Double(12, 8.5, 12, 14));
+                g.fill(new Ellipse2D.Double(11, 16.5, 2, 2));
+            }
+            case "chevron-down" -> {
+                Path2D p = new Path2D.Double();
+                p.moveTo(6, 9); p.lineTo(12, 15); p.lineTo(18, 9);
+                g.draw(p);
+            }
+            case "excel" -> {
+                g.draw(new RoundRectangle2D.Double(4, 3, 16, 18, 2, 2));
+                g.draw(new Line2D.Double(9, 9, 15, 15));
+                g.draw(new Line2D.Double(15, 9, 9, 15));
             }
             default -> { }
 
