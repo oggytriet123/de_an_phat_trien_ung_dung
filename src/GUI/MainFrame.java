@@ -53,8 +53,7 @@ public class MainFrame extends JFrame {
             Item.leaf("Nhân Viên", "person", "Danh sách nhân viên cửa hàng", ChucNang.NHAN_VIEN),
             Item.leaf("Sản Phẩm", "box", "Thức ăn, phụ kiện, tồn kho", ChucNang.SAN_PHAM),
             Item.leaf("Kho Hàng", "box", "Quản lý kho hàng và tồn kho", ChucNang.KHO_HANG),
-            Item.leaf("Danh Mục Bệnh", "list", "Danh mục bệnh và hướng điều trị", ChucNang.DANH_MUC_BENH),
-            Item.leaf("Khuyến Mãi", "tag", "Chương trình khuyến mãi và ưu đãi", ChucNang.KHUYEN_MAI)),
+            Item.leaf("Danh Mục Bệnh", "list", "Danh mục bệnh và hướng điều trị", ChucNang.DANH_MUC_BENH)),
         new Item("Xử Lý", "sync", null, null,
             Item.leaf("Lập Hoá Đơn",   "invoice",  "Lập hoá đơn bán hàng và dịch vụ",                  ChucNang.HOA_DON),
             Item.leaf("Lịch Sử Hoá Đơn","calendar","Xem lại các hoá đơn đã thanh toán",                 ChucNang.HOA_DON),
@@ -132,7 +131,6 @@ public class MainFrame extends JFrame {
     private QuanLyDichVuPanel dichVuPanel;
     private TiemPhongPanel tiemPhongPanel;
     private PhauThuatPanel phauThuatPanel;
-    private KhuyenMaiPanel pnlKhuyenMai;
 
     // Các phân hệ bổ sung từ nhánh ngoc-toan
     private KhoHangPanel pnlKhoHang;
@@ -264,7 +262,7 @@ public class MainFrame extends JFrame {
             case "Thoát" -> xacNhanThoat();
             case "Trợ Giúp" -> JOptionPane.showMessageDialog(this,
                     "Pet Station - Hệ thống quản lý cửa hàng thú cưng\n\n"
-                    + "• Danh Mục: quản lý khách hàng, thú cưng, nhân viên, sản phẩm, kho hàng, danh mục bệnh, khuyến mãi\n"
+                    + "• Danh Mục: quản lý khách hàng, thú cưng, nhân viên, sản phẩm, kho hàng, danh mục bệnh\n"
                     + "• Xử Lý: lập hoá đơn, lịch sử hoá đơn, dịch vụ, tiêm phòng, phẫu thuật, lồng chuồng, đặt lịch hẹn, lịch sử kho\n"
                     + "• Điều Trị & Đơn Thuốc: quản lý đơn thuốc, phác đồ điều trị\n"
                     + "• Quản Lý Lịch Hẹn: hồ sơ, quản lý, đổi, xác nhận và hủy lịch hẹn\n"
@@ -454,12 +452,7 @@ public class MainFrame extends JFrame {
                 }
                 phauThuatPanel.lamMoi();
                 p = phauThuatPanel;
-            } else if (tab.equals("Danh Mục") && it.label.equals("Khuyến Mãi")) {
-                if (pnlKhuyenMai == null) {
-                    pnlKhuyenMai = new KhuyenMaiPanel(maGiamGiaBus);
-                }
-                pnlKhuyenMai.lamMoi();
-                p = pnlKhuyenMai;
+
             } else {
                 String title = tab.equals("Thống Kê") || tab.equals("Danh Mục") || tab.equals("Xử Lý") || tab.equals("Tìm Kiếm")
                         ? (tab.equals("Thống Kê") ? "Thống Kê " + it.label : it.label) : it.label;
@@ -489,8 +482,7 @@ public class MainFrame extends JFrame {
                 tiemPhongPanel.lamMoi();
             } else if (it.label.equals("Phẫu Thuật") && phauThuatPanel != null) {
                 phauThuatPanel.lamMoi();
-            } else if (it.label.equals("Khuyến Mãi") && pnlKhuyenMai != null) {
-                pnlKhuyenMai.lamMoi();
+
             } else if ((it.label.equals("Khách Hàng") || it.label.equals("Tìm Khách Hàng")) && pnlKhachHang != null) {
                 pnlKhachHang.lamMoi();
             } else if ((it.label.equals("Thú Cưng") || it.label.equals("Tìm Thú Cưng")) && pnlThuCung != null) {
