@@ -127,10 +127,13 @@ public class MainFrame extends JFrame {
     // Trang Xử Lý (Lập hoá đơn) và Lịch sử hoá đơn — khởi tạo lười để tái sử dụng
     private XuLyPanel xuLyPanel;
     private LichSuHoaDonPanel lichSuPanel;
+    private LichSuHoaDonPanel pnlTimHoaDon;
+    private KhachHangPanel pnlTimKhachHang;
     private ThongKePanel pnlThongKe;
     private QuanLyDichVuPanel dichVuPanel;
     private TiemPhongPanel tiemPhongPanel;
     private PhauThuatPanel phauThuatPanel;
+    private KhuyenMaiPanel pnlKhuyenMai;
 
     // Các phân hệ bổ sung từ nhánh ngoc-toan
     private KhoHangPanel pnlKhoHang;
@@ -323,6 +326,9 @@ public class MainFrame extends JFrame {
             } else if (tab.equals("Danh Mục") && it.label.equals("Khách Hàng")) {
                 if (pnlKhachHang == null) pnlKhachHang = new KhachHangPanel();
                 p = pnlKhachHang;
+            } else if (it.label.equals("Tìm Khách Hàng")) {
+                if (pnlTimKhachHang == null) pnlTimKhachHang = new KhachHangPanel();
+                p = pnlTimKhachHang;
             } else if (it.label.equals("Thú Cưng") || it.label.equals("Tìm Thú Cưng")) {
                 if (pnlThuCung == null) pnlThuCung = new ThuCungPanel();
                 p = pnlThuCung;
@@ -349,7 +355,7 @@ public class MainFrame extends JFrame {
                     pnlPhacDo = new PhacDoPanel(sharedPhacDoBus, pnlThuCung.getBus(), sharedDonThuocBus);
                 }
                 p = pnlPhacDo;
-            } else if (it.label.equals("Hồ sơ lịch hẹn")) {
+            } else if (it.label.equals("Hồ sơ lịch hẹn") || it.label.equals("Phiếu Đặt Lịch")) {
                 if (pnlHoSoLichHen == null) pnlHoSoLichHen = new LichHenPanel(LichHenPanel.Mode.HO_SO);
                 p = pnlHoSoLichHen;
             } else if (it.label.equals("Quản lý lịch hẹn") || it.label.equals("Đặt Lịch Hẹn")) {
@@ -380,6 +386,12 @@ public class MainFrame extends JFrame {
                 }
                 lichSuPanel.lamMoi();
                 p = lichSuPanel;
+            } else if (it.label.equals("Tìm Hoá Đơn") || it.label.equals("Tìm Hóa Đơn")) {
+                if (pnlTimHoaDon == null) {
+                    pnlTimHoaDon = new LichSuHoaDonPanel(hoaDonBus, "Tìm Kiếm Hoá Đơn", "Tra cứu và tìm kiếm hoá đơn theo mã, tên khách hàng hoặc số điện thoại.");
+                }
+                pnlTimHoaDon.lamMoi();
+                p = pnlTimHoaDon;
             } else if (tab.equals("Thống Kê")) {
                 if (pnlThongKe == null) {
                     pnlThongKe = new ThongKePanel();
@@ -415,6 +427,12 @@ public class MainFrame extends JFrame {
                 }
                 phauThuatPanel.lamMoi();
                 p = phauThuatPanel;
+            } else if (tab.equals("Danh Mục") && it.label.equals("Khuyến Mãi")) {
+                if (pnlKhuyenMai == null) {
+                    pnlKhuyenMai = new KhuyenMaiPanel(maGiamGiaBus);
+                }
+                pnlKhuyenMai.lamMoi();
+                p = pnlKhuyenMai;
             } else {
                 String title = tab.equals("Thống Kê") || tab.equals("Danh Mục") || tab.equals("Xử Lý") || tab.equals("Tìm Kiếm")
                         ? (tab.equals("Thống Kê") ? "Thống Kê " + it.label : it.label) : it.label;
@@ -436,12 +454,16 @@ public class MainFrame extends JFrame {
                 xuLyPanel.hienQuanLy();
             } else if ((it.label.equals("Lịch Sử Hoá Đơn") || it.label.equals("Lịch Sử Hóa Đơn") || it.label.equals("Lịch Sử HĐ") || (tab.equals("Danh Mục") && it.label.equals("Hoá Đơn"))) && lichSuPanel != null) {
                 lichSuPanel.lamMoi();
+            } else if ((it.label.equals("Tìm Hoá Đơn") || it.label.equals("Tìm Hóa Đơn")) && pnlTimHoaDon != null) {
+                pnlTimHoaDon.lamMoi();
             } else if (it.label.equals("Quản Lý Dịch Vụ") && dichVuPanel != null) {
                 dichVuPanel.lamMoi();
             } else if (it.label.equals("Tiêm Phòng") && tiemPhongPanel != null) {
                 tiemPhongPanel.lamMoi();
             } else if (it.label.equals("Phẫu Thuật") && phauThuatPanel != null) {
                 phauThuatPanel.lamMoi();
+            } else if (it.label.equals("Khuyến Mãi") && pnlKhuyenMai != null) {
+                pnlKhuyenMai.lamMoi();
             }
         }
         cards.show(content, key);

@@ -8,6 +8,7 @@ import java.util.List;
 
 import Entity.HoaDon;
 import Entity.KhachHang;
+import Entity.SanPham;
 
 /**
  * Quản lý 20 ô hóa đơn đang hoạt động và lịch sử hóa đơn đã thanh toán.
@@ -26,9 +27,118 @@ public class HoaDonBUS {
     private final KhachHangBUS khachHang;
     private int soHoaDonTiepTheo = 1;
 
-    /** Mở lên là 20 ô trống và lịch sử rỗng: hóa đơn chỉ xuất hiện khi nhân viên lưu hoặc thanh toán. */
+    /** Khởi tạo BUS: tải hóa đơn từ CSDL (hoặc nạp dữ liệu mẫu ban đầu). */
     public HoaDonBUS(KhachHangBUS khachHang) {
         this.khachHang = khachHang;
+        taiDuLieuTuCSDL();
+    }
+
+    private void taiDuLieuTuCSDL() {
+        try (java.sql.Connection conn = ConnectDB.ConnectDB.getConnection()) {
+            if (conn != null) {
+                String sql = "SELECT h.maHD, h.ngayLap, h.tongTien, h.maKH, k.hoTen, k.soDienThoai "
+                           + "FROM HOADON h LEFT JOIN KHACHHANG k ON h.maKH = k.maKH "
+                           + "ORDER BY h.ngayLap DESC, h.maHD DESC";
+                try (java.sql.Statement st = conn.createStatement();
+                     java.sql.ResultSet rs = st.executeQuery(sql)) {
+                    while (rs.next()) {
+                        String maHD = rs.getString("maHD");
+                        java.sql.Date nl = rs.getDate("ngayLap");
+                        double tongTien = rs.getDouble("tongTien");
+                        String maKH = rs.getString("maKH");
+                        String tenKH = rs.getString("hoTen");
+                        String sdt = rs.getString("soDienThoai");
+
+                        HoaDon hd = new HoaDon(maHD, 0);
+                        hd.setMaKH(maKH != null ? maKH : "");
+                        hd.setTenKH(tenKH != null ? tenKH : "Khách vãng lai");
+                        hd.setSdt(sdt != null ? sdt : "");
+                        LocalDateTime ldt = nl != null ? nl.toLocalDate().atTime(9, 0) : LocalDateTime.now();
+                        hd.setNgayTao(ldt);
+                        hd.danhDauDaThanhToan("Tiền mặt", ldt);
+                        taiChiTietHoaDon(conn, hd);
+                        if (hd.canThanhToan() == 0 && tongTien > 0) {
+                            hd.them(new SanPham(maHD, "Dịch vụ & Sản phẩm tổng hợp", "Dịch vụ", (long) tongTien, true));
+                        }
+                        lichSu.add(hd);
+                    }
+                }
+            }
+        } catch (Exception ignored) { }
+
+        if (lichSu.isEmpty()) {
+            napDuLieuMau();
+        }
+
+        capNhatSoHoaDonTiepTheo();
+    }
+
+    private void taiChiTietHoaDon(java.sql.Connection conn, HoaDon hd) {
+        String sql = "SELECT ct.soLuong, ct.donGia, ct.thanhTien, ct.sku, ct.maDV, "
+                   + "ISNULL(sp.tenSP, dv.tenDV) AS tenItem, "
+                   + "CASE WHEN ct.maDV IS NOT NULL THEN 1 ELSE 0 END AS laDV "
+                   + "FROM CHITIETHOADON ct "
+                   + "LEFT JOIN SANPHAM sp ON ct.sku = sp.sku_maSP "
+                   + "LEFT JOIN DICHVU dv ON ct.maDV = dv.maDV "
+                   + "WHERE ct.maHD = ?";
+        try (java.sql.PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, hd.getMaHD());
+            try (java.sql.ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    int sl = rs.getInt("soLuong");
+                    long gia = (long) rs.getDouble("donGia");
+                    String sku = rs.getString("sku");
+                    String maDV = rs.getString("maDV");
+                    String ten = rs.getString("tenItem");
+                    boolean laDV = rs.getInt("laDV") == 1;
+                    String code = laDV ? (maDV != null ? maDV : "DV") : (sku != null ? sku : "SP");
+                    if (ten == null) ten = code;
+                    SanPham item = new SanPham(code, ten, laDV ? "Dịch vụ" : "Sản phẩm", gia, laDV);
+                    for (int i = 0; i < sl; i++) {
+                        hd.them(item);
+                    }
+                }
+            }
+        } catch (Exception ignored) { }
+    }
+
+    private void napDuLieuMau() {
+        taoMau("HD001", "Nguyễn Minh Anh", "0903123456", "KH001", LocalDate.now().minusDays(3),
+               new SanPham("SP001", "Thức ăn hạt Royal Canin 2kg", "Thức ăn", 350000, false),
+               new SanPham("SP002", "Thức ăn hạt Whiskas 1.5kg", "Thức ăn", 180000, false));
+        taoMau("HD002", "Lê Thị Cẩm Tú", "0938222111", "KH002", LocalDate.now().minusDays(2),
+               new SanPham("DV002", "Tiêm phòng vaccine", "Tiêm phòng & Xét nghiệm", 350000, true));
+        taoMau("HD003", "Phạm Gia Hân", "0977654321", "KH003", LocalDate.now().minusDays(1),
+               new SanPham("SP004", "Vòng cổ chống ve rận", "Phụ kiện", 95000, false),
+               new SanPham("SP002", "Thức ăn hạt Whiskas 1.5kg", "Thức ăn", 180000, false),
+               new SanPham("DV003", "Tắm và cắt tỉa lông", "Spa & Grooming", 150000, true));
+        taoMau("HD004", "Võ Hoàng Long", "0386909808", "KH004", LocalDate.now(),
+               new SanPham("DV001", "Khám tổng quát", "Khám & Điều trị", 200000, true));
+    }
+
+    private void taoMau(String ma, String ten, String sdt, String maKH, LocalDate ngay, SanPham... sps) {
+        HoaDon h = new HoaDon(ma, 0);
+        h.setTenKH(ten);
+        h.setSdt(sdt);
+        h.setMaKH(maKH);
+        h.setNgayTao(ngay.atTime(10, 0));
+        h.danhDauDaThanhToan("Tiền mặt", ngay.atTime(10, 15));
+        for (SanPham s : sps) h.them(s);
+        lichSu.add(h);
+    }
+
+    private void capNhatSoHoaDonTiepTheo() {
+        int max = 0;
+        for (HoaDon h : lichSu) {
+            String m = h.getMaHD();
+            if (m != null && m.startsWith("HD")) {
+                try {
+                    int num = Integer.parseInt(m.substring(2).trim());
+                    if (num > max) max = num;
+                } catch (Exception ignored) { }
+            }
+        }
+        soHoaDonTiepTheo = Math.max(soHoaDonTiepTheo, max + 1);
     }
 
     // ------------------------------------------------------------ 20 ô
@@ -167,6 +277,41 @@ public class HoaDonBUS {
         // đồng bộ lại bản nháp đang mở để giao diện biết hóa đơn đã thanh toán
         nhap.danhDauDaThanhToan(phuongThuc, h.getNgayThanhToan());
         khachHang.ghiNhanThanhToan(h.getMaKH(), h.canThanhToan());   // cộng vào tổng chi tiêu của khách
+        luuVaoCSDL(h);
+    }
+
+    private void luuVaoCSDL(HoaDon h) {
+        try (java.sql.Connection conn = ConnectDB.ConnectDB.getConnection()) {
+            if (conn == null) return;
+            String sqlHD = "INSERT INTO HOADON (maHD, ngayLap, tongTien, maKH) VALUES (?, ?, ?, ?)";
+            try (java.sql.PreparedStatement ps = conn.prepareStatement(sqlHD)) {
+                ps.setString(1, h.getMaHD());
+                ps.setDate(2, java.sql.Date.valueOf(h.getNgayThanhToan().toLocalDate()));
+                ps.setDouble(3, h.canThanhToan());
+                ps.setString(4, h.getMaKH().isEmpty() ? null : h.getMaKH());
+                ps.executeUpdate();
+            }
+            String sqlCT = "INSERT INTO CHITIETHOADON (maCTHD, soLuong, donGia, thanhTien, maHD, sku, maDV) VALUES (?, ?, ?, ?, ?, ?, ?)";
+            int ctIdx = 1;
+            for (Entity.DongGioHang d : h.getDong()) {
+                try (java.sql.PreparedStatement ps = conn.prepareStatement(sqlCT)) {
+                    String maCT = String.format("CT%s_%02d", h.getMaHD(), ctIdx++);
+                    ps.setString(1, maCT);
+                    ps.setInt(2, d.getSoLuong());
+                    ps.setDouble(3, d.getSanPham().getDonGia());
+                    ps.setDouble(4, d.thanhTien());
+                    ps.setString(5, h.getMaHD());
+                    if (d.getSanPham().isDichVu()) {
+                        ps.setNull(6, java.sql.Types.NVARCHAR);
+                        ps.setString(7, d.getSanPham().getSku());
+                    } else {
+                        ps.setString(6, d.getSanPham().getSku());
+                        ps.setNull(7, java.sql.Types.NVARCHAR);
+                    }
+                    ps.executeUpdate();
+                }
+            }
+        } catch (Exception ignored) { }
     }
 
     // ------------------------------------------------------------ lịch sử

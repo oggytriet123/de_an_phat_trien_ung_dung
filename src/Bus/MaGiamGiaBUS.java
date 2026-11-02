@@ -8,14 +8,18 @@ import java.util.Map;
 
 import Entity.MaGiamGia;
 
-/** Kiểm tra mã giảm giá (dữ liệu mẫu trong bộ nhớ). */
+/** Quản lý mã giảm giá / khuyến mãi. */
 public class MaGiamGiaBUS {
     private final Map<String, MaGiamGia> ds = new LinkedHashMap<>();
 
     public MaGiamGiaBUS() {
-        them(new MaGiamGia("GIAM10", true, 10, LocalDate.of(2027, 12, 31)));
-        them(new MaGiamGia("PET50K", false, 50_000, LocalDate.of(2027, 12, 31)));
-        them(new MaGiamGia("TET2026", true, 15, LocalDate.of(2026, 2, 28))); // đã hết hạn
+        them(new MaGiamGia("GIAM10", true, 10, LocalDate.of(2027, 12, 31), "Giảm 10% cho khách hàng thành viên"));
+        them(new MaGiamGia("PET50K", false, 50_000, LocalDate.of(2027, 12, 31), "Giảm 50.000₫ cho hóa đơn dịch vụ"));
+        them(new MaGiamGia("VIP100K", false, 100_000, LocalDate.of(2027, 11, 30), "Ưu đãi khách hàng VIP thân thiết"));
+        them(new MaGiamGia("PETCARE20", true, 20, LocalDate.of(2027, 12, 31), "Chương trình tri ân khách hàng Pet Care"));
+        them(new MaGiamGia("TRIAN15", true, 15, LocalDate.of(2027, 6, 30), "Giảm 15% gói combo tiêm phòng và spa"));
+        them(new MaGiamGia("TET2026", true, 15, LocalDate.of(2026, 2, 28), "Khuyến mãi dịp Tết Nguyên Đán (Đã hết hạn)"));
+        them(new MaGiamGia("HE2025", false, 30_000, LocalDate.of(2025, 8, 31), "Khuyến mãi chào hè 2025 (Đã hết hạn)"));
     }
 
     private void them(MaGiamGia m) {
@@ -26,8 +30,18 @@ public class MaGiamGiaBUS {
         return new ArrayList<>(ds.values());
     }
 
+    public MaGiamGia lay(String ma) {
+        if (ma == null) return null;
+        return ds.get(ma.trim().toUpperCase());
+    }
+
+    public boolean tonTai(String ma) {
+        if (ma == null) return false;
+        return ds.containsKey(ma.trim().toUpperCase());
+    }
+
     /**
-     * Xóa một mã giảm giá khỏi danh sách. Hóa đơn đã áp dụng mã này vẫn giữ mức giảm đã áp dụng.
+     * Xóa một mã giảm giá khỏi danh sách.
      * @throws IllegalArgumentException nếu không có mã đó.
      */
     public void xoa(String ma) {
@@ -41,25 +55,51 @@ public class MaGiamGiaBUS {
     }
 
     /**
-     * Tạo mã giảm giá mới (xuất hiện ngay trong danh sách mã có sẵn).
-     * @throws IllegalArgumentException với nội dung lỗi hiển thị cho nhân viên.
+     * Tạo mã giảm giá mới (không có ghi chú).
      */
     public MaGiamGia tao(String maNhap, boolean phanTram, long giaTri, LocalDate hanDung) {
+        return tao(maNhap, phanTram, giaTri, hanDung, "");
+    }
+
+    /**
+     * Tạo mã giảm giá mới có ghi chú/mô tả.
+     * @throws IllegalArgumentException với nội dung lỗi hiển thị cho nhân viên.
+     */
+    public MaGiamGia tao(String maNhap, boolean phanTram, long giaTri, LocalDate hanDung, String ghiChu) {
         String ma = maNhap == null ? "" : maNhap.trim().toUpperCase();
         if (ma.isEmpty()) throw new IllegalArgumentException("Vui lòng nhập mã giảm giá.");
         if (!ma.matches("[A-Z0-9_-]{3,20}")) {
-            throw new IllegalArgumentException("Mã gồm 3–20 ký tự: chữ, số, gạch ngang hoặc gạch dưới (không dấu, không khoảng trắng).");
+            throw new IllegalArgumentException("Mã gồm 3–20 ký tự: chữ cái, chữ số, gạch ngang hoặc gạch dưới (không dấu, không khoảng trắng).");
         }
-        if (ds.containsKey(ma)) throw new IllegalArgumentException("Mã giảm giá " + ma + " đã tồn tại.");
+        if (ds.containsKey(ma)) throw new IllegalArgumentException("Mã giảm giá \"" + ma + "\" đã tồn tại trong hệ thống.");
         if (phanTram) {
-            if (giaTri < 1 || giaTri > 100) throw new IllegalArgumentException("Phần trăm giảm phải từ 1 đến 100.");
+            if (giaTri < 1 || giaTri > 100) throw new IllegalArgumentException("Phần trăm giảm phải từ 1% đến 100%.");
         } else if (giaTri < 1_000 || giaTri > 100_000_000) {
             throw new IllegalArgumentException("Số tiền giảm phải từ 1.000₫ đến 100.000.000₫.");
         }
         if (hanDung == null) throw new IllegalArgumentException("Vui lòng nhập hạn dùng (dd/MM/yyyy).");
         if (hanDung.isBefore(LocalDate.now())) throw new IllegalArgumentException("Hạn dùng không được ở quá khứ.");
-        MaGiamGia m = new MaGiamGia(ma, phanTram, giaTri, hanDung);
+        MaGiamGia m = new MaGiamGia(ma, phanTram, giaTri, hanDung, ghiChu);
         them(m);
+        return m;
+    }
+
+    /**
+     * Chỉnh sửa thông tin mã giảm giá đã có (mức giảm, hạn dùng, ghi chú).
+     */
+    public MaGiamGia sua(String maNhap, boolean phanTram, long giaTri, LocalDate hanDung, String ghiChu) {
+        String ma = maNhap == null ? "" : maNhap.trim().toUpperCase();
+        if (ma.isEmpty() || !ds.containsKey(ma)) {
+            throw new IllegalArgumentException("Không tìm thấy mã giảm giá \"" + ma + "\" để cập nhật.");
+        }
+        if (phanTram) {
+            if (giaTri < 1 || giaTri > 100) throw new IllegalArgumentException("Phần trăm giảm phải từ 1% đến 100%.");
+        } else if (giaTri < 1_000 || giaTri > 100_000_000) {
+            throw new IllegalArgumentException("Số tiền giảm phải từ 1.000₫ đến 100.000.000₫.");
+        }
+        if (hanDung == null) throw new IllegalArgumentException("Vui lòng nhập hạn dùng (dd/MM/yyyy).");
+        MaGiamGia m = new MaGiamGia(ma, phanTram, giaTri, hanDung, ghiChu);
+        ds.put(ma, m);
         return m;
     }
 
@@ -71,8 +111,8 @@ public class MaGiamGiaBUS {
         String ma = nhap == null ? "" : nhap.trim().toUpperCase();
         if (ma.isEmpty()) throw new IllegalArgumentException("Vui lòng nhập mã giảm giá.");
         MaGiamGia m = ds.get(ma);
-        if (m == null) throw new IllegalArgumentException("Mã giảm giá không hợp lệ.");
-        if (m.getHanDung().isBefore(LocalDate.now())) throw new IllegalArgumentException("Mã giảm giá đã hết hạn.");
+        if (m == null) throw new IllegalArgumentException("Mã giảm giá không tồn tại.");
+        if (m.getHanDung().isBefore(LocalDate.now())) throw new IllegalArgumentException("Mã giảm giá đã hết hạn sử dụng.");
         return m;
     }
 }
