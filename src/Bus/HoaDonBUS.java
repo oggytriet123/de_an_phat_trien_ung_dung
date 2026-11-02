@@ -1,21 +1,20 @@
 package Bus;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
+import DAO.HoaDonDAO;
 import Entity.HoaDon;
 import Entity.KhachHang;
 
 /**
  * Quản lý 20 ô hóa đơn đang hoạt động và lịch sử hóa đơn đã thanh toán.
- * <ul>
- *   <li>Hóa đơn đã lưu nhưng chưa thanh toán luôn nằm tại ô được gán.</li>
- *   <li>Chỉ khi thanh toán thành công hóa đơn mới rời ô (ô trở thành trống) và vào lịch sử.</li>
- * </ul>
- * Hiện dùng dữ liệu trong bộ nhớ; khi có HoaDonDAO chỉ cần thay phần lưu / đọc.
+ * Kết nối trực tiếp cơ sở dữ liệu SQL Server (bảng HOADON và CHITIETHOADON).
  */
 public class HoaDonBUS {
     public static final int SO_O = 20;
@@ -24,11 +23,28 @@ public class HoaDonBUS {
     private final HoaDon[] cacO = new HoaDon[SO_O];       // null = ô trống
     private final List<HoaDon> lichSu = new ArrayList<>(); // mới nhất ở đầu
     private final KhachHangBUS khachHang;
+    private final HoaDonDAO dao = new HoaDonDAO();
     private int soHoaDonTiepTheo = 1;
 
-    /** Mở lên là 20 ô trống và lịch sử rỗng: hóa đơn chỉ xuất hiện khi nhân viên lưu hoặc thanh toán. */
+    /** Mở lên tải các ô đang mở và lịch sử đã thanh toán từ CSDL SQL Server. */
     public HoaDonBUS(KhachHangBUS khachHang) {
         this.khachHang = khachHang;
+        taiTuCSDL();
+    }
+
+    public synchronized void taiTuCSDL() {
+        for (int i = 0; i < SO_O; i++) cacO[i] = null;
+        lichSu.clear();
+
+        Map<Integer, HoaDon> oDangMo = dao.layCacODangMo();
+        for (Map.Entry<Integer, HoaDon> entry : oDangMo.entrySet()) {
+            if (entry.getKey() >= 0 && entry.getKey() < SO_O) {
+                cacO[entry.getKey()] = entry.getValue();
+            }
+        }
+
+        lichSu.addAll(dao.layLichSu());
+        soHoaDonTiepTheo = dao.laySoHoaDonTiepTheo();
     }
 
     // ------------------------------------------------------------ 20 ô
@@ -107,9 +123,7 @@ public class HoaDonBUS {
     }
 
     /**
-     * Lưu hóa đơn vào ô được gán (Chưa thanh toán). Lưu lần nữa thì cập nhật bản ghi cũ,
-     * không tạo bản trùng.
-     * @throws IllegalArgumentException nếu dữ liệu không hợp lệ.
+     * Lưu hóa đơn vào ô được gán (Chưa thanh toán) và lưu vào SQL Server.
      */
     public void luu(HoaDon nhap) {
         String loi = kiemTra(nhap);
@@ -135,24 +149,31 @@ public class HoaDonBUS {
             soHoaDonTiepTheo++;                       // chỉ cấp số khi lưu lần đầu
         }
         cacO[i] = nhap.saoChep();
+
+        try {
+            dao.luuHoaDon(cacO[i]);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
-     * Xóa hóa đơn đã lưu (chưa thanh toán) khỏi ô: ô trở thành trống để tạo hóa đơn mới.
-     * Hóa đơn đã thanh toán nằm trong lịch sử nên không xóa được. Mã hóa đơn đã dùng không được cấp lại.
-     * @param viTri 0..19
-     * @return hóa đơn vừa bị xóa
+     * Xóa hóa đơn đã lưu (chưa thanh toán) khỏi ô và xóa khỏi SQL Server.
      */
     public HoaDon xoa(int viTri) {
         HoaDon h = cacO[viTri];
         if (h == null) throw new IllegalStateException("Ô " + (viTri + 1) + " đang trống.");
         cacO[viTri] = null;
+        try {
+            dao.xoa(h.getMaHD());
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return h;
     }
 
     /**
-     * Ghi nhận thanh toán đã được xác nhận thành công: hóa đơn rời ô, vào lịch sử.
-     * Nếu chưa lưu thì lưu trước.
+     * Ghi nhận thanh toán đã được xác nhận thành công: hóa đơn rời ô, vào lịch sử và cập nhật vào SQL Server.
      */
     public void thanhToan(HoaDon nhap, String phuongThuc) {
         if (phuongThuc == null || !List.of(PHUONG_THUC).contains(phuongThuc)) {
@@ -164,6 +185,13 @@ public class HoaDonBUS {
         h.danhDauDaThanhToan(phuongThuc, LocalDateTime.now());
         cacO[i] = null;
         lichSu.add(0, h);
+
+        try {
+            dao.thanhToan(h);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
         // đồng bộ lại bản nháp đang mở để giao diện biết hóa đơn đã thanh toán
         nhap.danhDauDaThanhToan(phuongThuc, h.getNgayThanhToan());
         khachHang.ghiNhanThanhToan(h.getMaKH(), h.canThanhToan());   // cộng vào tổng chi tiêu của khách
@@ -177,11 +205,10 @@ public class HoaDonBUS {
     /** Tìm theo mã hóa đơn, tên khách, mã khách hàng hoặc số điện thoại; lọc theo ngày thanh toán (null = bỏ qua). */
     public List<HoaDon> timLichSu(String tuKhoa, LocalDate tu, LocalDate den) {
         String kw = ChuoiUtil.chuanHoa(tuKhoa == null ? "" : tuKhoa.trim());
-        // chỉ so khớp số điện thoại khi từ khóa toàn là chữ số (tránh "hd0001" khớp nhầm SĐT chứa 0001)
         String kwSo = kw.replaceAll("[\\s.+-]", "").matches("\\d+") ? ChuoiUtil.chiSo(kw) : "";
         List<HoaDon> kq = new ArrayList<>();
         for (HoaDon h : lichSu) {
-            LocalDate ngay = h.getNgayThanhToan().toLocalDate();
+            LocalDate ngay = h.getNgayThanhToan() != null ? h.getNgayThanhToan().toLocalDate() : h.getNgayTao().toLocalDate();
             if (tu != null && ngay.isBefore(tu)) continue;
             if (den != null && ngay.isAfter(den)) continue;
             if (!kw.isEmpty()) {

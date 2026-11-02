@@ -111,6 +111,18 @@ public class ChuongBUS {
         return dao.donChuong(maChuong, tong);
     }
 
+    public boolean chuyenBaoTri(String maChuong) {
+        return dao.chuyenBaoTri(maChuong);
+    }
+
+    public boolean hoanTatBaoTri(String maChuong) {
+        return dao.hoanTatBaoTri(maChuong);
+    }
+
+    public boolean themChuong(Chuong c) {
+        return dao.themChuong(c);
+    }
+
     public List<PhieuDatChuong> layDanhSachPhieuDat() {
         return dao.getAllPhieuDat();
     }

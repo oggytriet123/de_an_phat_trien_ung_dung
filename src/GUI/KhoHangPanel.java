@@ -628,14 +628,20 @@ public class KhoHangPanel extends JPanel {
         groupLoai.setPreferredSize(new Dimension(140, 62));
 
         // 1.2 Nhà cung cấp / Đối tác
-        String[] nccList = {
+        java.util.List<String> nccList = new java.util.ArrayList<>();
+        nccList.add("Chọn hoặc nhập tên nhà cung cấp...");
+        try {
+            for (Entity.DoiTac dt : new DAO.DoiTacDAO().layTatCa()) nccList.add(dt.getTenDT());
+        } catch (Exception ignored) {}
+        String[] nccArr = nccList.toArray(new String[0]);
+        String[] nccDummy = {
             "Chọn hoặc nhập tên nhà cung cấp...",
             "Công ty Cổ phần PetCare Việt Nam",
             "Nhà phân phối Royal Canin HCM",
             "Công ty Dược Thú Y Marphavet",
             "Đại lý Phụ kiện thú cưng Sài Gòn"
         };
-        JComboBox<String> cbNcc = new JComboBox<>(nccList);
+        JComboBox<String> cbNcc = new JComboBox<>(nccArr);
         cbNcc.setEditable(true);
         styleComboBox(cbNcc);
         if (cbNcc.getEditor().getEditorComponent() instanceof JTextField editorTf) {
@@ -774,7 +780,9 @@ public class KhoHangPanel extends JPanel {
         Runnable updateSummary = () -> {
             int totalUnits = 0;
             long totalMoney = 0;
+
             for (PhieuItem it : items) {
+
                 totalUnits += it.soLuong;
                 totalMoney += it.getThanhTien();
             }
@@ -857,9 +865,25 @@ public class KhoHangPanel extends JPanel {
 
         btnHuy.addActionListener(e -> dlg.dispose());
         btnLuu.addActionListener(e -> {
+
             for (PhieuItem it : items) {
+
                 bus.nhapKho(it.maSKU, it.soLuong);
             }
+            try {
+                String loai = (String) cbLoai.getSelectedItem();
+                String dt = (String) cbNcc.getSelectedItem();
+                if (dt == null || dt.contains("Chọn")) dt = "Nhà cung cấp đối tác";
+                DAO.PhieuKhoDAO pkDao = new DAO.PhieuKhoDAO();
+                String maMoi = pkDao.maTiepTheo(!"Xuất kho".equals(loai));
+                String ngayStr = java.time.LocalDate.now().format(CalendarPicker.DATE_FMT);
+                String gioStr = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
+                long tong = 0;
+                for (PhieuItem it : items) tong += (it.donGia * it.soLuong);
+                Entity.PhieuKho pk = new Entity.PhieuKho(maMoi, loai == null ? "Nhập mới" : loai, ngayStr, gioStr, "Lê Tuấn Anh", dt, tong, "Hoàn tất");
+                pkDao.them(pk);
+            } catch (Exception ignored) {}
+
             refresh();
             dlg.dispose();
             JOptionPane.showMessageDialog(this,

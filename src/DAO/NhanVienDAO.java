@@ -31,6 +31,8 @@ public class NhanVienDAO {
             st.executeUpdate("IF COL_LENGTH('NHANVIEN', 'trangThai') IS NULL ALTER TABLE NHANVIEN ADD trangThai NVARCHAR(30) NULL");
             st.executeUpdate("IF COL_LENGTH('NHANVIEN', 'caLamViec') IS NULL ALTER TABLE NHANVIEN ADD caLamViec NVARCHAR(30) NULL");
             st.executeUpdate("IF COL_LENGTH('NHANVIEN', 'ngayVaoLam') IS NULL ALTER TABLE NHANVIEN ADD ngayVaoLam DATE NULL");
+            // Bảng NHANVIEN_BACSI: đảm bảo cột chuyenMon tồn tại
+            st.executeUpdate("IF COL_LENGTH('NHANVIEN_BACSI', 'chuyenMon') IS NULL ALTER TABLE NHANVIEN_BACSI ADD chuyenMon NVARCHAR(200) NULL");
         } catch (SQLException ignored) {
         }
     }

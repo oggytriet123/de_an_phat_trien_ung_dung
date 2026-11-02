@@ -1,21 +1,30 @@
 package Bus;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import DAO.MaGiamGiaDAO;
 import Entity.MaGiamGia;
 
-/** Kiểm tra mã giảm giá (dữ liệu mẫu trong bộ nhớ). */
+/** Quản lý mã giảm giá, đồng bộ trực tiếp với CSDL SQL Server (bảng MAGIAMGIA). */
 public class MaGiamGiaBUS {
     private final Map<String, MaGiamGia> ds = new LinkedHashMap<>();
+    private final MaGiamGiaDAO dao = new MaGiamGiaDAO();
 
     public MaGiamGiaBUS() {
-        them(new MaGiamGia("GIAM10", true, 10, LocalDate.of(2027, 12, 31)));
-        them(new MaGiamGia("PET50K", false, 50_000, LocalDate.of(2027, 12, 31)));
-        them(new MaGiamGia("TET2026", true, 15, LocalDate.of(2026, 2, 28))); // đã hết hạn
+        taiTuCSDL();
+    }
+
+    public synchronized void taiTuCSDL() {
+        ds.clear();
+        List<MaGiamGia> list = dao.layTatCa();
+        for (MaGiamGia m : list) {
+            ds.put(m.getMa(), m);
+        }
     }
 
     private void them(MaGiamGia m) {
@@ -27,12 +36,16 @@ public class MaGiamGiaBUS {
     }
 
     /**
-     * Xóa một mã giảm giá khỏi danh sách. Hóa đơn đã áp dụng mã này vẫn giữ mức giảm đã áp dụng.
-     * @throws IllegalArgumentException nếu không có mã đó.
+     * Xóa một mã giảm giá khỏi danh sách và CSDL.
      */
     public void xoa(String ma) {
         if (ma == null || ds.remove(ma.trim().toUpperCase()) == null) {
             throw new IllegalArgumentException("Không tìm thấy mã giảm giá " + ma + ".");
+        }
+        try {
+            dao.xoa(ma.trim().toUpperCase());
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
@@ -41,8 +54,7 @@ public class MaGiamGiaBUS {
     }
 
     /**
-     * Tạo mã giảm giá mới (xuất hiện ngay trong danh sách mã có sẵn).
-     * @throws IllegalArgumentException với nội dung lỗi hiển thị cho nhân viên.
+     * Tạo mã giảm giá mới và lưu vào CSDL.
      */
     public MaGiamGia tao(String maNhap, boolean phanTram, long giaTri, LocalDate hanDung) {
         String ma = maNhap == null ? "" : maNhap.trim().toUpperCase();
@@ -60,12 +72,16 @@ public class MaGiamGiaBUS {
         if (hanDung.isBefore(LocalDate.now())) throw new IllegalArgumentException("Hạn dùng không được ở quá khứ.");
         MaGiamGia m = new MaGiamGia(ma, phanTram, giaTri, hanDung);
         them(m);
+        try {
+            dao.them(m);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
         return m;
     }
 
     /**
      * @return mã hợp lệ còn hạn.
-     * @throws IllegalArgumentException với nội dung lỗi hiển thị cho nhân viên.
      */
     public MaGiamGia kiemTra(String nhap) {
         String ma = nhap == null ? "" : nhap.trim().toUpperCase();

@@ -31,12 +31,12 @@ import Entity.TaiKhoan;
 import Entity.ThongKeNhanVien;
 
 /**
- * Giao diện Quản lý Nhân Viên - Thiết kế tinh gọn, dễ hiểu và chuẩn mực.
+ * Giao diện Quản lý & Tra cứu Nhân Viên - Thiết kế tinh gọn, dễ hiểu và chuẩn mực.
  */
 public class NhanVienPanel extends JPanel {
     private static final int SO_DONG_MOI_TRANG = 7;
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
-    private static final String[] DS_VAI_TRO = {"Tất cả", "Quản lý", "Bán hàng", "Kho", "Bác sĩ"};
+    private static final String[] DS_VAI_TRO = {"Tất cả vai trò", "Quản lý", "Bán hàng", "Kho", "Bác sĩ"};
     private static final String[] DS_SAP_XEP = {"Mới nhất", "Tên A-Z", "Mã NV tăng dần", "Vai trò"};
 
     private final NhanVienBUS bus = new NhanVienBUS();
@@ -59,8 +59,8 @@ public class NhanVienPanel extends JPanel {
     };
     private final JTable table = new JTable(tableModel);
     private final PlaceholderField txtTim = new PlaceholderField("Tìm tên nhân viên, mã NV, tài khoản, SĐT, email...");
-    private final List<RoundedButton> chipsVaiTro = new ArrayList<>();
-    private final RoundedButton btnSort = new RoundedButton("", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10);
+    private final JComboBox<String> cboLocVaiTro = new JComboBox<>(DS_VAI_TRO);
+    private final JComboBox<String> cboSapXep = new JComboBox<>(DS_SAP_XEP);
     private final JLabel lblTrangThai = new JLabel();
     private final JPanel pnlPhanTrang = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
 
@@ -97,12 +97,19 @@ public class NhanVienPanel extends JPanel {
         });
     }
 
+    public void focusTimKiem() {
+        SwingUtilities.invokeLater(() -> {
+            txtTim.requestFocusInWindow();
+            txtTim.selectAll();
+        });
+    }
+
     // ----------------- 1. HEADER & CÁC NÚT CHỨC NĂNG -----------------
     private JPanel taoPhanHeader() {
         JPanel head = new JPanel(new BorderLayout());
         head.setOpaque(false);
 
-        JLabel lblTieuDe = new JLabel("Quản lý Nhân Viên");
+        JLabel lblTieuDe = new JLabel("Quản lý & Tra cứu Nhân Viên");
         lblTieuDe.setFont(Theme.font(Font.BOLD, 22));
         lblTieuDe.setForeground(Theme.TEXT);
 
@@ -177,13 +184,11 @@ public class NhanVienPanel extends JPanel {
             cardBanHang.set(Theme.number(tk.soBanHang), "Tư vấn & Bán hàng", Theme.MUTED);
             cardKhoQL.set(Theme.number(tk.soKho + tk.soQuanLy), tk.soQuanLy + " Quản lý · " + tk.soKho + " Thủ kho", new Color(0xD97706));
         } catch (SQLException e) {
-            // Chưa kết nối được CSDL: dùng danh sách mẫu để xem giao diện xếp ca
-            bus.napDuLieuMau();
             List<NhanVien> ds = bus.layDanhSach();
             long bs = ds.stream().filter(n -> n.getMaQuyen() == 4).count();
             long bh = ds.stream().filter(n -> n.getMaQuyen() == 2).count();
             long kq = ds.stream().filter(n -> n.getMaQuyen() == 1 || n.getMaQuyen() == 3).count();
-            cardTong.set(Theme.number(ds.size()), "Dữ liệu mẫu (chưa kết nối CSDL)", Theme.ORANGE);
+            cardTong.set(Theme.number(ds.size()), "Chưa kết nối được CSDL", Theme.ORANGE);
             cardBacSi.set(Theme.number((int) bs), "Phụ trách khám chữa bệnh", new Color(0x0284C7));
             cardBanHang.set(Theme.number((int) bh), "Tư vấn & Bán hàng", Theme.MUTED);
             cardKhoQL.set(Theme.number((int) kq), "Quản lý & Thủ kho", new Color(0xD97706));
@@ -201,7 +206,7 @@ public class NhanVienPanel extends JPanel {
 
         RoundedPanel searchBox = new RoundedPanel(10, Color.WHITE, Theme.BORDER);
         searchBox.setLayout(new BorderLayout());
-        searchBox.setPreferredSize(new Dimension(300, 36));
+        searchBox.setPreferredSize(new Dimension(320, 36));
         JLabel ic = new JLabel(Icons.of("search", 16, new Color(0x8795A0)));
         ic.setBorder(new EmptyBorder(0, 10, 0, 4));
         txtTim.setBorder(new EmptyBorder(0, 4, 0, 8));
@@ -216,40 +221,32 @@ public class NhanVienPanel extends JPanel {
             @Override public void changedUpdate(DocumentEvent e) {}
         });
 
-        JPanel pnlTrai = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
+        JPanel pnlTrai = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         pnlTrai.setOpaque(false);
         pnlTrai.add(searchBox);
 
-        for (String vt : DS_VAI_TRO) {
-            RoundedButton chip = new RoundedButton(vt, Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(12, 6);
-            chip.setFont(Theme.font(Font.PLAIN, 12));
-            chip.addActionListener(e -> {
-                vaiTroDangLoc = vt;
-                trangHienTai = 1;
-                capNhatBang();
-            });
-            chipsVaiTro.add(chip);
-            pnlTrai.add(chip);
-        }
+        // Combobox lọc theo Vai trò
+        styleCombo(cboLocVaiTro);
+        cboLocVaiTro.setPreferredSize(new Dimension(140, 36));
+        cboLocVaiTro.addActionListener(e -> {
+            String sel = (String) cboLocVaiTro.getSelectedItem();
+            vaiTroDangLoc = (sel == null || sel.equals("Tất cả vai trò")) ? "Tất cả" : sel;
+            trangHienTai = 1;
+            capNhatBang();
+        });
+        pnlTrai.add(cboLocVaiTro);
 
-        btnSort.setFont(Theme.font(Font.PLAIN, 12));
-        btnSort.pad(14, 6);
-        btnSort.addActionListener(e -> {
-            JPopupMenu menu = new JPopupMenu();
-            for (String s : DS_SAP_XEP) {
-                JMenuItem mi = new JMenuItem(s);
-                mi.addActionListener(ev -> {
-                    sapXepHienTai = s;
-                    trangHienTai = 1;
-                    capNhatBang();
-                });
-                menu.add(mi);
-            }
-            menu.show(btnSort, 0, btnSort.getHeight() + 2);
+        // Combobox sắp xếp kết quả
+        styleCombo(cboSapXep);
+        cboSapXep.setPreferredSize(new Dimension(140, 36));
+        cboSapXep.addActionListener(e -> {
+            sapXepHienTai = (String) cboSapXep.getSelectedItem();
+            trangHienTai = 1;
+            capNhatBang();
         });
 
         toolbar.add(pnlTrai, BorderLayout.WEST);
-        toolbar.add(btnSort, BorderLayout.EAST);
+        toolbar.add(cboSapXep, BorderLayout.EAST);
         card.add(toolbar, BorderLayout.NORTH);
 
         // Bảng JTable - kẻ khung lưới đẹp
@@ -332,13 +329,6 @@ public class NhanVienPanel extends JPanel {
 
         lblTrangThai.setText(dsHienThi.isEmpty() ? "Không tìm thấy nhân viên nào phù hợp."
                 : "Hiển thị " + (tuDong + 1) + "–" + denDong + " trong " + dsHienThi.size() + " nhân viên");
-        btnSort.setText("Sắp xếp: " + sapXepHienTai);
-
-        for (RoundedButton b : chipsVaiTro) {
-            boolean active = b.getText().equals(vaiTroDangLoc);
-            if (active) b.style(Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null);
-            else b.style(Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER);
-        }
 
         veNutPhanTrang(tongSoTrang);
     }
@@ -391,7 +381,7 @@ public class NhanVienPanel extends JPanel {
         try {
             for (NhanVienDAO.QuyenOption q : bus.layDanhSachQuyen()) cboQuyen.addItem(q);
         } catch (SQLException ignored) {}
-        if (cboQuyen.getItemCount() == 0) { // bảng PHANQUYEN trống / chưa kết nối CSDL
+        if (cboQuyen.getItemCount() == 0) {
             cboQuyen.addItem(new NhanVienDAO.QuyenOption(1, "Quản lý"));
             cboQuyen.addItem(new NhanVienDAO.QuyenOption(2, "Bán hàng"));
             cboQuyen.addItem(new NhanVienDAO.QuyenOption(3, "Kho"));
