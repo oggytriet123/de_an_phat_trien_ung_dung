@@ -14,11 +14,14 @@ import Entity.TaiKhoan;
 public class TaiKhoanBUS {
     public static final DateTimeFormatter NGAY = DateTimeFormatter.ofPattern("dd/MM/uuuu")
             .withResolverStyle(ResolverStyle.STRICT);
+    // [CN-TK-14] Quy tắc SĐT: 10 số, bắt đầu bằng 0
     private static final Pattern SDT = Pattern.compile("^0\\d{9}$");
+    // [CN-TK-15] Quy tắc định dạng email
     private static final Pattern EMAIL = Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\\.[A-Za-z0-9-]+)*\\.[A-Za-z]{2,}$");
 
     private final TaiKhoanDAO dao = new TaiKhoanDAO();
 
+    // [CN-TK-16] Validate SĐT/ngày sinh/email rồi lưu
     /**
      * Kiểm tra rồi lưu SĐT / ngày sinh / email của chính tài khoản đăng nhập. Họ tên KHÔNG được sửa.
      * @return null nếu thành công, ngược lại là thông báo lỗi.
@@ -55,9 +58,11 @@ public class TaiKhoanBUS {
         return null;
     }
 
+    // [CN-TK-17] Validate mật khẩu mới rồi đổi
     /** Đổi mật khẩu của tài khoản đang đăng nhập. @return null nếu thành công, ngược lại là thông báo lỗi. */
     public String doiMatKhau(TaiKhoan tk, String cu, String moi, String nhapLai) {
         if (cu == null || cu.isEmpty()) return "Vui lòng nhập mật khẩu hiện tại.";
+        // [CN-TK-18] Độ dài mật khẩu tối thiểu (6 ký tự)
         if (moi == null || moi.length() < 6) return "Mật khẩu mới phải có ít nhất 6 ký tự.";
         if (moi.contains(" ")) return "Mật khẩu mới không được chứa khoảng trắng.";
         if (moi.equals(cu)) return "Mật khẩu mới phải khác mật khẩu hiện tại.";

@@ -37,6 +37,7 @@ public class NhanVienDAO {
         }
     }
 
+    // [CN-PQ-16] Mục chọn nhóm quyền (mã quyền + tên) cho combobox
     /**
      * Nhóm quyền từ bảng PHANQUYEN để hiển thị trong ComboBox.
      */
@@ -55,6 +56,7 @@ public class NhanVienDAO {
         }
     }
 
+    // [CN-NV-02] SELECT danh sách nhân viên (JOIN quyền, bảng chuyên môn)
     /**
      * Lấy danh sách toàn bộ nhân viên trong hệ thống kèm vai trò và chuyên môn bác sĩ.
      */
@@ -101,6 +103,7 @@ public class NhanVienDAO {
         return ds;
     }
 
+    // [CN-PQ-17] Đọc danh sách nhóm quyền từ bảng PHANQUYEN
     /**
      * Lấy danh sách nhóm quyền từ bảng PHANQUYEN.
      */
@@ -117,6 +120,7 @@ public class NhanVienDAO {
         return list;
     }
 
+    // [CN-NV-03] Kiểm tra trùng tên đăng nhập
     /**
      * Kiểm tra tên đăng nhập đã tồn tại trong CSDL hay chưa.
      */
@@ -133,6 +137,7 @@ public class NhanVienDAO {
         }
     }
 
+    // [CN-NV-04] INSERT nhân viên + bảng vai trò
     /**
      * Thêm mới một nhân viên cùng bảng vai trò phụ thuộc. Tự động sinh mã NVxxx.
      * @return mã nhân viên vừa tạo (ví dụ: NV011)
@@ -176,6 +181,7 @@ public class NhanVienDAO {
         }
     }
 
+    // [CN-NV-05] UPDATE nhân viên (đổi mật khẩu nếu có nhập)
     /**
      * Cập nhật thông tin hồ sơ nhân viên.
      * @param matKhauMoiHash nếu null hoặc rỗng thì giữ nguyên mật khẩu cũ.
@@ -221,6 +227,7 @@ public class NhanVienDAO {
         }
     }
 
+    // [CN-PQ-18] Đổi vai trò -> xóa/chèn lại bảng con QUANLY / BANHANG / KHO / BACSI
     private void capNhatBangVaiTro(Connection con, String maNV, int maQuyen, String chuyenMon) throws SQLException {
         // Gỡ khỏi các bảng con cũ
         try (Statement st = con.createStatement()) {
@@ -262,6 +269,7 @@ public class NhanVienDAO {
         }
     }
 
+    // [CN-NV-06] Chặn xóa: chính mình / đang phụ trách khách hàng, sản phẩm, lịch hẹn
     /**
      * Kiểm tra tính toàn vẹn dữ liệu trước khi xóa nhân viên.
      * @return chuỗi thông báo nếu có ràng buộc, null nếu có thể xóa an toàn.
@@ -314,6 +322,7 @@ public class NhanVienDAO {
         return null;
     }
 
+    // [CN-NV-07] DELETE nhân viên + bảng vai trò liên quan
     /**
      * Xóa hồ sơ nhân viên.
      */
@@ -345,6 +354,7 @@ public class NhanVienDAO {
         }
     }
 
+    // [CN-NV-08] SQL thống kê nhân viên (tổng, đang làm, bác sĩ, kho, quản lý)
     /**
      * Thống kê số lượng nhân sự theo từng chức danh và trạng thái.
      */
@@ -374,6 +384,7 @@ public class NhanVienDAO {
         return new ThongKeNhanVien(0, 0, 0, 0, 0, 0);
     }
 
+    // [CN-NV-09] Sinh mã nhân viên mới (NV + số lớn nhất + 1)
     private static int maxSoNV(Connection con) throws SQLException {
         String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(maNV, 3, 18) AS INT)), 0) "
                 + "FROM NHANVIEN WITH (UPDLOCK, HOLDLOCK) WHERE maNV LIKE 'NV%'";

@@ -64,6 +64,7 @@ public class DialogChiTietChuong extends JDialog {
         badge.setFont(Theme.font(Font.BOLD, 12));
         badge.setOpaque(true);
         if ("Trống".equalsIgnoreCase(st)) {
+            // [UI-LC-20] Màu nhãn trạng thái ở đầu dialog (xanh / cam / đỏ)
             badge.setBackground(Theme.GREEN);
             badge.setForeground(Color.WHITE);
         } else if ("Đã đặt".equalsIgnoreCase(st)) {
@@ -78,6 +79,7 @@ public class DialogChiTietChuong extends JDialog {
         }
         left.add(badge);
 
+        // [UI-LC-21] Dòng đơn giá/ngày ở đầu dialog
         JLabel price = new JLabel("Đơn giá: " + Theme.money((long) (c != null ? c.getGiaTheoNgay() : 0)) + "/ngày");
         price.setFont(Theme.font(Font.BOLD, 14));
         price.setForeground(new Color(0xD6EAF8));
@@ -97,6 +99,7 @@ public class DialogChiTietChuong extends JDialog {
         pnlPet.setLayout(new BoxLayout(pnlPet, BoxLayout.Y_AXIS));
         pnlPet.setBorder(new EmptyBorder(14, 16, 14, 16));
 
+        // [UI-LC-22] Tiêu đề khối thú cưng + chủ nuôi
         JLabel t1 = new JLabel("🐾 THÔNG TIN THÚ CƯNG & CHỦ NUÔI");
         t1.setFont(Theme.font(Font.BOLD, 13));
         t1.setForeground(Theme.SIDEBAR);
@@ -128,12 +131,14 @@ public class DialogChiTietChuong extends JDialog {
 
         JPanel topDV = new JPanel(new BorderLayout());
         topDV.setOpaque(false);
+        // [UI-LC-23] Tiêu đề khối dịch vụ đã dùng
         JLabel t2 = new JLabel("🍖 DỊCH VỤ & THỨC ĂN ĐÃ DÙNG");
         t2.setFont(Theme.font(Font.BOLD, 13));
         t2.setForeground(Theme.SIDEBAR);
         topDV.add(t2, BorderLayout.WEST);
 
         if (c != null && c.isDangLuuTru()) {
+            // [UI-LC-24] Nút + Thêm DV
             RoundedButton btnThemDV = new RoundedButton("+ Thêm DV", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(10, 4);
             btnThemDV.addActionListener(e -> {
                 Window owner = SwingUtilities.getWindowAncestor(this);
@@ -143,6 +148,7 @@ public class DialogChiTietChuong extends JDialog {
         }
         pnlDichVu.add(topDV, BorderLayout.NORTH);
 
+        // [UI-LC-25] Tiêu đề cột bảng dịch vụ
         String[] cols = {"Dịch vụ / Món ăn", "SL", "Đơn giá", "Thành tiền"};
         modelDV = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -166,6 +172,7 @@ public class DialogChiTietChuong extends JDialog {
         lblTienDV.setFont(Theme.font(Font.PLAIN, 12));
         lblTongTien = new JLabel("TỔNG CỘNG: 0₫");
         lblTongTien.setFont(Theme.font(Font.BOLD, 14));
+        // [UI-LC-26] Màu dòng TỔNG CỘNG
         lblTongTien.setForeground(Theme.RED);
 
         pnlSum.add(lblTienPhong);
@@ -195,6 +202,7 @@ public class DialogChiTietChuong extends JDialog {
         return r;
     }
 
+    // [CN-LC-20] Tính tiền phòng (số ngày x đơn giá) + tiền dịch vụ = tổng tạm tính
     private void loadDichVu() {
         if (modelDV == null) return;
         modelDV.setRowCount(0);
@@ -232,12 +240,14 @@ public class DialogChiTietChuong extends JDialog {
         foot.add(btnDong);
 
         if (c != null && c.isDaDat()) {
+            // [UI-LC-27] Nút Nhận Lồng Ngay
             RoundedButton btnNhan = new RoundedButton("🐾 Nhận Lồng Ngay (F5)", Theme.GREEN, new Color(0x278C44), Color.WHITE, null, 8).pad(16, 8);
             btnNhan.addActionListener(e -> nhanLong(c));
             foot.add(btnNhan);
         }
 
         if (c != null && c.isDangLuuTru()) {
+            // [UI-LC-28] Nút Trả Lồng & Thanh Toán
             RoundedButton btnTra = new RoundedButton("✨ Trả Lồng & Thanh Toán (F10)", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
             btnTra.addActionListener(e -> traLongThanhToan(c));
             foot.add(btnTra);
@@ -246,6 +256,7 @@ public class DialogChiTietChuong extends JDialog {
         return foot;
     }
 
+    // [CN-LC-21] Xác nhận nhận thú cưng vào lồng
     private void nhanLong(Chuong c) {
         int r = JOptionPane.showConfirmDialog(this,
                 "Xác nhận nhận thú cưng \"" + c.getTenPet() + "\" của khách \"" + c.getTenKhach() + "\" vào lồng " + c.getMaChuong() + "?",
@@ -259,6 +270,7 @@ public class DialogChiTietChuong extends JDialog {
         }
     }
 
+    // [CN-LC-22] Trả lồng: tính tổng, xác nhận, tạo hóa đơn, đưa lồng về Trống
     private void traLongThanhToan(Chuong c) {
         double tong = bus.tinhTongChiPhi(c);
         long soNgay = bus.tinhSoNgayLuuTru(c);

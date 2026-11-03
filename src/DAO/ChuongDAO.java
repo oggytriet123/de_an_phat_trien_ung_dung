@@ -28,6 +28,7 @@ public class ChuongDAO {
         damBaoCauTrucBang();
     }
 
+    // [CN-LC-46] Chuẩn hóa khu vực + tải trọng mặc định cho lồng cũ
     /**
      * Tự động bổ sung các cột cần thiết cho bảng PHIEU_LUUTRU và CHITIET_DICHVU_CHUONG nếu chưa có.
      */
@@ -93,6 +94,7 @@ public class ChuongDAO {
         try (Connection conn = ConnectDB.getConnection()) {
             if (conn != null) {
                 // 1. Lấy tất cả lồng từ CHUONGLUUTRU
+                // [CN-LC-47] SELECT toàn bộ lồng
                 String sql = "SELECT * FROM CHUONGLUUTRU ORDER BY cageID";
                 try (Statement st = conn.createStatement();
                      ResultSet rs = st.executeQuery(sql)) {
@@ -164,6 +166,7 @@ public class ChuongDAO {
         return null;
     }
 
+    // [CN-LC-48] Đổi trạng thái lồng; nhận lồng -> chuyển phiếu Đã đặt sang Đang lưu trú
     public boolean capNhatTrangThai(String maChuong, String trangThai) {
         try (Connection conn = ConnectDB.getConnection()) {
             if (conn != null) {
@@ -241,6 +244,7 @@ public class ChuongDAO {
         return false;
     }
 
+    // [CN-LC-49] INSERT phiếu đặt lồng (PHIEU_LUUTRU)
     public boolean datChuong(PhieuDatChuong pdc) {
         if (pdc == null || pdc.getMaChuong() == null) return false;
         try (Connection conn = ConnectDB.getConnection()) {
@@ -275,6 +279,7 @@ public class ChuongDAO {
         return false;
     }
 
+    // [CN-LC-50] Phiếu "Đã đặt" -> "Đã hủy"
     public boolean huyDat(String maChuong) {
         try (Connection conn = ConnectDB.getConnection()) {
             if (conn != null) {
@@ -292,6 +297,7 @@ public class ChuongDAO {
         return false;
     }
 
+    // [CN-LC-51] UPDATE phiếu sang lồng mới + đổi trạng thái hai lồng
     public boolean chuyenChuong(String maChuongCu, String maChuongMoi) {
         try (Connection conn = ConnectDB.getConnection()) {
             if (conn != null) {
@@ -313,6 +319,7 @@ public class ChuongDAO {
         return false;
     }
 
+    // [CN-LC-52] Trả phòng: đóng phiếu + tạo HOADON/CHITIETHOADON (mã DV005)
     /**
      * Trả lồng + thanh toán: đóng phiếu, lập hóa đơn cho khách, cộng điểm tích lũy (1 điểm / 10.000₫)
      * và nâng hạng thẻ; sau đó đưa lồng về trạng thái Trống.
@@ -439,6 +446,7 @@ public class ChuongDAO {
         return list;
     }
 
+    // [CN-LC-53] INSERT dịch vụ vào phiếu đang lưu trú
     public void themDichVu(String maChuong, ChiTietDichVuChuong dv) {
         if (maChuong == null || dv == null) return;
         try (Connection conn = ConnectDB.getConnection()) {
@@ -485,6 +493,7 @@ public class ChuongDAO {
         return capNhatTrangThai(maChuong, "Trống");
     }
 
+    // [CN-LC-54] INSERT lồng mới (CHUONGLUUTRU)
     public boolean themChuong(Chuong c) {
         if (c == null || c.getMaChuong() == null) return false;
         String sql = "INSERT INTO CHUONGLUUTRU (cageID, size, trangThai, giaTheoDem, khuVuc, canNangToiDa, tenChuong, maNV_QL) VALUES (?, ?, ?, ?, ?, ?, ?, NULL)";

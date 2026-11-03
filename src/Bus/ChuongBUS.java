@@ -28,6 +28,7 @@ public class ChuongBUS {
         return dao.getChuong(maChuong);
     }
 
+    // [CN-LC-36] Lọc lồng theo trạng thái / kích cỡ / khu vực / từ khóa
     /**
      * Lọc danh sách lồng theo trạng thái, kích cỡ, khu vực và từ khóa tìm kiếm.
      */
@@ -88,6 +89,7 @@ public class ChuongBUS {
         return cnt;
     }
 
+    // [CN-LC-37] Đặt trước lồng
     public boolean datChuong(PhieuDatChuong pdc) {
         return dao.datChuong(pdc);
     }
@@ -97,28 +99,34 @@ public class ChuongBUS {
         return dao.nhanChuong(maChuong, tenPet, loaiPet, canNang, tenKhach, sdtKhach, ghiChu, ngayRaDuKien);
     }
 
+    // [CN-LC-38] Hủy đặt
     public boolean huyDat(String maChuong) {
         return dao.huyDat(maChuong);
     }
 
+    // [CN-LC-39] Chuyển thú cưng sang lồng khác
     public boolean chuyenChuong(String maChuongCu, String maChuongMoi) {
         return dao.chuyenChuong(maChuongCu, maChuongMoi);
     }
 
+    // [CN-LC-40] Trả & dọn lồng (kèm tính tổng tiền)
     /** Trả lồng + thanh toán: lập hóa đơn, cộng điểm cho chủ nuôi rồi đưa lồng về Trống. */
     public boolean donChuong(String maChuong) {
         double tong = tinhTongChiPhi(timTheoMa(maChuong));
         return dao.donChuong(maChuong, tong);
     }
 
+    // [CN-LC-41] Chuyển lồng sang bảo trì
     public boolean chuyenBaoTri(String maChuong) {
         return dao.chuyenBaoTri(maChuong);
     }
 
+    // [CN-LC-42] Hoàn tất bảo trì -> Trống
     public boolean hoanTatBaoTri(String maChuong) {
         return dao.hoanTatBaoTri(maChuong);
     }
 
+    // [CN-LC-43] Thêm lồng mới
     public boolean themChuong(Chuong c) {
         return dao.themChuong(c);
     }
@@ -139,6 +147,7 @@ public class ChuongBUS {
         dao.xoaDichVu(maChuong, index);
     }
 
+    // [CN-LC-44] Tổng chi phí = tiền ở + dịch vụ
     /**
      * Tính tổng chi phí lưu trú tạm tính (tiền phòng theo số ngày + tiền dịch vụ).
      */
@@ -163,6 +172,7 @@ public class ChuongBUS {
         return tienPhong + tienDV;
     }
 
+    // [CN-LC-45] Số ngày lưu trú (tối thiểu 1 ngày)
     public long tinhSoNgayLuuTru(Chuong c) {
         if (c == null || c.getNgayVao() == null) return 1;
         long soGio = Math.max(1, Duration.between(c.getNgayVao(), LocalDateTime.now()).toHours());

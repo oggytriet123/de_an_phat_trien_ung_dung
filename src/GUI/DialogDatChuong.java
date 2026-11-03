@@ -68,6 +68,7 @@ public class DialogDatChuong extends JDialog {
         pnl.setBackground(Theme.SIDEBAR);
         pnl.setBorder(new EmptyBorder(16, 24, 16, 24));
 
+        // [UI-LC-37] Tiêu đề dialog Đặt trước lồng
         JLabel title = new JLabel("ĐẶT TRƯỚC LỒNG CHUỒNG");
         title.setFont(Theme.font(Font.BOLD, 18));
         title.setForeground(Color.WHITE);
@@ -113,6 +114,7 @@ public class DialogDatChuong extends JDialog {
 
         lblGiaPhong = new JLabel("Giá: 0₫/ngày");
         lblGiaPhong.setFont(Theme.font(Font.BOLD, 13));
+        // [UI-LC-38] Màu chữ giá phòng
         lblGiaPhong.setForeground(Theme.GREEN);
         lblGiaPhong.setBounds(380, y, 140, 28);
         body.add(lblGiaPhong);
@@ -122,6 +124,7 @@ public class DialogDatChuong extends JDialog {
 
         y += 40;
         // --- 2. SĐT Khách hàng & Tra cứu ---
+        // [UI-LC-39] Nhãn các ô trong form đặt lồng
         JLabel lblS = new JLabel("SĐT Chủ nuôi:");
         lblS.setFont(lblFont);
         lblS.setForeground(Theme.TEXT);
@@ -139,6 +142,7 @@ public class DialogDatChuong extends JDialog {
         });
         body.add(txtSDT);
 
+        // [UI-LC-40] Nút Tra cứu khách hàng
         JButton btnKiemTra = new RoundedButton("Tra cứu", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8);
         btnKiemTra.setBounds(340, y, 85, 28);
         btnKiemTra.addActionListener(e -> traCuuKhachHang());
@@ -278,6 +282,7 @@ public class DialogDatChuong extends JDialog {
         footer.setBorder(new LineBorder(Theme.BORDER, 1));
 
         RoundedButton btnHuy = new RoundedButton("Hủy bỏ", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(16, 8);
+        // [UI-LC-41] Nút Xác nhận đặt lồng
         RoundedButton btnXacNhan = new RoundedButton("✓ Xác Nhận Đặt Lồng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
 
         btnHuy.addActionListener(e -> dispose());
@@ -288,6 +293,7 @@ public class DialogDatChuong extends JDialog {
         return footer;
     }
 
+    // [CN-LC-28] Chọn lồng -> cập nhật giá/ngày
     private void capNhatGiaTheoChuong() {
         String sel = (String) cbChuong.getSelectedItem();
         if (sel != null && sel.contains(" - ")) {
@@ -324,6 +330,7 @@ public class DialogDatChuong extends JDialog {
         if (t.getCanNang() > 0) spnCanNang.setValue(Math.min(60.0, Math.max(0.5, t.getCanNang())));
     }
 
+    // [CN-LC-29] Tra cứu chủ nuôi theo SĐT (9-11 số); chưa có thì tạo khách mới
     private void traCuuKhachHang() {
         String raw = KhachHangBUS.chiSo(txtSDT.getText());
         if (raw.isEmpty()) {
@@ -383,6 +390,7 @@ public class DialogDatChuong extends JDialog {
         }
     }
 
+    // [CN-LC-30] Validate (lồng, SĐT, tên thú, khu vực theo loài, tải trọng) -> bus.datChuong
     private void thucHienDatLoi() {
         String sel = (String) cbChuong.getSelectedItem();
         if (sel == null) {

@@ -106,6 +106,7 @@ public class Chuong {
     public String getGhiChu() { return ghiChu; }
     public void setGhiChu(String ghiChu) { this.ghiChu = ghiChu; }
 
+    // [CN-LC-55] Quy ước tên trạng thái: Trống / Đã đặt / Đang lưu trú / Bảo trì (phải khớp CSDL)
     public boolean isTrong() {
         return "Trống".equalsIgnoreCase(trangThai);
     }

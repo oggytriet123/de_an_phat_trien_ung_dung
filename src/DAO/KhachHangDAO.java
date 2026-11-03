@@ -20,6 +20,7 @@ import Entity.ThuCung;
 /** Truy cập bảng KHACHHANG (kèm THUCUNG, HOADON để tính thú cưng / giao dịch / chi tiêu). */
 public class KhachHangDAO {
 
+    // [CN-KH-27] SELECT khách hàng + tên thú cưng của họ
     /** Toàn bộ khách hàng. Số điện thoại trả về dạng chỉ gồm chữ số (BUS sẽ định dạng lại để hiển thị). */
     public List<KhachHang> layTatCa() throws SQLException {
         String sqlKh = "SELECT k.maKH, k.hoTen, k.soDienThoai, k.hangThe, ISNULL(k.diemTichLuy, 0), "
@@ -72,12 +73,14 @@ public class KhachHangDAO {
         }
     }
 
+    // [CN-KH-28] Bao nhiêu tiền thanh toán = 1 điểm tích lũy
     /** 1 điểm cho mỗi 10.000₫ thanh toán. */
     public static final long SO_TIEN_MOI_DIEM = 10_000;
 
     /** Hạng thẻ theo điểm tích lũy: Thường (<100) · Bạc (từ 100) · Vàng (từ 200) · VIP (từ 500). */
         /** Hạng thẻ theo điểm tích lũy: Thường (<100) -> Thân thiết (từ 100 đến 499) -> VIP (từ 500). */
     public static String tinhHang(int diem) {
+        // [CN-KH-29] Ngưỡng điểm lên hạng: VIP >= 500, Thân thiết >= 100 (đồng bộ với BUS)
         if (diem >= 500) return "VIP";
         if (diem >= 100) return "Thân thiết";
         return "Thường";
@@ -133,6 +136,7 @@ public class KhachHangDAO {
         }
     }
 
+    // [CN-KH-30] INSERT khách hàng + thú cưng trong 1 giao dịch
     /**
      * Thêm khách hàng mới cùng các thú cưng trong một giao dịch. Hạng thẻ tự tính theo điểm.
      * @return mã khách hàng vừa tạo (KH001, KH002, ...)
@@ -152,6 +156,7 @@ public class KhachHangDAO {
         }
     }
 
+    // [CN-KH-31] UPDATE khách hàng (tự tính lại hạng thẻ)
     /** Cập nhật thông tin khách hàng (họ tên, SĐT, điểm tích lũy, tự tính hạng thẻ). */
     public boolean capNhat(String maKH, String hoTen, String sdtChiSo, int diem) throws SQLException {
         String sql = "UPDATE KHACHHANG SET hoTen = ?, soDienThoai = ?, diemTichLuy = ?, hangThe = ? WHERE maKH = ?";
@@ -165,6 +170,7 @@ public class KhachHangDAO {
         }
     }
 
+    // [CN-KH-32] Chặn xóa khi còn hóa đơn / phiếu lưu trú đang hoạt động
     /** Kiểm tra ràng buộc toàn vẹn trước khi xóa khách hàng. */
     public String kiemTraRangBuocTruocKhiXoa(String maKH) throws SQLException {
         try (Connection con = ConnectDB.getConnection()) {
@@ -188,6 +194,7 @@ public class KhachHangDAO {
         return null;
     }
 
+    // [CN-KH-33] DELETE khách (gỡ liên kết phiếu lưu trú, xóa thú cưng)
     /** Xóa khách hàng an toàn. */
     public boolean xoa(String maKH) throws SQLException {
         String err = kiemTraRangBuocTruocKhiXoa(maKH);
@@ -288,6 +295,7 @@ public class KhachHangDAO {
         }
     }
 
+    // [CN-KH-34] Cộng điểm + nâng hạng khi thanh toán
     /** Cộng điểm khi thanh toán (1 điểm / 10.000₫) và nâng hạng thẻ nếu đủ điểm. Dùng chung giao dịch của người gọi. @return số điểm đã cộng */
     static int tichDiem(Connection con, String maKH, long soTien) throws SQLException {
         long cong = soTien / SO_TIEN_MOI_DIEM;
@@ -321,6 +329,7 @@ public class KhachHangDAO {
         }
     }
 
+    // [CN-KH-35] SQL thống kê khách hàng (tổng, mới trong tháng...)
     public ThongKeKhachHang layThongKe() throws SQLException {
         String sql = "SET NOCOUNT ON; DECLARE @dau DATE = DATEFROMPARTS(YEAR(GETDATE()), MONTH(GETDATE()), 1); "
                 + "SELECT "

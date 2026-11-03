@@ -34,9 +34,12 @@ import Entity.ThongKeNhanVien;
  * Giao diện Quản lý & Tra cứu Nhân Viên - Thiết kế tinh gọn, dễ hiểu và chuẩn mực.
  */
 public class NhanVienPanel extends JPanel {
+    // [CN-NV-16] Số dòng mỗi trang của bảng
     private static final int SO_DONG_MOI_TRANG = 7;
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    // [UI-PQ-02] Danh sách vai trò ở bộ lọc (đổi chữ)
     private static final String[] DS_VAI_TRO = {"Tất cả vai trò", "Quản lý", "Bán hàng", "Kho", "Bác sĩ"};
+    // [UI-NV-02] Các kiểu sắp xếp ở combobox
     private static final String[] DS_SAP_XEP = {"Mới nhất", "Tên A-Z", "Mã NV tăng dần", "Vai trò"};
 
     private final NhanVienBUS bus = new NhanVienBUS();
@@ -53,11 +56,13 @@ public class NhanVienPanel extends JPanel {
     private final StatCard cardKhoQL = new StatCard("Kho & Quản trị");
 
     // Bảng và tìm kiếm
+    // [UI-NV-03] Tiêu đề các cột bảng nhân viên
     private final String[] tieuDeCot = {"Mã NV", "Họ và tên", "Tên đăng nhập", "Vai trò", "Số điện thoại", "Email", "Ca làm", "Trạng thái", "Ca hôm nay", "Trạng thái ca trực"};
     private final DefaultTableModel tableModel = new DefaultTableModel(tieuDeCot, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
     private final JTable table = new JTable(tableModel);
+    // [UI-NV-04] Chữ gợi ý ô tìm kiếm
     private final PlaceholderField txtTim = new PlaceholderField("Tìm tên nhân viên, mã NV, tài khoản, SĐT, email...");
     private final JComboBox<String> cboLocVaiTro = new JComboBox<>(DS_VAI_TRO);
     private final JComboBox<String> cboSapXep = new JComboBox<>(DS_SAP_XEP);
@@ -109,10 +114,12 @@ public class NhanVienPanel extends JPanel {
         JPanel head = new JPanel(new BorderLayout());
         head.setOpaque(false);
 
+        // [UI-NV-05] Tiêu đề trang
         JLabel lblTieuDe = new JLabel("Quản lý & Tra cứu Nhân Viên");
         lblTieuDe.setFont(Theme.font(Font.BOLD, 22));
         lblTieuDe.setForeground(Theme.TEXT);
 
+        // [UI-NV-06] Dòng phụ đề trang
         JLabel lblPhuDe = new JLabel("Hồ sơ nhân sự, chức danh phân quyền, ca làm việc và chuyên môn y tế");
         lblPhuDe.setFont(Theme.font(Font.PLAIN, 13));
         lblPhuDe.setForeground(Theme.MUTED);
@@ -124,14 +131,21 @@ public class NhanVienPanel extends JPanel {
         pnlTitle.add(Box.createVerticalStrut(4));
         pnlTitle.add(lblPhuDe);
 
+        // [UI-NV-07] Nút Xuất Excel
         RoundedButton btnExcel = new RoundedButton("Xuất Excel", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        // [UI-NV-08] Nút Xem chi tiết
         RoundedButton btnXem = new RoundedButton("Xem chi tiết", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        // [UI-NV-09] Nút Chỉnh sửa
         RoundedButton btnSua = new RoundedButton("Chỉnh sửa", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        // [UI-NV-10] Nút Xóa
         RoundedButton btnXoa = new RoundedButton("Xóa", Color.WHITE, new Color(0xFEE2E2), Theme.RED, Theme.BORDER, 10).pad(14, 9);
+        // [UI-NV-11] Nút Xếp ca làm
         RoundedButton btnXepCa = new RoundedButton("Xếp ca làm", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        // [UI-NV-12] Nút chính + Thêm nhân viên
         RoundedButton btnThem = new RoundedButton("+ Thêm nhân viên", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(16, 9);
 
         btnExcel.addActionListener(e -> xuatExcel());
+        // [CN-NV-17] Nút Xếp ca: mở XepCaDialog
         btnXepCa.addActionListener(e -> moXepCa());
         btnThem.addActionListener(e -> moDialogThemSua(null));
         btnXem.addActionListener(e -> {
@@ -144,6 +158,7 @@ public class NhanVienPanel extends JPanel {
             if (nv != null) moDialogThemSua(nv);
             else JOptionPane.showMessageDialog(this, "Vui lòng chọn nhân viên cần sửa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
         });
+        // [CN-NV-18] Nút Xóa: bắt buộc chọn dòng trước
         btnXoa.addActionListener(e -> {
             NhanVien nv = layNhanVienDangChon();
             if (nv != null) xoaNhanVien(nv);
@@ -175,10 +190,12 @@ public class NhanVienPanel extends JPanel {
         return row;
     }
 
+    // [CN-NV-19] Tải danh sách + thống kê nhân viên
     private void taiDuLieu() {
         try {
             bus.taiLai();
             ThongKeNhanVien tk = bus.layThongKe();
+            // [UI-NV-13] Chữ + màu các thẻ thống kê (tổng, bác sĩ, kho/quản lý)
             cardTong.set(Theme.number(tk.tongNhanVien), tk.soDangLamViec + " người đang hoạt động", Theme.GREEN);
             cardBacSi.set(Theme.number(tk.soBacSi), "Phụ trách khám chữa bệnh", new Color(0x0284C7));
             cardBanHang.set(Theme.number(tk.soBanHang), "Tư vấn & Bán hàng", Theme.MUTED);
@@ -291,6 +308,7 @@ public class NhanVienPanel extends JPanel {
     }
 
     // ----------------- 4. LỌC & ĐỔ DỮ LIỆU VÀO BẢNG -----------------
+    // [CN-NV-20] Lọc + sắp xếp + phân trang vẽ lại bảng
     private void capNhatBang() {
         List<NhanVien> list = bus.timKiemVaLoc(txtTim.getText(), vaiTroDangLoc, "Tất cả", "Tất cả");
 
@@ -367,6 +385,7 @@ public class NhanVienPanel extends JPanel {
     }
 
     // ----------------- 5. DIALOG THÊM / SỬA NHÂN VIÊN -----------------
+    // [CN-NV-21] Form Thêm / Sửa nhân viên
     private void moDialogThemSua(NhanVien nvHienTai) {
         boolean laSua = (nvHienTai != null);
         JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), laSua ? "Chỉnh sửa nhân viên" : "Tiếp nhận nhân viên mới", Dialog.ModalityType.APPLICATION_MODAL);
@@ -377,6 +396,7 @@ public class NhanVienPanel extends JPanel {
         txtMatKhau.setFont(Theme.font(Font.PLAIN, 13));
         txtMatKhau.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(0xD5DCE1)), BorderFactory.createEmptyBorder(4, 8, 4, 8)));
 
+        // [CN-PQ-20] Combobox chọn nhóm quyền khi thêm/sửa nhân viên
         JComboBox<NhanVienDAO.QuyenOption> cboQuyen = new JComboBox<>();
         try {
             for (NhanVienDAO.QuyenOption q : bus.layDanhSachQuyen()) cboQuyen.addItem(q);
@@ -394,8 +414,10 @@ public class NhanVienPanel extends JPanel {
         JTextField txtNgaySinh = taoTextField();
         txtNgaySinh.setToolTipText("dd/MM/yyyy (ví dụ: 15/03/1995)");
         JTextField txtEmail = taoTextField();
+        // [UI-NV-14] Các lựa chọn ca làm việc
         JComboBox<String> cboCaLam = new JComboBox<>(new String[] {"Toàn thời gian", "Ca sáng", "Ca chiều", "Ca tối"});
         styleCombo(cboCaLam);
+        // [UI-NV-15] Các lựa chọn trạng thái nhân viên
         JComboBox<String> cboTrangThai = new JComboBox<>(new String[] {"Đang làm việc", "Tạm nghỉ", "Đã nghỉ việc"});
         JTextField txtChuyenMon = taoTextField();
 
@@ -413,6 +435,7 @@ public class NhanVienPanel extends JPanel {
                 if (cboQuyen.getItemAt(i).maQuyen == nvHienTai.getMaQuyen()) { cboQuyen.setSelectedIndex(i); break; }
             }
         } else {
+            // [CN-NV-22] Mật khẩu MẶC ĐỊNH khi thêm nhân viên mới
             txtMatKhau.setText("123456");
         }
 
@@ -420,9 +443,11 @@ public class NhanVienPanel extends JPanel {
         form.setBorder(new EmptyBorder(16, 20, 16, 20));
         form.setBackground(Color.WHITE);
 
+        // [UI-NV-16] Nhãn các ô trong form Thêm/Sửa nhân viên
         form.add(new JLabel("Họ và tên (*):")); form.add(txtHoTen);
         form.add(new JLabel("Tên đăng nhập (*):")); form.add(txtTenDangNhap);
         form.add(new JLabel(laSua ? "Mật khẩu mới:" : "Mật khẩu ban đầu:")); form.add(txtMatKhau);
+        // [UI-PQ-03] Nhãn ô chọn chức danh / nhóm quyền
         form.add(new JLabel("Chức danh (*):")); form.add(cboQuyen);
         form.add(new JLabel("Số điện thoại:")); form.add(txtSdt);
         form.add(new JLabel("Ngày sinh (dd/MM/yyyy):")); form.add(txtNgaySinh);
@@ -430,10 +455,12 @@ public class NhanVienPanel extends JPanel {
         form.add(new JLabel("Ca làm việc:")); form.add(cboCaLam);
         form.add(new JLabel("Chuyên môn (nếu là BS):")); form.add(txtChuyenMon);
 
+        // [UI-NV-17] Nút Lưu form nhân viên
         RoundedButton btnLuu = new RoundedButton("Lưu thông tin", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
         RoundedButton btnHuy = new RoundedButton("Hủy", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(18, 8);
         btnHuy.addActionListener(e -> dlg.dispose());
 
+        // [CN-NV-23] Validate form (chức danh, họ tên, ngày sinh) -> bus.them / bus.capNhat
         btnLuu.addActionListener(e -> {
             String hoTen = txtHoTen.getText().trim();
             String username = txtTenDangNhap.getText().trim();
@@ -490,6 +517,7 @@ public class NhanVienPanel extends JPanel {
     }
 
     // ----------------- 6. XEM CHI TIẾT NHÂN VIÊN -----------------
+    // [CN-NV-24] Xem hồ sơ chi tiết nhân viên
     private void moDialogChiTiet(NhanVien nv) {
         String chucVu = nv.getTenQuyen() + (nv.getChuyenMon().isEmpty() ? "" : " (" + nv.getChuyenMon() + ")");
         Theme.hoSoDialog(SwingUtilities.getWindowAncestor(this),
@@ -506,6 +534,7 @@ public class NhanVienPanel extends JPanel {
     }
 
     // ----------------- XẾP CA LÀM & TRẠNG THÁI CA TRỰC -----------------
+    // [CN-NV-25] Mở hộp thoại xếp ca cho nhân viên đang chọn
     private void moXepCa() {
         if (dsHienThi.isEmpty()) {
             JOptionPane.showMessageDialog(this, "Chưa có nhân viên nào để xếp ca!", "Thông báo", JOptionPane.WARNING_MESSAGE);
@@ -518,6 +547,7 @@ public class NhanVienPanel extends JPanel {
     }
 
     // ----------------- 7. XÓA AN TOÀN -----------------
+    // [CN-NV-26] Xác nhận + xóa (không cho xóa chính mình / đang phụ trách dữ liệu)
     private void xoaNhanVien(NhanVien nv) {
         String maDangNhap = (taiKhoanHienTai != null) ? taiKhoanHienTai.getMaTaiKhoan() : "";
         int opt = JOptionPane.showConfirmDialog(this,
@@ -536,6 +566,7 @@ public class NhanVienPanel extends JPanel {
     }
 
     // ----------------- 8. XUẤT FILE EXCEL (CSV UTF-8) -----------------
+    // [CN-NV-27] Xuất danh sách nhân viên ra file
     private void xuatExcel() {
         JFileChooser fc = new JFileChooser();
         fc.setSelectedFile(new java.io.File("DanhSachNhanVien.csv"));
@@ -577,6 +608,7 @@ public class NhanVienPanel extends JPanel {
         return tf;
     }
 
+    // [UI-NV-18] Thẻ thống kê: bo góc / cỡ chữ
     private static class StatCard extends RoundedPanel {
         private final JLabel lblGiaTri = new JLabel("—");
         private final JLabel lblGhiChu = new JLabel(" ");

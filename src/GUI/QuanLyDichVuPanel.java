@@ -104,7 +104,14 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
     }
 
     @Override public void lamMoi() {
+        spBus.taiTuCSDL();
+        dungChips();
         refresh();
+    }
+
+    /** Mở thẳng tab "Sản phẩm" (dùng cho menu Danh Mục > Sản Phẩm). */
+    public void hienSanPham() {
+        chuyenTab(Tab.SAN_PHAM);
     }
 
     // =====================================================================

@@ -142,7 +142,17 @@ public class DataFixer {
                     + "(N'DV005', N'Lưu trú thú cưng (theo đêm)', 180000, N'Lưu trú', 1440, N'Dịch vụ khách sạn thú cưng tiện nghi, phòng máy lạnh, camera theo dõi 24/7', N'Đang cung cấp', N'Tất cả thú cưng'), "
                     + "(N'DV006', N'Cắt móng & vệ sinh tai', 80000, N'Spa & Grooming', 20, N'Dịch vụ cơ bản cắt mài móng an toàn và vệ sinh làm sạch ống tai ngoài', N'Đang cung cấp', N'Tất cả thú cưng'), "
                     + "(N'DV007', N'Xét nghiệm máu tổng quát', 450000, N'Xét nghiệm', 30, N'Tổng phân tích tế bào máu 18 thông số và sinh hóa máu cơ bản', N'Đang cung cấp', N'Tất cả thú cưng'), "
-                    + "(N'DV008', N'Siêu âm ổ bụng', 300000, N'Chẩn đoán hình ảnh', 25, N'Siêu âm khảo sát các cơ quan nội tạng ổ bụng bằng máy siêu âm màu 4D', N'Đang cung cấp', N'Tất cả thú cưng')");
+                    + "(N'DV008', N'Siêu âm ổ bụng', 300000, N'Chẩn đoán hình ảnh', 25, N'Siêu âm khảo sát các cơ quan nội tạng ổ bụng bằng máy siêu âm màu 4D', N'Đang cung cấp', N'Tất cả thú cưng'), "
+                    + "(N'VAC-001', N'Tiêm vaccine phòng Dại (Rabies)', 250000, N'Tiêm phòng', 15, N'Tiêm vaccine phòng bệnh dại định kỳ cho chó và mèo', N'Đang cung cấp', N'Chó & Mèo'), "
+                    + "(N'VAC-002', N'Tiêm vaccine 4 bệnh mèo (Nobivac Ducat)', 280000, N'Tiêm phòng', 15, N'Vaccine phòng 4 bệnh truyền nhiễm nguy hiểm ở mèo', N'Đang cung cấp', N'Mèo'), "
+                    + "(N'VAC-003', N'Tiêm vaccine 5 bệnh chó', 260000, N'Tiêm phòng', 15, N'Vaccine phòng 5 bệnh truyền nhiễm nguy hiểm ở chó', N'Đang cung cấp', N'Chó'), "
+                    + "(N'VAC-004', N'Tiêm vaccine 7 bệnh chó (Vanguard Plus 5/L4)', 300000, N'Tiêm phòng', 15, N'Vaccine tổng hợp 7 bệnh phổ biến cho chó', N'Đang cung cấp', N'Chó'), "
+                    + "(N'SUR-001', N'Triệt sản mèo cái nội soi', 650000, N'Phẫu thuật', 45, N'Phẫu thuật nội soi triệt sản ít xâm lấn, hồi phục nhanh', N'Đang cung cấp', N'Mèo'), "
+                    + "(N'SUR-002', N'Triệt sản mèo đực', 350000, N'Phẫu thuật', 30, N'Tiểu phẫu triệt sản an toàn cho mèo đực', N'Đang cung cấp', N'Mèo'), "
+                    + "(N'SUR-003', N'Phẫu thuật lấy sỏi bàng quang', 1500000, N'Phẫu thuật', 60, N'Mổ hở gắp sỏi và thông đường tiết niệu', N'Đang cung cấp', N'Tất cả thú cưng'), "
+                    + "(N'SUR-004', N'Phẫu thuật kết hợp xương gãy', 2500000, N'Phẫu thuật', 90, N'Cố định xương gãy bằng nẹp vis chuyên dụng', N'Đang cung cấp', N'Tất cả thú cưng'), "
+                    + "(N'SUR-005', N'Cắt mộng mắt', 500000, N'Phẫu thuật', 30, N'Phẫu thuật tạo hình mộng mắt (Cherry eye) cho thú cưng', N'Đang cung cấp', N'Tất cả thú cưng'), "
+                    + "(N'SUR-006', N'Mổ u nang ngoài da', 700000, N'Phẫu thuật', 40, N'Cắt bỏ khối u ngoài da và khâu thẩm mỹ', N'Đang cung cấp', N'Tất cả thú cưng')");
 
             // 9. SANPHAM
             System.out.println("-> Nạp SANPHAM...");

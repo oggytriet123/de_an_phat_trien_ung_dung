@@ -49,6 +49,7 @@ public class DialogChuyenChuong extends JDialog {
         head.setBackground(Theme.SIDEBAR);
         head.setBorder(new EmptyBorder(14, 20, 14, 20));
 
+        // [UI-LC-29] Tiêu đề dialog Chuyển lồng
         JLabel title = new JLabel("CHUYỂN LỒNG CHUỒNG LƯU TRÚ");
         title.setFont(Theme.font(Font.BOLD, 18));
         title.setForeground(Color.WHITE);
@@ -86,6 +87,7 @@ public class DialogChuyenChuong extends JDialog {
 
         lblMoi = new JLabel("Chưa chọn lồng đích");
         lblMoi.setFont(Theme.font(Font.BOLD, 14));
+        // [UI-LC-30] Màu chữ lồng đích đã chọn
         lblMoi.setForeground(Theme.GREEN);
         pnlBar.add(lblMoi);
 
@@ -107,6 +109,7 @@ public class DialogChuyenChuong extends JDialog {
         center.add(pnlBar, BorderLayout.NORTH);
 
         // Bảng danh sách các lồng còn trống
+        // [UI-LC-31] Tiêu đề cột bảng lồng trống
         String[] cols = {"Mã lồng", "Tên lồng", "Kích cỡ", "Khu vực", "Đơn giá/ngày", "Tiện ích"};
         modelTrong = new DefaultTableModel(cols, 0) {
             @Override
@@ -145,6 +148,7 @@ public class DialogChuyenChuong extends JDialog {
         RoundedButton btnDong = new RoundedButton("Hủy bỏ", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(16, 8);
         btnDong.addActionListener(e -> dispose());
 
+        // [UI-LC-32] Nút Xác nhận chuyển lồng
         RoundedButton btnChuyen = new RoundedButton("Xác Nhận Chuyển Lồng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
         btnChuyen.addActionListener(e -> thucHienChuyen());
 
@@ -153,6 +157,7 @@ public class DialogChuyenChuong extends JDialog {
         return foot;
     }
 
+    // [CN-LC-23] Chỉ liệt kê lồng đang Trống (+ lọc từ khóa)
     private void loadDanhSachTrong(String tuKhoa) {
         modelTrong.setRowCount(0);
         String kw = tuKhoa.toLowerCase();
@@ -176,6 +181,7 @@ public class DialogChuyenChuong extends JDialog {
         }
     }
 
+    // [CN-LC-24] Ràng buộc: đúng loài theo khu, cân nặng không vượt tải trọng -> bus.chuyenChuong
     private void thucHienChuyen() {
         if (maChuongMoiDuocChon == null) {
             JOptionPane.showMessageDialog(this, "Vui lòng chọn một lồng trống từ danh sách để chuyển đến!", "Thông báo", JOptionPane.WARNING_MESSAGE);

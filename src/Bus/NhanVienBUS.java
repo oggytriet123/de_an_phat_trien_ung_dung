@@ -36,6 +36,7 @@ public class NhanVienBUS {
         return Collections.unmodifiableList(new ArrayList<>(cache));
     }
 
+    // [CN-PQ-19] Chuyển danh sách nhóm quyền lên giao diện
     public List<NhanVienDAO.QuyenOption> layDanhSachQuyen() throws SQLException {
         return dao.layDanhSachQuyen();
     }
@@ -44,6 +45,7 @@ public class NhanVienBUS {
         return dao.layThongKe();
     }
 
+    // [CN-NV-10] Băm SHA-256 mật khẩu nhân viên
     /**
      * Băm chuỗi bằng thuật toán SHA-256, trả về chuỗi Hex in hoa.
      */
@@ -59,6 +61,7 @@ public class NhanVienBUS {
         }
     }
 
+    // [CN-NV-11] Validate dữ liệu nhân viên (tên, tên đăng nhập, SĐT, email, ngày sinh...)
     /**
      * Kiểm tra tính hợp lệ của dữ liệu nhân viên.
      */
@@ -115,6 +118,7 @@ public class NhanVienBUS {
         }
     }
 
+    // [CN-NV-12] Thêm nhân viên (kiểm tra -> băm mật khẩu -> DAO)
     public String them(NhanVien nv, String matKhauTho) throws SQLException {
         kiemTraDuLieu(nv, true, matKhauTho);
         String hash = bamSha256(matKhauTho.trim());
@@ -123,6 +127,7 @@ public class NhanVienBUS {
         return maNV;
     }
 
+    // [CN-NV-13] Cập nhật nhân viên
     public boolean capNhat(NhanVien nv, String matKhauMoiTho) throws SQLException {
         kiemTraDuLieu(nv, false, matKhauMoiTho);
         String hash = (matKhauMoiTho != null && !matKhauMoiTho.trim().isEmpty()) ? bamSha256(matKhauMoiTho.trim()) : null;
@@ -133,6 +138,7 @@ public class NhanVienBUS {
         return ok;
     }
 
+    // [CN-NV-14] Xóa nhân viên (kiểm tra ràng buộc)
     public boolean xoa(String maNV, String maNVDangNhap) throws SQLException {
         String err = dao.kiemTraRangBuocTruocKhiXoa(maNV, maNVDangNhap);
         if (err != null) {
@@ -145,6 +151,7 @@ public class NhanVienBUS {
         return ok;
     }
 
+    // [CN-NV-15] Tìm kiếm + lọc theo vai trò / trạng thái / ca
     /**
      * Tìm kiếm và lọc đa tiêu chí.
      */

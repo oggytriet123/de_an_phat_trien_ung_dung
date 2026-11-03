@@ -72,6 +72,7 @@ public class DialogChamSocDichVu extends JDialog {
         capNhatBangOrder();
     }
 
+    // [CN-LC-31] Danh mục dịch vụ / thức ăn mẫu + đơn giá
     private void initSampleMenu() {
         menuItems.clear();
         // Thức ăn dinh dưỡng
@@ -108,6 +109,7 @@ public class DialogChamSocDichVu extends JDialog {
         head.setBorder(new EmptyBorder(14, 20, 14, 20));
 
         String petInfo = (c != null && c.getTenPet() != null) ? " - Bé " + c.getTenPet() + " (" + c.getLoaiPet() + ")" : "";
+        // [UI-LC-42] Tiêu đề dialog Chăm sóc & dịch vụ
         JLabel title = new JLabel("CHĂM SÓC & DỊCH VỤ - LỒNG " + maChuong + petInfo);
         title.setFont(Theme.font(Font.BOLD, 18));
         title.setForeground(Color.WHITE);
@@ -141,6 +143,7 @@ public class DialogChamSocDichVu extends JDialog {
         txtTimMenu.addActionListener(e -> filterMenu());
         topFilters.add(txtTimMenu);
 
+        // [UI-LC-43] Các nhóm menu dịch vụ
         cbLoaiMenu = new JComboBox<>(new String[]{"Tất cả", "Thức ăn & Dinh dưỡng", "Spa & Grooming", "Y tế & Chăm sóc"});
         cbLoaiMenu.setFont(Theme.font(Font.PLAIN, 12));
         cbLoaiMenu.addActionListener(e -> filterMenu());
@@ -152,6 +155,7 @@ public class DialogChamSocDichVu extends JDialog {
 
         pnlLeft.add(topFilters, BorderLayout.NORTH);
 
+        // [UI-LC-44] Tiêu đề cột menu dịch vụ
         String[] colsMenu = {"Mã", "Tên Dịch Vụ / Món Ăn", "Loại", "Đơn Giá"};
         modelMenu = new DefaultTableModel(colsMenu, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -177,6 +181,7 @@ public class DialogChamSocDichVu extends JDialog {
 
         JPanel pnlAddBtn = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 4));
         pnlAddBtn.setOpaque(false);
+        // [UI-LC-45] Nút thêm vào phiếu (nền xanh)
         RoundedButton btnAdd = new RoundedButton("+ Thêm vào phiếu care >>", Theme.GREEN, new Color(0x278C44), Color.WHITE, null, 8).pad(14, 6);
         btnAdd.addActionListener(e -> themMonVaoOrder());
         pnlAddBtn.add(btnAdd);
@@ -194,6 +199,7 @@ public class DialogChamSocDichVu extends JDialog {
         titleOrder.setForeground(Theme.SIDEBAR);
         pnlRight.add(titleOrder, BorderLayout.NORTH);
 
+        // [UI-LC-46] Tiêu đề cột phiếu dịch vụ
         String[] colsOrder = {"Mặt hàng / Dịch vụ", "SL", "Đơn giá", "Thành tiền"};
         modelOrder = new DefaultTableModel(colsOrder, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -238,6 +244,7 @@ public class DialogChamSocDichVu extends JDialog {
         lblGiamGia.setFont(Theme.font(Font.PLAIN, 12));
         lblCanTra = new JLabel("CẦN THANH TOÁN: 0₫");
         lblCanTra.setFont(Theme.font(Font.BOLD, 14));
+        // [UI-LC-47] Màu dòng tổng thanh toán
         lblCanTra.setForeground(Theme.RED);
 
         pnlBill.add(lblTongTien);
@@ -257,6 +264,7 @@ public class DialogChamSocDichVu extends JDialog {
         foot.setBorder(new LineBorder(Theme.BORDER, 1));
 
         RoundedButton btnDong = new RoundedButton("Hủy bỏ", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(16, 8);
+        // [UI-LC-48] Nút Lưu phiếu chăm sóc
         RoundedButton btnLuu = new RoundedButton("✓ Lưu Phiếu Chăm Sóc", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
 
         btnDong.addActionListener(e -> dispose());
@@ -267,6 +275,7 @@ public class DialogChamSocDichVu extends JDialog {
         return foot;
     }
 
+    // [CN-LC-32] Lọc menu theo từ khóa + nhóm
     private void filterMenu() {
         modelMenu.setRowCount(0);
         String kw = txtTimMenu != null ? txtTimMenu.getText().trim().toLowerCase() : "";
@@ -283,6 +292,7 @@ public class DialogChamSocDichVu extends JDialog {
         }
     }
 
+    // [CN-LC-33] Thêm món vào phiếu (bắt buộc chọn mục bên trái)
     private void themMonVaoOrder() {
         int r = tblMenu.getSelectedRow();
         if (r == -1) {
@@ -332,6 +342,7 @@ public class DialogChamSocDichVu extends JDialog {
         capNhatBangOrder();
     }
 
+    // [CN-LC-34] Tính tổng + ưu đãi thành viên + cần thanh toán
     private void capNhatBangOrder() {
         modelOrder.setRowCount(0);
         double sum = 0;
@@ -353,6 +364,7 @@ public class DialogChamSocDichVu extends JDialog {
         lblCanTra.setText("TỔNG DỊCH VỤ: " + Theme.money((long) (sum - giam)));
     }
 
+    // [CN-LC-35] Lưu dịch vụ vào lồng qua bus.themDichVu
     private void luuOrder() {
         // Cập nhật lại danh sách dịch vụ của lồng
         List<ChiTietDichVuChuong> old = bus.layDichVuCuaChuong(maChuong);

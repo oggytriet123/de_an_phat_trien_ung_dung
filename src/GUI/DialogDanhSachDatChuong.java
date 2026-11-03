@@ -46,6 +46,7 @@ public class DialogDanhSachDatChuong extends JDialog {
         head.setBackground(Theme.SIDEBAR);
         head.setBorder(new EmptyBorder(16, 24, 16, 24));
 
+        // [UI-LC-33] Tiêu đề dialog Danh sách đặt
         JLabel title = new JLabel("DANH SÁCH LỊCH HẸN ĐẶT LỒNG CHUỒNG");
         title.setFont(Theme.font(Font.BOLD, 18));
         title.setForeground(Color.WHITE);
@@ -64,6 +65,7 @@ public class DialogDanhSachDatChuong extends JDialog {
         pnl.setBackground(Theme.BG);
         pnl.setBorder(new EmptyBorder(14, 18, 14, 18));
 
+        // [UI-LC-34] Tiêu đề cột bảng phiếu đặt
         String[] cols = {"Mã Phiếu", "Khách Hàng", "SĐT", "Tên Thú Cưng", "Loài / Giống", "Giờ Hẹn Đến", "Lồng Cấp", "Tiền Cọc", "Trạng Thái"};
         model = new DefaultTableModel(cols, 0) {
             @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -90,7 +92,9 @@ public class DialogDanhSachDatChuong extends JDialog {
         foot.setBorder(new LineBorder(Theme.BORDER, 1));
 
         RoundedButton btnDong = new RoundedButton("Đóng", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(16, 8);
+        // [UI-LC-35] Nút Hủy Giữ Chỗ (nền hồng, chữ đỏ)
         RoundedButton btnHuy = new RoundedButton("Hủy Giữ Chỗ", new Color(0xFADBD8), new Color(0xF5B7B1), Theme.RED, null, 8).pad(14, 8);
+        // [UI-LC-36] Nút Nhận Lồng Ngay
         RoundedButton btnNhan = new RoundedButton("🐾 Nhận Lồng Ngay", Theme.GREEN, new Color(0x278C44), Color.WHITE, null, 8).pad(16, 8);
 
         btnDong.addActionListener(e -> dispose());
@@ -103,6 +107,7 @@ public class DialogDanhSachDatChuong extends JDialog {
         return foot;
     }
 
+    // [CN-LC-25] Tải danh sách phiếu đặt từ BUS
     private void loadData() {
         model.setRowCount(0);
         List<PhieuDatChuong> list = bus.layDanhSachPhieuDat();
@@ -121,6 +126,7 @@ public class DialogDanhSachDatChuong extends JDialog {
         }
     }
 
+    // [CN-LC-26] Nhận lồng từ phiếu: chỉ khi phiếu còn "Đã đặt"
     private void nhanLongNgay() {
         int r = table.getSelectedRow();
         if (r == -1) {
@@ -153,6 +159,7 @@ public class DialogDanhSachDatChuong extends JDialog {
         }
     }
 
+    // [CN-LC-27] Hủy phiếu: chỉ khi "Đã đặt" -> lồng về Trống
     private void huyDat() {
         int r = table.getSelectedRow();
         if (r == -1) {

@@ -18,11 +18,15 @@ import Entity.NhanVien;
 public final class CaLamData {
     private CaLamData() {}
 
+    // [UI-NV-19] Tên các ca (sáng / chiều / tối)
     public static final String[] TEN_CA = {"Ca sáng", "Ca chiều", "Ca tối"};
+    // [CN-NV-28] Khung giờ từng ca: sáng 7-12, chiều 12-17, tối 17-22
     public static final LocalTime[] GIO_BD = {LocalTime.of(7, 0), LocalTime.of(12, 0), LocalTime.of(17, 0)};
     public static final LocalTime[] GIO_KT = {LocalTime.of(12, 0), LocalTime.of(17, 0), LocalTime.of(22, 0)};
+    // [UI-NV-20] Nhãn các thứ trong tuần
     public static final String[] TEN_THU = {"T2", "T3", "T4", "T5", "T6", "T7", "CN"};
 
+    // [UI-NV-21] Chữ các trạng thái ca trực (Đang trực, Sắp vào ca, Nghỉ phép...)
     public static final String DANG_TRUC = "Đang trực";
     public static final String SAP_VAO_CA = "Sắp vào ca";
     public static final String HET_CA = "Đã hết ca";
@@ -38,6 +42,7 @@ public final class CaLamData {
     private static final Map<String, Object[]> NGOAI_LE = new HashMap<>();
     private static final List<Runnable> LISTENERS = new ArrayList<>();
 
+    // [CN-NV-29] Lấy lịch tuần của nhân viên (ma trận ngày x ca)
     /** Lịch tuần của nhân viên (nếu chưa xếp thì suy ra từ cột "Ca làm việc" trong hồ sơ). */
     public static synchronized boolean[][] layLich(NhanVien nv) {
         boolean[][] l = LICH.get(nv.getMaNV());
@@ -48,6 +53,7 @@ public final class CaLamData {
         return l;
     }
 
+    // [CN-NV-30] Lịch mặc định theo ca làm việc của nhân viên
     private static boolean[][] macDinh(String ca) {
         boolean[][] l = new boolean[7][3];
         for (int d = 0; d < 6; d++) {          // T2..T7
@@ -116,6 +122,7 @@ public final class CaLamData {
         return trangThaiCaTruc(nv, LocalDate.now(), LocalTime.now());
     }
 
+    // [CN-NV-31] Tính trạng thái ca trực theo ngày + giờ hiện tại
     public static synchronized String trangThaiCaTruc(NhanVien nv, LocalDate ngay, LocalTime gio) {
         if ("Đã nghỉ việc".equals(nv.getTrangThai())) return DA_NGHI_VIEC;
         if ("Tạm nghỉ".equals(nv.getTrangThai())) return TAM_NGHI;
@@ -132,6 +139,7 @@ public final class CaLamData {
         return sau ? SAP_VAO_CA : HET_CA;
     }
 
+    // [CN-NV-32] Đánh dấu nghỉ phép / vắng mặt cho hôm nay
     /** Đánh dấu nghỉ phép / vắng mặt hôm nay; truyền null để bỏ đánh dấu. */
     public static synchronized void danhDauHomNay(NhanVien nv, String trangThai) {
         if (trangThai == null) NGOAI_LE.remove(nv.getMaNV());

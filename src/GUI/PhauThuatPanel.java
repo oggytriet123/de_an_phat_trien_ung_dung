@@ -18,11 +18,13 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 
+import DAO.DichVuDAO;
 import DAO.KhachHangDAO;
 import DAO.PhauThuatDAO;
 import DAO.ThuCungDAO;
 import Entity.CaPhauThuat;
 import Entity.KhachHang;
+import Entity.SanPham;
 import Entity.ThuCung;
 
 /**
@@ -33,6 +35,7 @@ public class PhauThuatPanel extends JPanel implements Refreshable {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final PhauThuatDAO dao = new PhauThuatDAO();
+    private final DichVuDAO dichVuDAO = new DichVuDAO();
     private final List<CaPhauThuat> danhSach = new ArrayList<>();
     private final List<CaPhauThuat> daLoc = new ArrayList<>();
     private final PhauThuatTableModel model = new PhauThuatTableModel();
@@ -275,19 +278,30 @@ public class PhauThuatPanel extends JPanel implements Refreshable {
             }
         });
 
-        JComboBox<String> cbPhauThuat = new JComboBox<>(new String[]{
-                "Tri\u1ec7t s\u1ea3n m\u00e8o c\u00e1i n\u1ed9i soi",
-                "Tri\u1ec7t s\u1ea3n m\u00e8o \u0111\u1ef1c",
-                "Ph\u1eabu thu\u1eadt l\u1ea5y s\u1ecfi b\u00e0ng quang",
-                "Ph\u1eabu thu\u1eadt k\u1ebft h\u1ee3p x\u01b0\u01a1ng g\u00e3y",
-                "C\u1eaft m\u1ed9ng m\u1eaft",
-                "M\u1ed5 u nang ngo\u00e0i da"
-        });
+        JComboBox<String> cbPhauThuat = new JComboBox<>();
         cbPhauThuat.setFont(Theme.font(Font.PLAIN, 13));
         cbPhauThuat.setBackground(Color.WHITE);
 
-        JTextField txtChiPhi = new JTextField("1500000");
+        JTextField txtChiPhi = new JTextField("0");
         txtChiPhi.setFont(Theme.font(Font.PLAIN, 13));
+
+        List<SanPham> dsPhauThuat = dichVuDAO.layDichVuPhauThuat();
+        for (SanPham sp : dsPhauThuat) {
+            cbPhauThuat.addItem(sp.getTen());
+        }
+
+        cbPhauThuat.addActionListener(e -> {
+            int idx = cbPhauThuat.getSelectedIndex();
+            if (idx >= 0 && idx < dsPhauThuat.size()) {
+                txtChiPhi.setText(String.valueOf(dsPhauThuat.get(idx).getDonGia()));
+            }
+        });
+
+        if (!dsPhauThuat.isEmpty()) {
+            txtChiPhi.setText(String.valueOf(dsPhauThuat.get(0).getDonGia()));
+        } else {
+            cbPhauThuat.setEditable(true);
+        }
 
         JComboBox<String> cbBacSi = new JComboBox<>(new String[]{
                 "BS. Nguy\u1ec5n Ho\u00e0i Anh",
