@@ -53,8 +53,7 @@ public class MainFrame extends JFrame {
             Item.leaf("Nhân Viên", "person", "Danh sách nhân viên cửa hàng", ChucNang.NHAN_VIEN),
             Item.leaf("Sản Phẩm", "box", "Thức ăn, phụ kiện, tồn kho", ChucNang.SAN_PHAM),
             Item.leaf("Kho Hàng", "box", "Quản lý kho hàng và tồn kho", ChucNang.KHO_HANG),
-            Item.leaf("Danh Mục Bệnh", "list", "Danh mục bệnh và hướng điều trị", ChucNang.DANH_MUC_BENH),
-            Item.leaf("Khuyến Mãi", "tag", "Chương trình khuyến mãi và ưu đãi", ChucNang.KHUYEN_MAI)),
+            Item.leaf("Danh Mục Bệnh", "list", "Danh mục bệnh và hướng điều trị", ChucNang.DANH_MUC_BENH)),
         new Item("Xử Lý", "sync", null, null,
             Item.leaf("Lập Hoá Đơn",   "invoice",  "Lập hoá đơn bán hàng và dịch vụ",                  ChucNang.HOA_DON),
             Item.leaf("Lịch Sử Hoá Đơn","calendar","Xem lại các hoá đơn đã thanh toán",                 ChucNang.HOA_DON),
@@ -262,7 +261,7 @@ public class MainFrame extends JFrame {
             case "Thoát" -> xacNhanThoat();
             case "Trợ Giúp" -> JOptionPane.showMessageDialog(this,
                     "Pet Station - Hệ thống quản lý cửa hàng thú cưng\n\n"
-                    + "• Danh Mục: quản lý khách hàng, thú cưng, nhân viên, sản phẩm, kho hàng, danh mục bệnh, khuyến mãi\n"
+                    + "• Danh Mục: quản lý khách hàng, thú cưng, nhân viên, sản phẩm, kho hàng, danh mục bệnh\n"
                     + "• Xử Lý: lập hoá đơn, lịch sử hoá đơn, dịch vụ, tiêm phòng, phẫu thuật, lồng chuồng, đặt lịch hẹn, lịch sử kho\n"
                     + "• Điều Trị & Đơn Thuốc: quản lý đơn thuốc, phác đồ điều trị\n"
                     + "• Quản Lý Lịch Hẹn: hồ sơ, quản lý, đổi, xác nhận và hủy lịch hẹn\n"
