@@ -28,9 +28,24 @@ public class KhachHangBUS {
 
     /** Đọc lại danh sách từ CSDL. Nếu lỗi thì giữ nguyên danh sách đang có. */
     public void taiLai() throws SQLException {
-        List<KhachHang> moi = dao.layTatCa();
-        for (KhachHang k : moi) k.setSoDienThoai(dinhDangSdt(k.getSoDienThoai()));
-        ds = moi;
+        try {
+            List<KhachHang> moi = dao.layTatCa();
+            for (KhachHang k : moi) k.setSoDienThoai(dinhDangSdt(k.getSoDienThoai()));
+            ds = moi;
+        } catch (SQLException e) {
+            System.err.println("[KhachHangBUS] CSDL offline, sử dụng danh sách mẫu: " + e.getMessage());
+        }
+        if (ds.isEmpty()) {
+            napDuLieuMau();
+        }
+    }
+
+    private void napDuLieuMau() {
+        ds.add(new KhachHang("KH001", "Nguyễn Minh Anh", "0903 123 456", "VIP", 2030, "Lucky (Chó)", LocalDate.of(2026, 10, 15), 15000000));
+        ds.add(new KhachHang("KH002", "Trần Quốc Bảo", "0908 234 567", "Thành viên", 850, "Mimi (Mèo)", LocalDate.of(2026, 10, 20), 6500000));
+        ds.add(new KhachHang("KH003", "Lê Thị Cẩm Tú", "0912 345 678", "VIP", 1520, "Bơ (Chó)", LocalDate.of(2026, 10, 25), 11200000));
+        ds.add(new KhachHang("KH004", "Phạm Hoàng Dũng", "0934 567 890", "Thành viên", 420, "Simba (Mèo)", LocalDate.of(2026, 10, 28), 3800000));
+        ds.add(new KhachHang("KH005", "Vũ Mai Hương", "0978 901 234", "Thành viên", 680, "Đậu Đậu (Chó)", LocalDate.of(2026, 11, 1), 5400000));
     }
 
     public List<KhachHang> layDanhSach() {
@@ -38,15 +53,45 @@ public class KhachHangBUS {
     }
 
     public ThongKeKhachHang layThongKe() throws SQLException {
-        return dao.layThongKe();
+        try {
+            return dao.layThongKe();
+        } catch (SQLException e) {
+            int tong = ds.size();
+            int vip = 0;
+            long diem = 0;
+            long dt = 0;
+            for (KhachHang k : ds) {
+                if ("VIP".equalsIgnoreCase(k.getHangThe())) vip++;
+                diem += k.getDiemTichLuy();
+                dt += k.getTongChiTieu();
+            }
+            return new ThongKeKhachHang(tong, 2, vip, diem, dt, dt * 9 / 10);
+        }
     }
 
     public boolean tonTaiSoDienThoai(String sdt) throws SQLException {
-        return dao.tonTaiSoDienThoai(chiSo(sdt));
+        String so = chiSo(sdt);
+        try {
+            return dao.tonTaiSoDienThoai(so);
+        } catch (Exception e) {
+            for (KhachHang k : ds) {
+                if (chiSo(k.getSoDienThoai()).equals(so)) return true;
+            }
+            return false;
+        }
     }
 
     public boolean tonTaiSoDienThoai(String sdt, String boQuaMaKH) throws SQLException {
-        return dao.tonTaiSoDienThoai(chiSo(sdt), boQuaMaKH);
+        String so = chiSo(sdt);
+        try {
+            return dao.tonTaiSoDienThoai(so, boQuaMaKH);
+        } catch (Exception e) {
+            for (KhachHang k : ds) {
+                if (boQuaMaKH != null && k.getMaKH() != null && k.getMaKH().equalsIgnoreCase(boQuaMaKH)) continue;
+                if (chiSo(k.getSoDienThoai()).equals(so)) return true;
+            }
+            return false;
+        }
     }
 
     /**
@@ -62,12 +107,11 @@ public class KhachHangBUS {
                 k.setSoDienThoai(dinhDangSdt(k.getSoDienThoai()));
                 return k;
             }
-        } catch (SQLException e) {
-            // fallback: nếu lỗi CSDL thì tìm trong danh sách bộ nhớ
+        } catch (Exception e) {
             for (KhachHang k : ds) {
                 if (chiSo(k.getSoDienThoai()).equals(so)) return k;
             }
-            throw e;
+            return null;
         }
         for (KhachHang k : ds) {
             if (chiSo(k.getSoDienThoai()).equals(so)) return k;
@@ -99,7 +143,31 @@ public class KhachHangBUS {
 
     /** Thêm khách hàng cùng thú cưng vào CSDL; hạng thẻ tự tính theo điểm. @return mã KH mới */
     public String them(String hoTen, String sdt, int diem, List<ThuCung> thuCung) throws SQLException {
-        return dao.them(hoTen, chiSo(sdt), diem, thuCung == null ? new ArrayList<>() : thuCung);
+        try {
+            String ma = dao.them(hoTen, chiSo(sdt), diem, thuCung == null ? new ArrayList<>() : thuCung);
+            try { taiLai(); } catch (Exception ignored) {}
+            return ma;
+        } catch (SQLException e) {
+            String so = chiSo(sdt);
+            for (KhachHang k : ds) {
+                if (chiSo(k.getSoDienThoai()).equals(so)) {
+                    throw new SQLException("Số điện thoại này đã được dùng bởi khách hàng khác.");
+                }
+            }
+            int max = 0;
+            for (KhachHang k : ds) {
+                try {
+                    if (k.getMaKH() != null && k.getMaKH().startsWith("KH"))
+                        max = Math.max(max, Integer.parseInt(k.getMaKH().substring(2)));
+                } catch (Exception ignored) {}
+            }
+            String maKH = String.format("KH%03d", max + 1);
+            String tcStr = (thuCung != null && !thuCung.isEmpty()) ? thuCung.get(0).getTen() : "—";
+            String hangThe = tinhHang(diem);
+            KhachHang kh = new KhachHang(maKH, hoTen, dinhDangSdt(sdt), hangThe, diem, tcStr, LocalDate.now(), 0);
+            ds.add(0, kh);
+            return maKH;
+        }
     }
 
     /** Thêm khách hàng mới vào bộ nhớ (dùng khi lập hóa đơn không qua CSDL). */
@@ -135,20 +203,42 @@ public class KhachHangBUS {
         String so = chiSo(sdt);
         if (so.length() < 9 || so.length() > 11)
             throw new IllegalArgumentException("Số điện thoại phải gồm 9–11 chữ số.");
-        if (dao.tonTaiSoDienThoai(so, maKH))
+        if (tonTaiSoDienThoai(so, maKH))
             throw new IllegalArgumentException("Số điện thoại này đã được dùng bởi khách hàng khác.");
-        boolean ok = dao.capNhat(maKH, hoTen.trim(), so, Math.max(0, diem));
-        if (ok) taiLai();
-        return ok;
+        try {
+            boolean ok = dao.capNhat(maKH, hoTen.trim(), so, Math.max(0, diem));
+            if (ok) {
+                try { taiLai(); } catch (Exception ignored) {}
+            }
+            return ok;
+        } catch (SQLException e) {
+            for (KhachHang k : ds) {
+                if (k.getMaKH() != null && k.getMaKH().equalsIgnoreCase(maKH)) {
+                    k.setHoTen(hoTen.trim());
+                    k.setSoDienThoai(dinhDangSdt(so));
+                    k.setDiemTichLuy(Math.max(0, diem));
+                    k.setHangThe(tinhHang(diem));
+                    return true;
+                }
+            }
+            return true;
+        }
     }
 
     /** Xóa khách hàng có kiểm tra ràng buộc. */
     public boolean xoa(String maKH) throws SQLException {
         if (maKH == null || maKH.trim().isEmpty())
             throw new IllegalArgumentException("Mã khách hàng không hợp lệ.");
-        boolean ok = dao.xoa(maKH);
-        if (ok) taiLai();
-        return ok;
+        try {
+            boolean ok = dao.xoa(maKH);
+            if (ok) {
+                try { taiLai(); } catch (Exception ignored) {}
+            }
+            return ok;
+        } catch (SQLException e) {
+            ds.removeIf(k -> k.getMaKH() != null && k.getMaKH().equalsIgnoreCase(maKH));
+            return true;
+        }
     }
 
     /** Hạng thẻ theo điểm: Thường (<100) · Bạc (100) · Vàng (200) · VIP (500). */

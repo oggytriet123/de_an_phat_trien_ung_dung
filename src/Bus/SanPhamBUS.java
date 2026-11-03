@@ -54,6 +54,60 @@ public class SanPhamBUS {
         for (SanPham sp : spList) {
             dangKy(sp);
         }
+
+        if (ds.isEmpty()) {
+            napDuLieuMau();
+        }
+    }
+
+    private void napDuLieuMau() {
+        // Dịch vụ mẫu
+        taoDVMau("VET-001", "Khám sức khỏe tổng quát", "Dịch vụ khám", 150000, "30 phút", "Tất cả thú cưng");
+        taoDVMau("VET-002", "Siêu âm chẩn đoán hình ảnh", "Dịch vụ khám", 250000, "45 phút", "Chó & Mèo");
+        taoDVMau("VET-003", "Khám da liễu & tai mũi họng", "Dịch vụ khám", 180000, "30 phút", "Chó & Mèo");
+
+        taoDVMau("SPA-001", "Tắm vệ sinh & sấy chải", "Dịch vụ spa", 120000, "45 phút", "Chó & Mèo");
+        taoDVMau("SPA-002", "Cắt tỉa tạo kiểu lông toàn thân", "Dịch vụ spa", 280000, "60 phút", "Chó & Mèo");
+        taoDVMau("SPA-003", "Vệ sinh tai & cắt mài móng", "Dịch vụ spa", 60000, "20 phút", "Tất cả thú cưng");
+
+        taoDVMau("VAC-001", "Tiêm vắc xin phòng dại Rabisin", "Tiêm phòng", 100000, "15 phút", "Chó & Mèo");
+        taoDVMau("VAC-002", "Vắc xin 7 bệnh cho chó Vanguard", "Tiêm phòng", 250000, "20 phút", "Chó");
+        taoDVMau("VAC-003", "Vắc xin 4 bệnh cho mèo Purevax", "Tiêm phòng", 280000, "20 phút", "Mèo");
+
+        taoDVMau("SUR-001", "Phẫu thuật triệt sản mèo đực", "Phẫu thuật", 350000, "60 phút", "Mèo");
+        taoDVMau("SUR-002", "Phẫu thuật triệt sản mèo cái", "Phẫu thuật", 550000, "90 phút", "Mèo");
+        taoDVMau("SUR-003", "Lấy cao răng sóng siêu âm", "Phẫu thuật", 300000, "45 phút", "Chó & Mèo");
+
+        taoDVMau("LC-001", "Lưu chuồng phòng VIP máy lạnh", "Lưu chuồng", 200000, "1 ngày", "Chó & Mèo");
+        taoDVMau("LC-002", "Lưu chuồng phòng Standard", "Lưu chuồng", 120000, "1 ngày", "Chó & Mèo");
+
+        // Sản phẩm mẫu
+        taoSPMau("TA-001", "Thức ăn hạt Royal Canin Mini Adult 2kg", "Thức ăn", 280000);
+        taoSPMau("TA-002", "Pate Whiskas cá ngừ & cá hồi gói 85g", "Thức ăn", 25000);
+        taoSPMau("TA-003", "Xương gặm sạch răng Pedigree DentaStix", "Thức ăn", 45000);
+        taoSPMau("TA-004", "Hạt Me-O vị cá ngừ cho mèo lớn 1.2kg", "Thức ăn", 135000);
+        taoSPMau("TA-005", "Bánh thưởng thịt gà SmartHeart 100g", "Thức ăn", 38000);
+
+        taoSPMau("TY-001", "Cần câu mèo lông vũ gắn chuông", "Đồ chơi", 35000);
+        taoSPMau("TY-002", "Bóng cao su gặm sạch răng cho chó", "Đồ chơi", 45000);
+        taoSPMau("TY-003", "Cỏ tươi Catnip sấy khô cho mèo 45g", "Đồ chơi", 50000);
+
+        taoSPMau("MED-001", "Thuốc trị ve rận Frontline Plus", "Thuốc", 185000);
+        taoSPMau("MED-002", "Sữa tắm trị ve rận Bio Derma 250ml", "Thuốc", 95000);
+        taoSPMau("MED-003", "Dung dịch nhỏ mắt Bioline 50ml", "Thuốc", 65000);
+        taoSPMau("MED-004", "Thuốc tẩy giun Sanpet cho chó mèo", "Thuốc", 35000);
+    }
+
+    private void taoDVMau(String sku, String ten, String danhMuc, long gia, String thoiLuong, String doiTuong) {
+        SanPham sp = new SanPham(sku, ten, danhMuc, gia, true);
+        sp.setThoiLuong(thoiLuong);
+        sp.setDoiTuong(doiTuong);
+        dangKy(sp);
+    }
+
+    private void taoSPMau(String sku, String ten, String danhMuc, long gia) {
+        SanPham sp = new SanPham(sku, ten, danhMuc, gia, false);
+        dangKy(sp);
     }
 
     private void macDinh(String ten, String tienTo, boolean dichVu) {

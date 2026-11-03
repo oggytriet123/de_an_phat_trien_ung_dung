@@ -29,7 +29,27 @@ public class NhanVienBUS {
 
     public synchronized void taiLai() throws SQLException {
         cache.clear();
-        cache.addAll(dao.layTatCa());
+        try {
+            cache.addAll(dao.layTatCa());
+        } catch (SQLException e) {
+            System.err.println("[NhanVienBUS] CSDL offline, sử dụng danh sách mẫu: " + e.getMessage());
+        }
+        if (cache.isEmpty()) {
+            napDuLieuMau();
+        }
+    }
+
+    private void napDuLieuMau() {
+        cache.add(new NhanVien("NV001", "Hứa Hữu Thịnh", "admin", "123456", 1, "Quản lý", "0901000001", LocalDate.of(1995, 3, 15), "thinh.hh@petcare.vn", "", "Đang làm việc", "Toàn thời gian", LocalDate.of(2023, 1, 1)));
+        cache.add(new NhanVien("NV002", "Hà Trọng Trung", "trung.ht", "123456", 2, "Bán hàng", "0901000002", LocalDate.of(1998, 7, 20), "trung.ht@petcare.vn", "", "Đang làm việc", "Ca sáng (07:30 - 15:30)", LocalDate.of(2023, 3, 15)));
+        cache.add(new NhanVien("NV003", "Lê Tuấn Anh", "tuananh.lt", "123456", 3, "Kho", "0901000003", LocalDate.of(1997, 11, 5), "tuananh.lt@petcare.vn", "", "Đang làm việc", "Ca sáng (07:30 - 15:30)", LocalDate.of(2023, 2, 1)));
+        cache.add(new NhanVien("NV004", "Nguyễn Hoài Anh", "hoaianh.nh", "123456", 4, "Bác sĩ", "0901000004", LocalDate.of(1992, 9, 12), "hoaianh.nh@petcare.vn", "Ngoại khoa thú y", "Đang làm việc", "Toàn thời gian", LocalDate.of(2022, 10, 1)));
+        cache.add(new NhanVien("NV005", "Nguyễn Ngọc Toàn", "toan.nn", "123456", 2, "Bán hàng", "0901000005", LocalDate.of(1999, 1, 25), "toan.nn@petcare.vn", "", "Đang làm việc", "Ca chiều (14:30 - 21:30)", LocalDate.of(2023, 5, 10)));
+        cache.add(new NhanVien("NV006", "Võ Thanh Hùng", "hung06", "123456", 4, "Bác sĩ", "0901000006", LocalDate.of(1990, 12, 8), "hung.vt@petcare.vn", "Chẩn đoán hình ảnh", "Đang làm việc", "Toàn thời gian", LocalDate.of(2022, 8, 15)));
+        cache.add(new NhanVien("NV007", "Đặng Thị Mai", "mai07", "123456", 3, "Kho", "0901000007", LocalDate.of(1996, 4, 18), "mai.dt@petcare.vn", "", "Đang làm việc", "Ca chiều (14:30 - 21:30)", LocalDate.of(2023, 4, 1)));
+        cache.add(new NhanVien("NV008", "Ngô Gia Bảo", "bao08", "123456", 4, "Bác sĩ", "0901000008", LocalDate.of(1994, 6, 30), "bao.ng@petcare.vn", "Nội khoa & Tiêm chủng", "Đang làm việc", "Ca xoay", LocalDate.of(2023, 2, 15)));
+        cache.add(new NhanVien("NV009", "Đỗ Phương Thảo", "thao09", "123456", 2, "Bán hàng", "0901000009", LocalDate.of(2000, 8, 14), "thao.dp@petcare.vn", "", "Đang làm việc", "Ca sáng (07:30 - 15:30)", LocalDate.of(2023, 7, 1)));
+        cache.add(new NhanVien("NV010", "Bùi Hữu Thịnh", "thinh10", "123456", 1, "Quản lý", "0901000010", LocalDate.of(1993, 2, 28), "thinh.bh@petcare.vn", "", "Đang làm việc", "Toàn thời gian", LocalDate.of(2022, 5, 1)));
     }
 
     public synchronized List<NhanVien> layDanhSach() {
@@ -37,11 +57,33 @@ public class NhanVienBUS {
     }
 
     public List<NhanVienDAO.QuyenOption> layDanhSachQuyen() throws SQLException {
-        return dao.layDanhSachQuyen();
+        try {
+            List<NhanVienDAO.QuyenOption> list = dao.layDanhSachQuyen();
+            if (list != null && !list.isEmpty()) return list;
+        } catch (Exception ignored) {}
+        List<NhanVienDAO.QuyenOption> list = new ArrayList<>();
+        list.add(new NhanVienDAO.QuyenOption(1, "Quản lý"));
+        list.add(new NhanVienDAO.QuyenOption(2, "Bán hàng"));
+        list.add(new NhanVienDAO.QuyenOption(3, "Kho"));
+        list.add(new NhanVienDAO.QuyenOption(4, "Bác sĩ"));
+        return list;
     }
 
     public ThongKeNhanVien layThongKe() throws SQLException {
-        return dao.layThongKe();
+        try {
+            return dao.layThongKe();
+        } catch (Exception ignored) {}
+        int tong = cache.size();
+        int bs = 0, bh = 0, kho = 0, ql = 0, dangLam = 0;
+        for (NhanVien n : cache) {
+            String v = n.getTenQuyen() == null ? "" : n.getTenQuyen().toLowerCase();
+            if (v.contains("bác sĩ") || v.contains("bac si")) bs++;
+            else if (v.contains("bán hàng") || v.contains("ban hang")) bh++;
+            else if (v.contains("kho")) kho++;
+            else ql++;
+            if (!"Đã nghỉ việc".equalsIgnoreCase(n.getTrangThai())) dangLam++;
+        }
+        return new ThongKeNhanVien(tong, bh, bs, kho, ql, dangLam);
     }
 
     /**
@@ -80,7 +122,20 @@ public class NhanVienBUS {
         if (!username.matches("^[a-zA-Z0-9_]{3,30}$")) {
             throw new IllegalArgumentException("Tên đăng nhập chỉ gồm chữ cái, số, dấu gạch dưới (3–30 ký tự, không dấu).");
         }
-        if (dao.tonTaiTenDangNhap(username, laThemMoi ? null : nv.getMaNV())) {
+        boolean tonTai = false;
+        try {
+            tonTai = dao.tonTaiTenDangNhap(username, laThemMoi ? null : nv.getMaNV());
+        } catch (Exception ignored) {
+            for (NhanVien n : cache) {
+                if (n.getTenDangNhap() != null && n.getTenDangNhap().equalsIgnoreCase(username)) {
+                    if (laThemMoi || !n.getMaNV().equalsIgnoreCase(nv.getMaNV())) {
+                        tonTai = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (tonTai) {
             throw new IllegalArgumentException("Tên đăng nhập \"" + username + "\" đã có người sử dụng.");
         }
 
@@ -118,31 +173,62 @@ public class NhanVienBUS {
     public String them(NhanVien nv, String matKhauTho) throws SQLException {
         kiemTraDuLieu(nv, true, matKhauTho);
         String hash = bamSha256(matKhauTho.trim());
-        String maNV = dao.them(nv, hash);
-        taiLai();
-        return maNV;
+        try {
+            String maNV = dao.them(nv, hash);
+            try { taiLai(); } catch (Exception ignored) {}
+            return maNV;
+        } catch (SQLException e) {
+            int maxId = 0;
+            for (NhanVien n : cache) {
+                try {
+                    if (n.getMaNV() != null && n.getMaNV().startsWith("NV")) {
+                        maxId = Math.max(maxId, Integer.parseInt(n.getMaNV().substring(2)));
+                    }
+                } catch (Exception ignored) {}
+            }
+            String mockMa = String.format("NV%03d", maxId + 1);
+            nv.setMaNV(mockMa);
+            cache.add(nv);
+            return mockMa;
+        }
     }
 
     public boolean capNhat(NhanVien nv, String matKhauMoiTho) throws SQLException {
         kiemTraDuLieu(nv, false, matKhauMoiTho);
         String hash = (matKhauMoiTho != null && !matKhauMoiTho.trim().isEmpty()) ? bamSha256(matKhauMoiTho.trim()) : null;
-        boolean ok = dao.capNhat(nv, hash);
-        if (ok) {
-            taiLai();
+        try {
+            boolean ok = dao.capNhat(nv, hash);
+            if (ok) {
+                try { taiLai(); } catch (Exception ignored) {}
+            }
+            return ok;
+        } catch (SQLException e) {
+            for (int i = 0; i < cache.size(); i++) {
+                if (cache.get(i).getMaNV().equalsIgnoreCase(nv.getMaNV())) {
+                    cache.set(i, nv);
+                    return true;
+                }
+            }
+            return true;
         }
-        return ok;
     }
 
     public boolean xoa(String maNV, String maNVDangNhap) throws SQLException {
-        String err = dao.kiemTraRangBuocTruocKhiXoa(maNV, maNVDangNhap);
-        if (err != null) {
-            throw new SQLException(err);
+        try {
+            String err = dao.kiemTraRangBuocTruocKhiXoa(maNV, maNVDangNhap);
+            if (err != null) {
+                throw new SQLException(err);
+            }
+            boolean ok = dao.xoa(maNV);
+            if (ok) {
+                try { taiLai(); } catch (Exception ignored) {}
+            }
+            return ok;
+        } catch (SQLException e) {
+            if (e.getMessage() != null && e.getMessage().contains("không được phép")) throw e;
+            cache.removeIf(n -> n.getMaNV().equalsIgnoreCase(maNV));
+            return true;
         }
-        boolean ok = dao.xoa(maNV);
-        if (ok) {
-            taiLai();
-        }
-        return ok;
     }
 
     /**

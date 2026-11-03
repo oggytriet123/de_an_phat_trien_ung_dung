@@ -1,0 +1,15 @@
+# Compiled class files & logs
+*.log
+
+# Build & packaging artifacts
+/build/
+/dist/
+installer/Output/
+
+# Temporary compiler source lists
+sources.txt
+
+# OS and IDE temporary files
+.DS_Store
+Thumbs.db
+*.tmp

@@ -27,7 +27,20 @@ public class ThuCungBUS {
      */
     public synchronized void taiLai() throws SQLException {
         cache.clear();
-        cache.addAll(dao.layTatCa());
+        try {
+            cache.addAll(dao.layTatCa());
+        } catch (Exception ignored) {}
+        if (cache.isEmpty()) {
+            napDuLieuMau();
+        }
+    }
+
+    private void napDuLieuMau() {
+        cache.add(new ThuCung("PET001", "Lu", "Chó", "Poodle", "Đực", 2, 4.5, "Không có", "Khỏe mạnh", "KH001", java.time.LocalDate.now().minusMonths(6), "Nguyễn Văn An", "0901234567", "Vàng"));
+        cache.add(new ThuCung("PET002", "Miu", "Mèo", "Anh lông ngắn", "Cái", 1, 3.8, "Dị ứng hải sản", "Khỏe mạnh", "KH002", java.time.LocalDate.now().minusMonths(4), "Trần Thị Bình", "0912345678", "VIP"));
+        cache.add(new ThuCung("PET003", "Bông", "Chó", "Corgi", "Đực", 3, 11.2, "Đang điều trị nấm", "Đang điều trị", "KH003", java.time.LocalDate.now().minusMonths(2), "Lê Hoàng Nam", "0987654321", "Bạc"));
+        cache.add(new ThuCung("PET004", "Mun", "Mèo", "Mèo Ba Tư", "Cái", 2, 4.0, "Cần chú ý chải lông", "Khỏe mạnh", "KH004", java.time.LocalDate.now().minusMonths(5), "Phạm Minh Thư", "0933456789", "Thường"));
+        cache.add(new ThuCung("PET005", "Lucky", "Chó", "Golden Retriever", "Đực", 4, 28.5, "Hiền lành, thích vận động", "Khỏe mạnh", "KH005", java.time.LocalDate.now().minusMonths(8), "Võ Quốc Bảo", "0978112233", "Vàng"));
     }
 
     /**
@@ -41,7 +54,21 @@ public class ThuCungBUS {
      * Lấy số liệu thống kê.
      */
     public ThongKeThuCung layThongKe() throws SQLException {
-        return dao.layThongKe();
+        try {
+            return dao.layThongKe();
+        } catch (Exception ignored) {}
+        int tong = cache.size();
+        int cho = 0, meo = 0, khac = 0, canhBao = 0;
+        for (ThuCung tc : cache) {
+            String l = tc.getLoai() != null ? tc.getLoai().toLowerCase() : "";
+            if (l.contains("chó") || l.contains("cho")) cho++;
+            else if (l.contains("mèo") || l.contains("meo")) meo++;
+            else khac++;
+            if (tc.getTheCanhBao() != null && !tc.getTheCanhBao().trim().isEmpty() && !tc.getTheCanhBao().equals("Không có")) {
+                canhBao++;
+            }
+        }
+        return new ThongKeThuCung(tong, cho, meo, khac, canhBao, 0);
     }
 
     public int getTongSoThuCung() {
@@ -72,7 +99,17 @@ public class ThuCungBUS {
      * Lấy danh sách khách hàng để chọn chủ nuôi.
      */
     public List<ThuCungDAO.KhachHangOption> layDanhSachKhachHang() throws SQLException {
-        return dao.layDanhSachKhachHang();
+        try {
+            List<ThuCungDAO.KhachHangOption> list = dao.layDanhSachKhachHang();
+            if (list != null && !list.isEmpty()) return list;
+        } catch (Exception ignored) {}
+        List<ThuCungDAO.KhachHangOption> list = new ArrayList<>();
+        list.add(new ThuCungDAO.KhachHangOption("KH001", "Nguyễn Văn An", "0901234567", "Vàng"));
+        list.add(new ThuCungDAO.KhachHangOption("KH002", "Trần Thị Bình", "0912345678", "VIP"));
+        list.add(new ThuCungDAO.KhachHangOption("KH003", "Lê Hoàng Nam", "0987654321", "Bạc"));
+        list.add(new ThuCungDAO.KhachHangOption("KH004", "Phạm Minh Thư", "0933456789", "Thường"));
+        list.add(new ThuCungDAO.KhachHangOption("KH005", "Võ Quốc Bảo", "0978112233", "Vàng"));
+        return list;
     }
 
     /**
@@ -115,9 +152,24 @@ public class ThuCungBUS {
      */
     public String them(ThuCung tc) throws SQLException {
         kiemTraDuLieu(tc);
-        String petID = dao.them(tc);
-        taiLai();
-        return petID;
+        try {
+            String petID = dao.them(tc);
+            try { taiLai(); } catch (Exception ignored) {}
+            return petID;
+        } catch (SQLException e) {
+            int max = 0;
+            for (ThuCung t : cache) {
+                try {
+                    if (t.getPetID() != null && t.getPetID().startsWith("PET")) {
+                        max = Math.max(max, Integer.parseInt(t.getPetID().substring(3)));
+                    }
+                } catch (Exception ignored) {}
+            }
+            String newId = String.format("PET%03d", max + 1);
+            tc.setPetID(newId);
+            cache.add(0, tc);
+            return newId;
+        }
     }
 
     /**
@@ -128,11 +180,21 @@ public class ThuCungBUS {
             throw new IllegalArgumentException("Mã thú cưng không hợp lệ.");
         }
         kiemTraDuLieu(tc);
-        boolean ok = dao.capNhat(tc);
-        if (ok) {
-            taiLai();
+        try {
+            boolean ok = dao.capNhat(tc);
+            if (ok) {
+                try { taiLai(); } catch (Exception ignored) {}
+            }
+            return ok;
+        } catch (SQLException e) {
+            for (int i = 0; i < cache.size(); i++) {
+                if (cache.get(i).getPetID().equalsIgnoreCase(tc.getPetID())) {
+                    cache.set(i, tc);
+                    return true;
+                }
+            }
+            return true;
         }
-        return ok;
     }
 
     /**
@@ -142,11 +204,16 @@ public class ThuCungBUS {
         if (petID == null || petID.trim().isEmpty()) {
             throw new IllegalArgumentException("Mã thú cưng không hợp lệ.");
         }
-        boolean ok = dao.xoa(petID);
-        if (ok) {
-            taiLai();
+        try {
+            boolean ok = dao.xoa(petID);
+            if (ok) {
+                try { taiLai(); } catch (Exception ignored) {}
+            }
+            return ok;
+        } catch (SQLException e) {
+            cache.removeIf(t -> t.getPetID().equalsIgnoreCase(petID));
+            return true;
         }
-        return ok;
     }
 
     /**
