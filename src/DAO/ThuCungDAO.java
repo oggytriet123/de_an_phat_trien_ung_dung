@@ -40,6 +40,7 @@ public class ThuCungDAO {
         }
     }
 
+    // [CN-TC-20] SELECT thú cưng + thông tin chủ nuôi
     /**
      * Lấy toàn bộ danh sách thú cưng kèm thông tin chủ nuôi từ bảng KHACHHANG.
      */
@@ -108,6 +109,7 @@ public class ThuCungDAO {
         }
     }
 
+    // [CN-TC-21] SELECT chủ nuôi cho combobox
     /**
      * Lấy danh sách khách hàng phục vụ việc chọn chủ nuôi cho thú cưng.
      */
@@ -129,6 +131,7 @@ public class ThuCungDAO {
         return list;
     }
 
+    // [CN-TC-22] INSERT thú cưng (sinh mã PET mới)
     /**
      * Thêm mới một thú cưng vào hệ thống. Tự động sinh mã PETxxx tăng dần.
      * @return mã thú cưng mới vừa tạo (ví dụ: PET013)
@@ -172,6 +175,7 @@ public class ThuCungDAO {
         }
     }
 
+    // [CN-TC-23] UPDATE thú cưng
     /**
      * Cập nhật thông tin hồ sơ thú cưng đã có trong CSDL.
      */
@@ -201,6 +205,7 @@ public class ThuCungDAO {
         }
     }
 
+    // [CN-TC-24] Chặn xóa khi còn phiếu lưu trú / lịch hẹn chưa hoàn tất
     /**
      * Kiểm tra tính toàn vẹn dữ liệu trước khi xóa.
      * @return chuỗi thông báo nếu có ràng buộc không được xóa, null nếu an toàn để xóa.
@@ -236,6 +241,7 @@ public class ThuCungDAO {
         return null;
     }
 
+    // [CN-TC-25] DELETE thú cưng (gỡ liên kết phiếu lưu trú, lịch hẹn)
     /**
      * Xóa hồ sơ thú cưng khỏi CSDL.
      */
@@ -278,6 +284,7 @@ public class ThuCungDAO {
         }
     }
 
+    // [CN-TC-26] SQL thống kê thú cưng
     /**
      * Thống kê số liệu phục vụ 4 thẻ KPI trên giao diện.
      */
@@ -310,6 +317,7 @@ public class ThuCungDAO {
         return new ThongKeThuCung(0, 0, 0, 0, 0, 0);
     }
 
+    // [CN-TC-27] Sinh mã thú cưng mới (PET + số lớn nhất + 1)
     private static int maxSoPet(Connection con) throws SQLException {
         String sql = "SELECT ISNULL(MAX(TRY_CAST(SUBSTRING(petID, 4, 18) AS INT)), 0) "
                 + "FROM THUCUNG WITH (UPDLOCK, HOLDLOCK) WHERE petID LIKE 'PET%'";

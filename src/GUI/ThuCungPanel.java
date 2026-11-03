@@ -32,8 +32,11 @@ import Entity.ThuCung;
  * Giao diện Quản lý Thú cưng - Thiết kế trực quan, dễ hiểu cho đồ án Java Swing.
  */
 public class ThuCungPanel extends JPanel {
+    // [CN-TC-02] Số dòng mỗi trang của bảng
     private static final int SO_DONG_MOI_TRANG = 7;
+    // [UI-TC-02] Các loài ở nút lọc
     private static final String[] DS_LOAI = {"Tất cả", "Chó", "Mèo", "Thỏ", "Khác"};
+    // [UI-TC-03] Các kiểu sắp xếp
     private static final String[] DS_SAP_XEP = {"Mới nhất", "Tên A-Z", "Cân nặng cao nhất", "Cân nặng thấp nhất"};
 
     private final ThuCungBUS bus = new ThuCungBUS();
@@ -50,14 +53,18 @@ public class ThuCungPanel extends JPanel {
     private final StatCard cardCanhBao = new StatCard("Cần theo dõi / Cảnh báo");
 
     // Bảng và tìm kiếm
+    // [UI-TC-04] Tiêu đề các cột bảng thú cưng
     private final String[] tieuDeCot = {"Mã thú cưng", "Tên thú cưng", "Loài", "Giống loài", "Giới tính", "Tuổi", "Cân nặng", "Chủ nuôi", "Tình trạng sức khỏe"};
     private final DefaultTableModel tableModel = new DefaultTableModel(tieuDeCot, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
     private final JTable table = new JTable(tableModel);
+    // [UI-TC-05] Chữ gợi ý ô tìm kiếm
     private final PlaceholderField txtTim = new PlaceholderField("Tìm theo tên bé, mã PET, giống, tên chủ, số điện thoại...");
     private final List<RoundedButton> chipsLoai = new ArrayList<>();
+    // [UI-TC-06] Các lựa chọn lọc giới tính
     private final JComboBox<String> cboGioiTinh = new JComboBox<>(new String[]{"Tất cả giới tính", "Đực", "Cái"});
+    // [UI-TC-07] Các lựa chọn lọc tình trạng sức khỏe
     private final JComboBox<String> cboTrangThai = new JComboBox<>(new String[]{"Tất cả tình trạng", "Khỏe mạnh", "Đang theo dõi", "Đang điều trị", "Chờ phẫu thuật", "Hậu phẫu", "Đang lưu trú", "Đã hồi phục"});
     private final JComboBox<String> cboSapXep = new JComboBox<>(DS_SAP_XEP);
     private final JLabel lblTrangThai = new JLabel();
@@ -108,10 +115,12 @@ public class ThuCungPanel extends JPanel {
         JPanel head = new JPanel(new BorderLayout());
         head.setOpaque(false);
 
+        // [UI-TC-08] Tiêu đề trang
         JLabel lblTieuDe = new JLabel("Quản lý Thú Cưng");
         lblTieuDe.setFont(Theme.font(Font.BOLD, 22));
         lblTieuDe.setForeground(Theme.TEXT);
 
+        // [UI-TC-09] Dòng phụ đề trang
         JLabel lblPhuDe = new JLabel("Hồ sơ sức khỏe, chủng loại, thể trạng và thông tin liên hệ chủ nuôi");
         lblPhuDe.setFont(Theme.font(Font.PLAIN, 13));
         lblPhuDe.setForeground(Theme.MUTED);
@@ -124,12 +133,19 @@ public class ThuCungPanel extends JPanel {
         pnlTitle.add(lblPhuDe);
 
         // Nút chức năng: Xuất Excel, Xem chi tiết, Sửa, Xóa, Thêm mới
+        // [UI-TC-10] Nút Xuất Excel
         RoundedButton btnExcel = new RoundedButton("Xuất Excel", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        // [UI-TC-11] Nút Xem chi tiết
         RoundedButton btnXem = new RoundedButton("Xem chi tiết", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        // [UI-TC-12] Nút Kê đơn
         RoundedButton btnKeDon = new RoundedButton("Kê đơn", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        // [UI-TC-13] Nút Phác đồ
         RoundedButton btnPhacDo = new RoundedButton("Phác đồ", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        // [UI-TC-14] Nút Chỉnh sửa
         RoundedButton btnSua = new RoundedButton("Chỉnh sửa", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        // [UI-TC-15] Nút Xóa
         RoundedButton btnXoa = new RoundedButton("Xóa", Color.WHITE, new Color(0xFEE2E2), Theme.RED, Theme.BORDER, 10).pad(14, 9);
+        // [UI-TC-16] Nút chính + Thêm thú cưng
         RoundedButton btnThem = new RoundedButton("+ Thêm thú cưng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(16, 9);
 
         btnExcel.addActionListener(e -> xuatExcel());
@@ -139,6 +155,7 @@ public class ThuCungPanel extends JPanel {
             if (tc != null) moDialogChiTiet(tc);
             else JOptionPane.showMessageDialog(this, "Vui lòng chọn một thú cưng trong bảng!", "Thông báo", JOptionPane.WARNING_MESSAGE);
         });
+        // [CN-TC-03] Nút Kê đơn: mở màn Đơn thuốc cho thú cưng đang chọn
         btnKeDon.addActionListener(e -> {
             ThuCung tc = layThuCungDangChon();
             if (tc != null) {
@@ -150,6 +167,7 @@ public class ThuCungPanel extends JPanel {
                 JOptionPane.showMessageDialog(this, "Vui lòng chọn một thú cưng để kê đơn!", "Thông báo", JOptionPane.WARNING_MESSAGE);
             }
         });
+        // [CN-TC-04] Nút Phác đồ: mở màn Phác đồ cho thú cưng đang chọn
         btnPhacDo.addActionListener(e -> {
             ThuCung tc = layThuCungDangChon();
             if (tc != null) {
@@ -166,6 +184,7 @@ public class ThuCungPanel extends JPanel {
             if (tc != null) moDialogThemSua(tc);
             else JOptionPane.showMessageDialog(this, "Vui lòng chọn thú cưng cần sửa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
         });
+        // [CN-TC-05] Nút Xóa: bắt buộc chọn dòng trước
         btnXoa.addActionListener(e -> {
             ThuCung tc = layThuCungDangChon();
             if (tc != null) xoaThuCung(tc);
@@ -198,10 +217,12 @@ public class ThuCungPanel extends JPanel {
         return row;
     }
 
+    // [CN-TC-06] Tải danh sách + thống kê thú cưng
     private void taiDuLieu() {
         try {
             bus.taiLai();
             ThongKeThuCung tk = bus.layThongKe();
+            // [UI-TC-17] Chữ + màu các thẻ thống kê (tổng, cảnh báo...)
             cardTong.set(Theme.number(tk.tongThuCung), "+" + tk.soTiepNhanThang + " bé mới tháng này", Theme.GREEN);
             cardCho.set(Theme.number(tk.soCho), "Chiếm " + (tk.tongThuCung > 0 ? (tk.soCho * 100 / tk.tongThuCung) : 0) + "% tổng số", Theme.MUTED);
             cardMeo.set(Theme.number(tk.soMeo), "Chiếm " + (tk.tongThuCung > 0 ? (tk.soMeo * 100 / tk.tongThuCung) : 0) + "% tổng số", Theme.MUTED);
@@ -324,6 +345,7 @@ public class ThuCungPanel extends JPanel {
     }
 
     // ----------------- 4. LỌC, SẮP XẾP & ĐỔ DỮ LIỆU VÀO BẢNG -----------------
+    // [CN-TC-07] Lọc + sắp xếp + phân trang vẽ lại bảng
     private void capNhatBang() {
         String gioiTinh = (String) cboGioiTinh.getSelectedItem();
         if (gioiTinh == null || gioiTinh.equals("Tất cả giới tính")) gioiTinh = "Tất cả";
@@ -419,13 +441,16 @@ public class ThuCungPanel extends JPanel {
     }
 
     // ----------------- 5. DIALOG THÊM / SỬA THÚ CƯNG -----------------
+    // [CN-TC-08] Form Thêm / Sửa thú cưng
     private void moDialogThemSua(ThuCung tcHienTai) {
         boolean laSua = (tcHienTai != null);
         JDialog dlg = new JDialog(SwingUtilities.getWindowAncestor(this), laSua ? "Chỉnh sửa thông tin bé" : "Tiếp nhận thú cưng mới", Dialog.ModalityType.APPLICATION_MODAL);
 
         JTextField txtTen = taoTextField();
+        // [UI-TC-18] Các lựa chọn loài trong form
         JComboBox<String> cboLoai = new JComboBox<>(new String[] {"Chó", "Mèo", "Thỏ", "Chuột Hamster", "Khác"});
         JTextField txtGiong = taoTextField();
+        // [UI-TC-19] Các lựa chọn giới tính trong form
         JComboBox<String> cboGioiTinhForm = new JComboBox<>(new String[] {"Đực", "Cái", "Không rõ"});
         JSpinner spnTuoi = new JSpinner(new SpinnerNumberModel(1, 0, 50, 1));
         JTextField txtCanNang = taoTextField();
@@ -459,6 +484,7 @@ public class ThuCungPanel extends JPanel {
         form.setBorder(new EmptyBorder(16, 20, 16, 20));
         form.setBackground(Color.WHITE);
 
+        // [UI-TC-20] Nhãn các ô trong form Thêm/Sửa thú cưng
         form.add(new JLabel("Tên thú cưng (*):")); form.add(txtTen);
         form.add(new JLabel("Loài (*):")); form.add(cboLoai);
         form.add(new JLabel("Giống loài:")); form.add(txtGiong);
@@ -479,10 +505,12 @@ public class ThuCungPanel extends JPanel {
         pnlCenter.add(pnlGhiChu, BorderLayout.CENTER);
         pnlCenter.setBorder(new EmptyBorder(0, 20, 10, 20));
 
+        // [UI-TC-21] Nút Lưu form thú cưng
         RoundedButton btnLuu = new RoundedButton("Lưu thông tin", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
         RoundedButton btnHuy = new RoundedButton("Hủy", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(18, 8);
         btnHuy.addActionListener(e -> dlg.dispose());
 
+        // [CN-TC-09] Validate form (tên bé, cân nặng là số) -> bus.them / bus.capNhat
         btnLuu.addActionListener(e -> {
             String ten = txtTen.getText().trim();
             if (ten.isEmpty()) { JOptionPane.showMessageDialog(dlg, "Vui lòng nhập tên bé!", "Lỗi", JOptionPane.ERROR_MESSAGE); return; }
@@ -531,6 +559,7 @@ public class ThuCungPanel extends JPanel {
     }
 
     // ----------------- 6. XEM CHI TIẾT HỒ SƠ -----------------
+    // [CN-TC-10] Xem hồ sơ chi tiết thú cưng
     private void moDialogChiTiet(ThuCung tc) {
         String giong = tc.getGiong().isEmpty() ? "Không rõ giống" : tc.getGiong();
         Theme.hoSoDialog(SwingUtilities.getWindowAncestor(this),
@@ -547,6 +576,7 @@ public class ThuCungPanel extends JPanel {
     }
 
     // ----------------- 7. XÓA AN TOÀN -----------------
+    // [CN-TC-11] Xác nhận + xóa (báo lỗi nếu còn phiếu lưu trú / lịch hẹn)
     private void xoaThuCung(ThuCung tc) {
         int opt = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc chắn muốn xóa bé \"" + tc.getTen() + "\" (" + tc.getPetID() + ")?",
@@ -564,6 +594,7 @@ public class ThuCungPanel extends JPanel {
     }
 
     // ----------------- 8. XUẤT FILE EXCEL (CSV UTF-8) -----------------
+    // [CN-TC-12] Xuất danh sách thú cưng ra file
     private void xuatExcel() {
         JFileChooser fc = new JFileChooser();
         fc.setSelectedFile(new java.io.File("DanhSachThuCung.csv"));
@@ -606,6 +637,7 @@ public class ThuCungPanel extends JPanel {
     }
 
     // Thẻ thống kê nhỏ gọn
+    // [UI-TC-22] Thẻ thống kê: bo góc / cỡ chữ
     private static class StatCard extends RoundedPanel {
         private final JLabel lblGiaTri = new JLabel("—");
         private final JLabel lblGhiChu = new JLabel(" ");

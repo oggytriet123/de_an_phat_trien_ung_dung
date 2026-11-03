@@ -37,10 +37,12 @@ public class KhachHangBUS {
         return Collections.unmodifiableList(ds);
     }
 
+    // [CN-KH-16] Lấy số liệu thống kê khách hàng
     public ThongKeKhachHang layThongKe() throws SQLException {
         return dao.layThongKe();
     }
 
+    // [CN-KH-17] Kiểm tra trùng SĐT
     public boolean tonTaiSoDienThoai(String sdt) throws SQLException {
         return dao.tonTaiSoDienThoai(chiSo(sdt));
     }
@@ -49,6 +51,7 @@ public class KhachHangBUS {
         return dao.tonTaiSoDienThoai(chiSo(sdt), boQuaMaKH);
     }
 
+    // [CN-KH-18] Tìm khách theo SĐT
     /**
      * Tìm khách theo SĐT — thử CSDL trước, nếu lỗi kết nối thì tìm trong bộ nhớ.
      * Trả về null nếu chưa có.
@@ -97,6 +100,7 @@ public class KhachHangBUS {
         return null;
     }
 
+    // [CN-KH-19] Thêm khách hàng (+ thú cưng)
     /** Thêm khách hàng cùng thú cưng vào CSDL; hạng thẻ tự tính theo điểm. @return mã KH mới */
     public String them(String hoTen, String sdt, int diem, List<ThuCung> thuCung) throws SQLException {
         return dao.them(hoTen, chiSo(sdt), diem, thuCung == null ? new ArrayList<>() : thuCung);
@@ -132,6 +136,7 @@ public class KhachHangBUS {
         return kh;
     }
 
+    // [CN-KH-20] Cộng điểm tích lũy sau thanh toán
     /** Cộng số tiền vừa thanh toán vào tổng chi tiêu và cập nhật ngày giao dịch gần nhất. */
     public void ghiNhanThanhToan(String maKH, long soTien) {
         KhachHang k = timTheoMa(maKH);
@@ -140,6 +145,7 @@ public class KhachHangBUS {
         k.setGiaoDichGanNhat(LocalDate.now());
     }
 
+    // [CN-KH-21] Cập nhật thông tin / điểm khách hàng
     /** Cập nhật thông tin khách hàng (họ tên, SĐT, điểm). */
     public boolean capNhat(String maKH, String hoTen, String sdt, int diem) throws SQLException {
         if (maKH == null || maKH.trim().isEmpty())
@@ -156,6 +162,7 @@ public class KhachHangBUS {
         return ok;
     }
 
+    // [CN-KH-22] Xóa khách hàng (kiểm tra ràng buộc)
     /** Xóa khách hàng có kiểm tra ràng buộc. */
     public boolean xoa(String maKH) throws SQLException {
         if (maKH == null || maKH.trim().isEmpty())
@@ -165,11 +172,13 @@ public class KhachHangBUS {
         return ok;
     }
 
+    // [CN-KH-23] Quy đổi điểm -> hạng thẻ: chỉ gọi sang KhachHangDAO.tinhHang (ngưỡng điểm sửa ở DAO)
     /** Hạng thẻ theo điểm: Thường (<100) · Bạc (100) · Vàng (200) · VIP (500). */
     public static String tinhHang(int diem) {
         return KhachHangDAO.tinhHang(diem);
     }
 
+    // [CN-KH-24] Quy đổi số tiền thanh toán -> điểm
     /** Số điểm nhận được khi thanh toán số tiền này (1 điểm / 10.000₫). */
     public static long diemTuSoTien(long soTien) {
         return Math.max(0, soTien / KhachHangDAO.SO_TIEN_MOI_DIEM);
@@ -189,6 +198,7 @@ public class KhachHangBUS {
         return sb.toString();
     }
 
+    // [CN-KH-25] Validate họ tên (độ dài, ký tự cho phép)
     /** @return thông báo lỗi hoặc null nếu tên hợp lệ. */
     public static String loiTen(String ten) {
         String t = chuanHoaTen(ten);
@@ -207,6 +217,7 @@ public class KhachHangBUS {
         return d;
     }
 
+    // [CN-KH-26] Validate số điện thoại
     /** Di động Việt Nam 10 số (03, 05, 07, 08, 09) hoặc điện thoại bàn 11 số (02x). */
     public static String loiSdt(String sdt) {
         String d = chuanHoaSdt(sdt);

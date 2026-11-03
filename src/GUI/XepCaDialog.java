@@ -17,6 +17,7 @@ public class XepCaDialog extends JDialog {
     private final JLabel lblTong = new JLabel();
     private boolean dangNap;
 
+    // [UI-NV-22] Tiêu đề cột bảng xếp ca
     private final String[] cot = {"Mã NV", "Nhân viên", "Vai trò", "Ca hôm nay", "Khung giờ", "Trạng thái ca trực"};
     private final DefaultTableModel model = new DefaultTableModel(cot, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
@@ -39,6 +40,7 @@ public class XepCaDialog extends JDialog {
         getContentPane().setBackground(Theme.BG);
         add(tabs, BorderLayout.CENTER);
 
+        // [UI-NV-23] Nút Đóng
         RoundedButton btnDong = new RoundedButton("Đóng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(22, 8);
         btnDong.addActionListener(e -> dispose());
         JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT, 12, 10));
@@ -54,6 +56,7 @@ public class XepCaDialog extends JDialog {
     }
 
     // ---------------- Tab 1: xếp ca ----------------
+    // [CN-NV-33] Tab xếp lịch tuần: tick từng ô ngày x ca
     private JPanel taoTabXepCa() {
         JPanel root = new JPanel(new BorderLayout(14, 0));
         root.setBorder(new EmptyBorder(14, 14, 6, 14));
@@ -116,6 +119,7 @@ public class XepCaDialog extends JDialog {
             }
         }
 
+        // [UI-NV-24] Tiêu đề khối lịch tuần
         JLabel tieuDe = new JLabel("Lịch làm việc cố định hằng tuần");
         tieuDe.setFont(Theme.font(Font.BOLD, 15));
         tieuDe.setForeground(Theme.TEXT);
@@ -134,6 +138,7 @@ public class XepCaDialog extends JDialog {
         nhanh.add(nutNhanh("Ca sáng", new int[] {0}, 6));
         nhanh.add(nutNhanh("Ca chiều", new int[] {1}, 6));
         nhanh.add(nutNhanh("Ca tối", new int[] {2}, 6));
+        // [UI-NV-25] Nút Xóa lịch
         RoundedButton xoa = new RoundedButton("Xóa lịch", Color.WHITE, new Color(0xFEE2E2), Theme.RED, Theme.BORDER, 10).pad(12, 7);
         xoa.addActionListener(e -> ap(new int[] {}, 0));
         nhanh.add(xoa);
@@ -149,6 +154,7 @@ public class XepCaDialog extends JDialog {
         return b;
     }
 
+    // [CN-NV-34] Áp mẫu ca nhanh (nút tắt) cho nhân viên đang chọn
     private void ap(int[] cas, int soNgay) {
         NhanVien nv = lst.getSelectedValue();
         if (nv == null) return;
@@ -170,6 +176,7 @@ public class XepCaDialog extends JDialog {
     }
 
     // ---------------- Tab 2: trạng thái ca trực ----------------
+    // [CN-NV-35] Tab đánh dấu trạng thái ca hôm nay
     private JPanel taoTabTrangThai() {
         JPanel root = new JPanel(new BorderLayout(0, 10));
         root.setBorder(new EmptyBorder(14, 14, 6, 14));
@@ -184,6 +191,7 @@ public class XepCaDialog extends JDialog {
 
         JPanel nut = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         nut.setOpaque(false);
+        // [UI-NV-26] Tiêu đề khối đánh dấu trạng thái
         JLabel hd = new JLabel("Đánh dấu hôm nay cho nhân viên đã chọn:");
         hd.setFont(Theme.font(Font.PLAIN, 13));
         nut.add(hd);
@@ -194,6 +202,7 @@ public class XepCaDialog extends JDialog {
         return root;
     }
 
+    // [CN-NV-36] Nút đánh dấu: bắt buộc chọn nhân viên trước
     private RoundedButton nutDanhDau(String text, String tt) {
         RoundedButton b = new RoundedButton(text, Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(12, 7);
         b.addActionListener(e -> {
@@ -223,6 +232,7 @@ public class XepCaDialog extends JDialog {
     }
 
     // ---------------- Màu trạng thái ----------------
+    // [UI-NV-27] Màu chữ theo trạng thái ca (xanh/cam/đỏ)
     static Color mauChu(String tt) {
         switch (tt) {
             case CaLamData.DANG_TRUC: return Theme.GREEN;

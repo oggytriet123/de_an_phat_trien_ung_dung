@@ -29,6 +29,35 @@ public class DichVuDAO {
             st.executeUpdate("IF COL_LENGTH('SANPHAM', 'donViTinh') IS NULL ALTER TABLE SANPHAM ADD donViTinh NVARCHAR(30) NULL");
             st.executeUpdate("IF COL_LENGTH('SANPHAM', 'quyCach') IS NULL ALTER TABLE SANPHAM ADD quyCach NVARCHAR(100) NULL");
             suaLoiFontSanPham(con);
+            damBaoDuLieuDichVuBanDau(con);
+        } catch (SQLException ignored) {
+        }
+    }
+
+    private void damBaoDuLieuDichVuBanDau(Connection con) {
+        try (Statement st = con.createStatement()) {
+            String checkVac = "SELECT COUNT(*) FROM DICHVU WHERE loaiDV = N'Tiêm phòng'";
+            try (ResultSet rs = st.executeQuery(checkVac)) {
+                if (rs.next() && rs.getInt(1) == 0) {
+                    st.executeUpdate("INSERT INTO DICHVU (maDV, tenDV, giaTien, loaiDV, thoiGianThucHien, moTa, trangThai, doiTuong) VALUES "
+                            + "(N'VAC-001', N'Tiêm vaccine phòng Dại (Rabies)', 250000, N'Tiêm phòng', 15, N'Tiêm vaccine phòng bệnh dại định kỳ cho chó và mèo', N'Đang cung cấp', N'Chó & Mèo'), "
+                            + "(N'VAC-002', N'Tiêm vaccine 4 bệnh mèo (Nobivac Ducat)', 280000, N'Tiêm phòng', 15, N'Vaccine phòng 4 bệnh truyền nhiễm nguy hiểm ở mèo', N'Đang cung cấp', N'Mèo'), "
+                            + "(N'VAC-003', N'Tiêm vaccine 5 bệnh chó', 260000, N'Tiêm phòng', 15, N'Vaccine phòng 5 bệnh truyền nhiễm nguy hiểm ở chó', N'Đang cung cấp', N'Chó'), "
+                            + "(N'VAC-004', N'Tiêm vaccine 7 bệnh chó (Vanguard Plus 5/L4)', 300000, N'Tiêm phòng', 15, N'Vaccine tổng hợp 7 bệnh phổ biến cho chó', N'Đang cung cấp', N'Chó')");
+                }
+            }
+            String checkSur = "SELECT COUNT(*) FROM DICHVU WHERE loaiDV = N'Phẫu thuật'";
+            try (ResultSet rs = st.executeQuery(checkSur)) {
+                if (rs.next() && rs.getInt(1) == 0) {
+                    st.executeUpdate("INSERT INTO DICHVU (maDV, tenDV, giaTien, loaiDV, thoiGianThucHien, moTa, trangThai, doiTuong) VALUES "
+                            + "(N'SUR-001', N'Triệt sản mèo cái nội soi', 650000, N'Phẫu thuật', 45, N'Phẫu thuật nội soi triệt sản ít xâm lấn, hồi phục nhanh', N'Đang cung cấp', N'Mèo'), "
+                            + "(N'SUR-002', N'Triệt sản mèo đực', 350000, N'Phẫu thuật', 30, N'Tiểu phẫu triệt sản an toàn cho mèo đực', N'Đang cung cấp', N'Mèo'), "
+                            + "(N'SUR-003', N'Phẫu thuật lấy sỏi bàng quang', 1500000, N'Phẫu thuật', 60, N'Mổ hở gắp sỏi và thông đường tiết niệu', N'Đang cung cấp', N'Tất cả thú cưng'), "
+                            + "(N'SUR-004', N'Phẫu thuật kết hợp xương gãy', 2500000, N'Phẫu thuật', 90, N'Cố định xương gãy bằng nẹp vis chuyên dụng', N'Đang cung cấp', N'Tất cả thú cưng'), "
+                            + "(N'SUR-005', N'Cắt mộng mắt', 500000, N'Phẫu thuật', 30, N'Phẫu thuật tạo hình mộng mắt (Cherry eye) cho thú cưng', N'Đang cung cấp', N'Tất cả thú cưng'), "
+                            + "(N'SUR-006', N'Mổ u nang ngoài da', 700000, N'Phẫu thuật', 40, N'Cắt bỏ khối u ngoài da và khâu thẩm mỹ', N'Đang cung cấp', N'Tất cả thú cưng')");
+                }
+            }
         } catch (SQLException ignored) {
         }
     }
@@ -108,6 +137,49 @@ public class DichVuDAO {
             e.printStackTrace();
         }
         return ds;
+    }
+
+    public List<SanPham> layDichVuTheoLoai(String loaiDV) {
+        List<SanPham> ds = new ArrayList<>();
+        String sql = "SELECT maDV, tenDV, giaTien, loaiDV, thoiGianThucHien, moTa, trangThai, doiTuong "
+                + "FROM DICHVU "
+                + "WHERE (loaiDV = ? OR (loaiDV = N'Phòng bệnh' AND ? = N'Tiêm phòng')) "
+                + "  AND (trangThai IS NULL OR trangThai NOT LIKE N'%ngưng%') "
+                + "ORDER BY maDV";
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, loaiDV);
+            ps.setString(2, loaiDV);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    String ma = rs.getString("maDV");
+                    String ten = rs.getString("tenDV");
+                    long gia = Math.round(rs.getDouble("giaTien"));
+                    String loai = rs.getString("loaiDV");
+                    if (loai == null || loai.trim().isEmpty()) loai = loaiDV;
+                    int thoiGian = rs.getInt("thoiGianThucHien");
+                    String doiTuong = rs.getString("doiTuong");
+                    String tt = rs.getString("trangThai");
+
+                    SanPham sp = new SanPham(ma, ten, loai, gia, true);
+                    if (thoiGian > 0) sp.setThoiLuong(thoiGian + " phút");
+                    if (doiTuong != null) sp.setDoiTuong(doiTuong);
+                    if (tt != null && tt.contains("ngưng")) sp.setDangMo(false);
+                    ds.add(sp);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ds;
+    }
+
+    public List<SanPham> layDichVuTiemPhong() {
+        return layDichVuTheoLoai("Tiêm phòng");
+    }
+
+    public List<SanPham> layDichVuPhauThuat() {
+        return layDichVuTheoLoai("Phẫu thuật");
     }
 
     public List<SanPham> layTatCaSanPham() {

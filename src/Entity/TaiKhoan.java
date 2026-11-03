@@ -51,6 +51,7 @@ public class TaiKhoan {
         this.trangThai = trangThai;
     }
 
+    // [CN-TK-29] Cập nhật SĐT/ngày sinh/email trong đối tượng đang đăng nhập
     public void capNhatLienHe(String soDienThoai, LocalDate ngaySinh, String email) {
         this.soDienThoai = soDienThoai;
         this.ngaySinh = ngaySinh;
@@ -64,6 +65,7 @@ public class TaiKhoan {
                 .toLowerCase().trim();
     }
 
+    // [CN-PQ-04] HÀM KIỂM TRA QUYỀN: tài khoản có được dùng chức năng này không
     /** Kiểm tra xem tài khoản có quyền dùng chức năng này không. */
     public boolean coQuyen(String tenChucNang) {
         if (tenChucNang == null || tenChucNang.trim().isEmpty()) return true;
@@ -71,20 +73,22 @@ public class TaiKhoan {
         String target = norm(tenChucNang);
 
         // Các chức năng dùng chung: mọi tài khoản đều có quyền
+        // [CN-PQ-05] Chức năng dùng chung: ai cũng được vào
         if (target.equals("trang chu") || target.equals("tai khoan") || target.equals("dang xuat") || target.equals("tro giup")) {
             return true;
         }
 
         // Quản lý hoặc admin có toàn quyền 100% với tất cả chức năng
         String v = norm(vaiTro);
-        String u = norm(tenDangNhap);
-        if (v.contains("quan ly") || v.contains("admin") || u.equals("admin") || u.startsWith("nv001") || u.startsWith("nv010")) {
+        // [CN-PQ-09] Chi bypass theo vai tro, KHONG bypass theo username
+        if (v.contains("quan ly") || v.contains("admin")) {
             return true;
         }
 
         // Tìm kiếm chung: cho phép mở menu tìm kiếm nếu có quyền tra cứu
         if (target.equals("tim kiem")) {
-            return true;
+            // [CN-PQ-05b] Chi hien menu Tim Kiem neu tai khoan co quyen
+            return !chucNang.isEmpty();
         }
 
         // Duyệt qua các quyền thực tế trong database của tài khoản
@@ -100,8 +104,11 @@ public class TaiKhoan {
 
             // Ánh xạ Thống kê
             if (target.contains("thong ke")) {
-                if (c.contains("thong ke")) return true;
-                if (target.contains("ton kho") && (c.contains("kho") || c.contains("san pham"))) return true;
+                // Chi cho phep "Thong Ke Kho" neu co quyen kho
+                if (target.equals("thong ke kho") && (c.equals("thong ke kho") || c.equals("kho hang") || c.contains("san pham"))) return true;
+                if (!target.equals("thong ke kho") && c.equals("thong ke")) return true;
+                if (c.equals("thong ke kho")) return false; // Thong Ke Kho khong duoc tinh la Thong Ke chung
+                if (target.contains("ton kho") && (c.equals("kho hang") || c.contains("san pham") || c.equals("thong ke kho"))) return true;
                 if (target.contains("thu cung") && (c.contains("bac si") || c.contains("thu cung"))) return true;
                 if (target.contains("khach hang") && (c.contains("ban hang") || c.contains("khach hang"))) return true;
             }
@@ -121,7 +128,7 @@ public class TaiKhoan {
 
             // Ánh xạ Kho hàng / Sản phẩm / Nhập xuất
             if ((target.contains("kho hang") || target.contains("nhap xuat") || target.contains("san pham"))
-                    && (c.contains("kho") || c.contains("san pham"))) {
+                    && (c.equals("kho hang") || c.contains("nhap") || c.contains("san pham"))) {
                 return true;
             }
 

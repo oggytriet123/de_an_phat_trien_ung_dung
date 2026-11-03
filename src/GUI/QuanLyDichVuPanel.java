@@ -104,6 +104,8 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
     }
 
     @Override public void lamMoi() {
+        spBus.taiTuCSDL();
+        dungChips();
         refresh();
     }
 

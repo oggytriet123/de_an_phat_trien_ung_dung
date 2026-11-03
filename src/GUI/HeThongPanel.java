@@ -22,10 +22,12 @@ public class HeThongPanel extends JPanel {
         top.setLayout(new BoxLayout(top, BoxLayout.Y_AXIS));
         top.setOpaque(false);
         
+        // [UI-TK-32] Tiêu đề trang Hệ thống
         JLabel title = new JLabel("Hệ Thống");
         title.setFont(Theme.font(Font.BOLD, 24));
         title.setForeground(Theme.TEXT);
         
+        // [UI-TK-33] Dòng phụ đề trang Hệ thống
         JLabel subtitle = new JLabel("Quản lý phiên đăng nhập, mật khẩu và thông tin cá nhân");
         subtitle.setFont(Theme.font(Font.PLAIN, 13));
         subtitle.setForeground(Theme.MUTED);
@@ -57,6 +59,7 @@ public class HeThongPanel extends JPanel {
         bottom.setLayout(new BoxLayout(bottom, BoxLayout.Y_AXIS));
         bottom.setBorder(new EmptyBorder(16, 20, 16, 20));
 
+        // [UI-TK-34] Tiêu đề khối phiên làm việc
         JLabel sessionTitle = new JLabel("PHIÊN LÀM VIỆC");
         sessionTitle.setFont(Theme.font(Font.BOLD, 11));
         sessionTitle.setForeground(Theme.MUTED);
@@ -88,6 +91,7 @@ public class HeThongPanel extends JPanel {
         });
     }
 
+    // [UI-TK-35] Thẻ chức năng (icon / màu nền / bo góc)
     private JPanel createCard(String text, String sub, String icon, ActionListener action) {
         RoundedPanel card = new RoundedPanel(16, Theme.CARD, null); // no border line in image
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
@@ -145,10 +149,12 @@ public class HeThongPanel extends JPanel {
         return card;
     }
 
+    // [CN-TK-12] Thông báo "Đổi mật khẩu đang phát triển" (trang thật là TaiKhoanPanel)
     private void showDoiMatKhau() {
         JOptionPane.showMessageDialog(this, "Chức năng Đổi mật khẩu đang được phát triển.");
     }
 
+    // [CN-TK-13] Hiển thị thông tin cá nhân
     private void showThongTin() {
         mainFrame.moTaiKhoan();
     }

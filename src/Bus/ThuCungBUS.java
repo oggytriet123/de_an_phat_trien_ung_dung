@@ -60,6 +60,7 @@ public class ThuCungBUS {
         return cnt;
     }
 
+    // [CN-TC-13] Đếm thú cưng cần theo dõi (dị ứng / đang điều trị)
     public int getSoCanTheoDoi() {
         try {
             return layThongKe().soCanhBao;
@@ -68,6 +69,7 @@ public class ThuCungBUS {
         }
     }
 
+    // [CN-TC-14] Danh sách chủ nuôi cho combobox
     /**
      * Lấy danh sách khách hàng để chọn chủ nuôi.
      */
@@ -75,6 +77,7 @@ public class ThuCungBUS {
         return dao.layDanhSachKhachHang();
     }
 
+    // [CN-TC-15] Validate dữ liệu thú cưng (tên, loài, cân nặng, tuổi...)
     /**
      * Kiểm tra tính hợp lệ của dữ liệu trước khi lưu vào CSDL (Business Validation).
      * @throws IllegalArgumentException nếu dữ liệu không thỏa mãn
@@ -109,6 +112,7 @@ public class ThuCungBUS {
         }
     }
 
+    // [CN-TC-16] Thêm thú cưng
     /**
      * Thêm mới thú cưng.
      * @return mã thú cưng mới tạo
@@ -120,6 +124,7 @@ public class ThuCungBUS {
         return petID;
     }
 
+    // [CN-TC-17] Cập nhật thú cưng
     /**
      * Cập nhật thông tin thú cưng.
      */
@@ -135,6 +140,7 @@ public class ThuCungBUS {
         return ok;
     }
 
+    // [CN-TC-18] Xóa thú cưng (kiểm tra ràng buộc)
     /**
      * Xóa thú cưng.
      */
@@ -149,6 +155,7 @@ public class ThuCungBUS {
         return ok;
     }
 
+    // [CN-TC-19] Tìm kiếm + lọc theo loài / giới tính / tình trạng
     /**
      * Lọc danh sách thú cưng theo từ khóa và bộ lọc.
      */

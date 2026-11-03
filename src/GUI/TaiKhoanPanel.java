@@ -15,6 +15,7 @@ import Entity.TaiKhoan;
 public class TaiKhoanPanel extends JPanel {
     private final TaiKhoan tk;
     private final TaiKhoanBUS bus = new TaiKhoanBUS();
+    // [UI-TK-16] Chữ gợi ý (placeholder) các ô SĐT / ngày sinh / email
     private final PlaceholderField txtSdt = new PlaceholderField("0901234567");
     private final PlaceholderField txtNgaySinh = new PlaceholderField("dd/MM/yyyy");
     private final PlaceholderField txtEmail = new PlaceholderField("ten@gmail.com");
@@ -30,10 +31,12 @@ public class TaiKhoanPanel extends JPanel {
         setBackground(Theme.BG);
         setBorder(new EmptyBorder(26, 28, 24, 28));
 
+        // [UI-TK-17] Tiêu đề trang Tài khoản
         JLabel title = new JLabel("Tài Khoản");
         title.setFont(Theme.font(Font.BOLD, 24));
         title.setForeground(Theme.TEXT);
         title.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // [UI-TK-18] Dòng phụ đề trang
         JLabel sub = new JLabel("Xem và cập nhật thông tin cá nhân của tài khoản đang đăng nhập");
         sub.setFont(Theme.font(Font.PLAIN, 13));
         sub.setForeground(Theme.MUTED);
@@ -46,6 +49,7 @@ public class TaiKhoanPanel extends JPanel {
         head.add(sub);
         add(head, BorderLayout.NORTH);
 
+        // [UI-TK-19] Thẻ trắng chứa form: bo góc / màu nền / màu viền
         RoundedPanel card = new RoundedPanel(16, Theme.CARD, Theme.BORDER);
         card.setLayout(new GridBagLayout());
         card.setBorder(new EmptyBorder(28, 32, 28, 32));
@@ -61,7 +65,9 @@ public class TaiKhoanPanel extends JPanel {
         c.anchor = GridBagConstraints.WEST;
         c.insets = new Insets(8, 0, 8, 0);
 
+        // [UI-TK-20] Tiêu đề nhóm thông tin cố định
         row = section(card, c, row, "THÔNG TIN CỐ ĐỊNH (không thể chỉnh sửa)");
+        // [UI-TK-21] Các dòng thông tin KHÓA (mã NV, họ tên, vai trò, ca, trạng thái...)
         row = field(card, c, row, "Mã nhân viên", locked(tk.getMaTaiKhoan()));
         row = field(card, c, row, "Họ và tên", locked(tk.getHoTen()));
         row = field(card, c, row, "Tên đăng nhập", locked(tk.getTenDangNhap()));
@@ -71,6 +77,7 @@ public class TaiKhoanPanel extends JPanel {
         row = field(card, c, row, "Trạng thái", locked(tk.getTrangThai()));
 
         c.insets = new Insets(24, 0, 8, 0);
+        // [UI-TK-22] Tiêu đề nhóm thông tin sửa được
         row = section(card, c, row, "THÔNG TIN LIÊN HỆ (có thể chỉnh sửa)");
         c.insets = new Insets(8, 0, 8, 0);
         style(txtSdt);
@@ -84,9 +91,12 @@ public class TaiKhoanPanel extends JPanel {
         c.gridx = 1; c.gridy = row++; c.insets = new Insets(4, 0, 0, 0);
         card.add(lblThongBao, c);
 
+        // [UI-TK-23] Nút Lưu thay đổi
         RoundedButton btnLuu = new RoundedButton("Lưu thay đổi", Theme.DARK, Theme.ACCENT, Color.WHITE, null, 12);
+        // [UI-TK-24] Nút Hoàn tác
         RoundedButton btnHoan = new RoundedButton("Hoàn tác", new Color(0xE4E8EB), new Color(0xD5DBE0), Theme.TEXT, null, 12);
         btnLuu.addActionListener(e -> luu());
+        // [CN-TK-08] Hoàn tác: nạp lại dữ liệu gốc
         btnHoan.addActionListener(e -> { napDuLieu(); thongBao(" ", Theme.MUTED); });
         JPanel btns = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 0));
         btns.setOpaque(false);
@@ -102,6 +112,7 @@ public class TaiKhoanPanel extends JPanel {
         c.fill = GridBagConstraints.NONE;
         row++;
         c.insets = new Insets(18, 0, 8, 0);
+        // [UI-TK-25] Tiêu đề nhóm đổi mật khẩu
         row = section(card, c, row, "ĐỔI MẬT KHẨU");
         c.insets = new Insets(8, 0, 8, 0);
         styleMk(txtMkCu); styleMk(txtMkMoi); styleMk(txtMkLai);
@@ -111,6 +122,7 @@ public class TaiKhoanPanel extends JPanel {
         lblMk.setFont(Theme.font(Font.PLAIN, 13));
         c.gridx = 1; c.gridy = row++; c.insets = new Insets(4, 0, 0, 0);
         card.add(lblMk, c);
+        // [UI-TK-26] Nút Đổi mật khẩu
         RoundedButton btnDoi = new RoundedButton("Đổi mật khẩu", Theme.DARK, Theme.ACCENT, Color.WHITE, null, 12);
         btnDoi.addActionListener(e -> doiMatKhau());
         JPanel btnMk = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -135,12 +147,14 @@ public class TaiKhoanPanel extends JPanel {
         napDuLieu();
     }
 
+    // [CN-TK-09] Đổ dữ liệu tài khoản lên các ô sửa được
     private void napDuLieu() {
         txtSdt.setText(tk.getSoDienThoai() == null ? "" : tk.getSoDienThoai());
         txtNgaySinh.setText(tk.getNgaySinh() == null ? "" : tk.getNgaySinh().format(TaiKhoanBUS.NGAY));
         txtEmail.setText(tk.getEmail() == null ? "" : tk.getEmail());
     }
 
+    // [CN-TK-10] Lưu SĐT/ngày sinh/email -> bus.capNhatThongTin, báo xanh/đỏ
     private void luu() {
         String loi = bus.capNhatThongTin(tk, txtSdt.getText(), txtNgaySinh.getText(), txtEmail.getText());
         if (loi != null) {
@@ -151,6 +165,7 @@ public class TaiKhoanPanel extends JPanel {
         thongBao("Đã lưu thông tin thành công.", Theme.GREEN);
     }
 
+    // [CN-TK-11] Đổi mật khẩu -> bus.doiMatKhau, xóa ô khi thành công
     private void doiMatKhau() {
         String loi = bus.doiMatKhau(tk, new String(txtMkCu.getPassword()), new String(txtMkMoi.getPassword()),
                 new String(txtMkLai.getPassword()));
@@ -167,6 +182,7 @@ public class TaiKhoanPanel extends JPanel {
             @Override protected void paintComponent(Graphics g) {
                 Graphics2D g2 = (Graphics2D) g.create();
                 g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+                // [UI-TK-27] Màu hình tròn avatar
                 g2.setColor(Theme.ACCENT);
                 g2.fillOval(0, 0, getWidth() - 1, getHeight() - 1);
                 g2.dispose();
@@ -199,6 +215,7 @@ public class TaiKhoanPanel extends JPanel {
         return p;
     }
 
+    // [UI-TK-28] Kiểu ô nhập mật khẩu (viền / cỡ chữ)
     private static void styleMk(JPasswordField f) {
         f.setFont(Theme.font(Font.PLAIN, 14));
         f.setForeground(Theme.TEXT);
@@ -214,6 +231,7 @@ public class TaiKhoanPanel extends JPanel {
         lblThongBao.setForeground(color);
     }
 
+    // [UI-TK-29] Kiểu ô bị khóa (màu nền xám, tooltip)
     private static JTextField locked(String text) {
         JTextField f = new JTextField(text == null ? "" : text);
         f.setEditable(false);
@@ -227,6 +245,7 @@ public class TaiKhoanPanel extends JPanel {
         return f;
     }
 
+    // [UI-TK-30] Kiểu ô nhập có thể sửa
     private static void style(JTextField f) {
         f.setFont(Theme.font(Font.PLAIN, 14));
         f.setForeground(Theme.TEXT);
@@ -250,6 +269,7 @@ public class TaiKhoanPanel extends JPanel {
         l.setPreferredSize(new Dimension(150, 20));
         c.gridx = 0; c.gridy = row; c.weightx = 0; c.fill = GridBagConstraints.NONE;
         p.add(l, c);
+        // [UI-TK-31] Kích thước ô nhập (rộng 380, cao 40)
         f.setPreferredSize(new Dimension(380, 40));
         c.gridx = 1; c.weightx = 1; c.fill = GridBagConstraints.NONE;
         p.add(f, c);

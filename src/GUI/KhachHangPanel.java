@@ -34,8 +34,10 @@ import Entity.ThuCung;
 
 /** Màn hình Quản lý Khách hàng - Đầy đủ Thêm, Sửa, Xóa, Chi tiết và Xuất Excel. */
 public class KhachHangPanel extends JPanel {
+    // [CN-KH-02] Số dòng mỗi trang của bảng
     private static final int PAGE_SIZE = 7;
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+    // [UI-KH-02] Tên hạng thẻ ở nút lọc
     private static final String[] HANG = {"Tất cả", "VIP", "Thân thiết", "Thường"};
     private static final String[] SORTS = {"Điểm cao nhất", "Chi tiêu cao nhất", "Giao dịch gần nhất", "Tên A-Z"};
 
@@ -51,11 +53,13 @@ public class KhachHangPanel extends JPanel {
     private final StatCard cardDiem = new StatCard("Điểm đang lưu hành");
     private final StatCard cardDoanhThu = new StatCard("Doanh thu từ thành viên");
 
+    // [UI-KH-03] Tiêu đề các cột bảng khách hàng
     private final String[] cols = {"Mã KH", "Khách hàng", "Số điện thoại", "Hạng thẻ", "Điểm tích lũy", "Thú cưng", "Giao dịch gần nhất", "Tổng chi tiêu"};
     private final DefaultTableModel tableModel = new DefaultTableModel(cols, 0) {
         @Override public boolean isCellEditable(int r, int c) { return false; }
     };
     private final JTable table = new JTable(tableModel);
+    // [UI-KH-04] Chữ gợi ý ô tìm kiếm
     private final PlaceholderField txtTim = new PlaceholderField("Tìm theo tên, số điện thoại, mã thẻ...");
     private final JComboBox<String> cboHangThe = new JComboBox<>(new String[]{"Tất cả hạng", "VIP", "Thân thiết", "Thường"});
     private final JComboBox<String> cboSapXep = new JComboBox<>(SORTS);
@@ -93,6 +97,7 @@ public class KhachHangPanel extends JPanel {
         });
     }
 
+    // [CN-KH-03] Tải lại dữ liệu khi mở trang
     /** Làm mới dữ liệu – gọi khi chuyển sang panel này từ menu Tìm Kiếm. */
     public void lamMoi() {
         taiDuLieu();
@@ -104,9 +109,11 @@ public class KhachHangPanel extends JPanel {
         JPanel head = new JPanel(new BorderLayout());
         head.setOpaque(false);
 
+        // [UI-KH-05] Tiêu đề trang
         JLabel t = new JLabel("Quản lý Khách hàng");
         t.setFont(Theme.font(Font.BOLD, 24));
         t.setForeground(Theme.TEXT);
+        // [UI-KH-06] Dòng phụ đề trang
         JLabel s = new JLabel("Hồ sơ khách hàng, thẻ thành viên, điểm tích lũy và lịch sử giao dịch");
         s.setFont(Theme.font(Font.PLAIN, 13));
         s.setForeground(Theme.MUTED);
@@ -117,10 +124,15 @@ public class KhachHangPanel extends JPanel {
         left.add(Box.createVerticalStrut(4));
         left.add(s);
 
+        // [UI-KH-07] Nút Xuất Excel
         RoundedButton btnExcel = new RoundedButton("Xuất Excel", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        // [UI-KH-08] Nút Xem chi tiết
         RoundedButton btnXem = new RoundedButton("Xem chi tiết", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        // [UI-KH-09] Nút Chỉnh sửa
         RoundedButton btnSua = new RoundedButton("Chỉnh sửa", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 9);
+        // [UI-KH-10] Nút Xóa (nền đỏ nhạt, chữ đỏ)
         RoundedButton btnXoa = new RoundedButton("Xóa", Color.WHITE, new Color(0xFEE2E2), Theme.RED, Theme.BORDER, 10).pad(14, 9);
+        // [UI-KH-11] Nút chính + Thêm khách hàng (màu ACCENT)
         RoundedButton btnThem = new RoundedButton("+ Thêm khách hàng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(16, 9);
 
         btnExcel.addActionListener(e -> xuatExcel());
@@ -135,6 +147,7 @@ public class KhachHangPanel extends JPanel {
             if (kh != null) suaKhachHang(kh);
             else JOptionPane.showMessageDialog(this, "Vui lòng chọn khách hàng cần chỉnh sửa!", "Thông báo", JOptionPane.WARNING_MESSAGE);
         });
+        // [CN-KH-04] Nút Xóa: bắt buộc chọn dòng trước
         btnXoa.addActionListener(e -> {
             KhachHang kh = layKhachHangDangChon();
             if (kh != null) xoaKhachHang(kh);
@@ -165,6 +178,7 @@ public class KhachHangPanel extends JPanel {
         return row;
     }
 
+    // [CN-KH-05] Tải danh sách + thống kê từ BUS
     private void taiDuLieu() {
         try {
             bus.taiLai();
@@ -176,6 +190,7 @@ public class KhachHangPanel extends JPanel {
         }
     }
 
+    // [CN-KH-06] Đổ số liệu lên thẻ thống kê (khách mới, % tăng giảm)
     private void capNhatThongKe(ThongKeKhachHang t) {
         cardTong.set(Theme.number(t.tongKhach),
                 t.khachMoiThang > 0 ? "+" + Theme.number(t.khachMoiThang) + " khách mới trong tháng" : "Chưa có khách mới trong tháng",
@@ -212,6 +227,7 @@ public class KhachHangPanel extends JPanel {
         return v >= 1_000_000 ? String.format(Locale.ROOT, "%.1f", v / 1_000_000.0).replace('.', ',') + " triệu₫" : Theme.money(v);
     }
 
+    // [UI-KH-12] Thẻ thống kê đầu trang: bo góc / cỡ chữ / màu
     private static class StatCard extends RoundedPanel {
         private final JLabel value = new JLabel("—");
         private final JLabel note = new JLabel(" ");
@@ -335,6 +351,7 @@ public class KhachHangPanel extends JPanel {
                 String h = String.valueOf(val).trim();
                 l.setFont(Theme.font(Font.BOLD, 12));
                 if ("VIP".equalsIgnoreCase(h)) {
+                    // [UI-KH-13] Màu chữ hạng thẻ trong bảng (VIP tím, Thân thiết cam, Thường xám)
                     l.setForeground(new Color(0x7C3AED));
                 } else if ("Thân thiết".equalsIgnoreCase(h) || h.toLowerCase().contains("thiet")) {
                     l.setForeground(new Color(0xD97706));
@@ -373,6 +390,7 @@ public class KhachHangPanel extends JPanel {
     }
 
     // ---------------- Lọc / sắp xếp / phân trang ----------------
+    // [CN-KH-07] Lọc + sắp xếp + phân trang rồi vẽ lại bảng
     private void refresh() {
         String kw = norm(txtTim.getText().trim());
         List<KhachHang> list = new ArrayList<>();
@@ -445,6 +463,7 @@ public class KhachHangPanel extends JPanel {
         return b;
     }
 
+    // [CN-KH-08] Các kiểu sắp xếp (điểm, chi tiêu, giao dịch, tên)
     private Comparator<KhachHang> comparator() {
         if ("Chi tiêu cao nhất".equals(sapXep)) {
             return Comparator.comparingLong(KhachHang::getTongChiTieu).reversed();
@@ -522,6 +541,7 @@ public class KhachHangPanel extends JPanel {
         return r;
     }
 
+    // [CN-KH-09] Form Thêm khách hàng (kèm danh sách thú cưng)
     private void themKhachHang() {
         Window owner = SwingUtilities.getWindowAncestor(this);
         JDialog dlg = new JDialog(owner, "Thêm khách hàng", Dialog.ModalityType.APPLICATION_MODAL);
@@ -540,6 +560,7 @@ public class KhachHangPanel extends JPanel {
         JScrollPane petScroll = new JScrollPane(petList);
         petScroll.setBorder(null);
         petScroll.setPreferredSize(new Dimension(300, 120));
+        // [UI-KH-14] Nút thêm dòng thú cưng trong form
         RoundedButton addPet = new RoundedButton("+ Thêm thú cưng", Color.WHITE, new Color(0xF3F6F8), Theme.ACCENT, Theme.BORDER, 8).pad(14, 6);
         addPet.setFont(Theme.font(Font.PLAIN, 12));
         addPet.addActionListener(e -> taoDongThuCung(petList, petRows, dlg));
@@ -555,6 +576,7 @@ public class KhachHangPanel extends JPanel {
         c.gridx = 0; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
 
         int y = 0;
+        // [UI-KH-15] Nhãn các ô trong form Thêm khách hàng
         c.gridy = y++; c.insets = new Insets(0, 0, 4, 0); form.add(new JLabel("Họ tên *"), c);
         c.gridy = y++; c.insets = new Insets(0, 0, 10, 0); form.add(tfTen, c);
         c.gridy = y++; c.insets = new Insets(0, 0, 4, 0); form.add(new JLabel("Số điện thoại *"), c);
@@ -564,12 +586,14 @@ public class KhachHangPanel extends JPanel {
 
         JPanel petHead = new JPanel(new BorderLayout());
         petHead.setBackground(Color.WHITE);
+        // [UI-KH-16] Tiêu đề khối nhập thú cưng của khách
         petHead.add(new JLabel("Thú cưng [tên · loài · cân nặng kg]"), BorderLayout.WEST);
         petHead.add(addPet, BorderLayout.EAST);
         c.gridy = y++; c.insets = new Insets(0, 0, 6, 0); form.add(petHead, c);
         c.gridy = y++; c.insets = new Insets(0, 0, 8, 0); form.add(petScroll, c);
         c.gridy = y; c.insets = new Insets(0, 0, 0, 0); form.add(err, c);
 
+        // [UI-KH-17] Nút Lưu (form Thêm)
         RoundedButton ok = new RoundedButton("Lưu", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(24, 9);
         RoundedButton cancel = new RoundedButton("Hủy", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(24, 9);
         JPanel btns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
@@ -582,6 +606,7 @@ public class KhachHangPanel extends JPanel {
             String ten = tfTen.getText().trim().replaceAll("\\s+", " ");
             String sdt = KhachHangBUS.chiSo(tfSdt.getText());
             if (ten.isEmpty()) { err.setText("Vui lòng nhập họ tên."); return; }
+            // [CN-KH-10] Validate độ dài SĐT khi thêm
             if (sdt.length() < 9 || sdt.length() > 11) { err.setText("Số điện thoại phải gồm 9–11 chữ số."); return; }
 
             List<ThuCung> pets = new ArrayList<>();
@@ -594,6 +619,7 @@ public class KhachHangPanel extends JPanel {
                 pets.add(new ThuCung(null, tenPet, (String) r.cbLoai.getSelectedItem(), can));
             }
             try {
+                // [CN-KH-11] Chặn trùng SĐT khi thêm
                 if (bus.tonTaiSoDienThoai(sdt)) { err.setText("Số điện thoại này đã tồn tại."); return; }
                 bus.them(ten, sdt, ((Number) spDiem.getValue()).intValue(), pets);
                 dlg.dispose();
@@ -613,6 +639,7 @@ public class KhachHangPanel extends JPanel {
     }
 
     // ---------------- CHỈNH SỬA KHÁCH HÀNG ----------------
+    // [CN-KH-12] Form Sửa khách hàng (hạng thẻ tự tính theo điểm)
     private void suaKhachHang(KhachHang kh) {
         Window owner = SwingUtilities.getWindowAncestor(this);
         JDialog dlg = new JDialog(owner, "Chỉnh sửa khách hàng: " + kh.getMaKH(), Dialog.ModalityType.APPLICATION_MODAL);
@@ -625,6 +652,7 @@ public class KhachHangPanel extends JPanel {
         spDiem.setFont(Theme.font(Font.PLAIN, 14));
         spDiem.setPreferredSize(new Dimension(300, 36));
 
+        // [UI-KH-18] Dòng hiển thị hạng thẻ trong form Sửa
         JLabel lblHang = new JLabel("Hạng thẻ: " + kh.getHangThe() + " (Tự động cập nhật theo điểm)");
         lblHang.setFont(Theme.font(Font.PLAIN, 12));
         lblHang.setForeground(Theme.MUTED);
@@ -644,6 +672,7 @@ public class KhachHangPanel extends JPanel {
         pCenter.add(lblHang, BorderLayout.CENTER);
         lblHang.setBorder(new EmptyBorder(0, 24, 0, 24));
 
+        // [UI-KH-19] Nút Lưu cập nhật (form Sửa)
         RoundedButton ok = new RoundedButton("Lưu cập nhật", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(20, 9);
         RoundedButton cancel = new RoundedButton("Hủy", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(20, 9);
         cancel.addActionListener(e -> dlg.dispose());
@@ -683,6 +712,7 @@ public class KhachHangPanel extends JPanel {
     }
 
     // ---------------- XÓA KHÁCH HÀNG ----------------
+    // [CN-KH-13] Xác nhận + xóa khách (báo lỗi nếu vướng ràng buộc)
     private void xoaKhachHang(KhachHang kh) {
         int opt = JOptionPane.showConfirmDialog(this,
                 "Bạn có chắc chắn muốn xóa khách hàng \"" + kh.getHoTen() + "\" (" + kh.getMaKH() + ")?\n"
@@ -701,6 +731,7 @@ public class KhachHangPanel extends JPanel {
     }
 
     // ---------------- XEM CHI TIẾT KHÁCH HÀNG ----------------
+    // [CN-KH-14] Xem hồ sơ chi tiết khách hàng
     private void xemChiTiet(KhachHang kh) {
         Theme.hoSoDialog(SwingUtilities.getWindowAncestor(this),
                 kh.getHoTen(), kh.getMaKH() + "  •  " + kh.getSoDienThoai(), "Thẻ " + kh.getHangThe(),
@@ -713,6 +744,7 @@ public class KhachHangPanel extends JPanel {
     }
 
     // ---------------- Xuất file CSV ----------------
+    // [CN-KH-15] Xuất danh sách đang lọc ra file
     private void xuatExcel() {
         JFileChooser fc = new JFileChooser();
         fc.setDialogTitle("Xuất danh sách khách hàng");

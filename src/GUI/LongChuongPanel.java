@@ -60,10 +60,12 @@ public class LongChuongPanel extends JPanel {
         JPanel titleRow = new JPanel(new BorderLayout());
         titleRow.setOpaque(false);
 
+        // [UI-LC-02] Tiêu đề trang
         JLabel lblTitle = new JLabel("Quản Lý Lồng Chuồng Lưu Trú");
         lblTitle.setFont(Theme.font(Font.BOLD, 22));
         lblTitle.setForeground(Theme.TEXT);
 
+        // [UI-LC-03] Dòng phụ đề trang
         JLabel lblSub = new JLabel("Hệ thống phòng lưu trú thú cưng, chăm sóc dinh dưỡng và đặt giữ chỗ");
         lblSub.setFont(Theme.font(Font.PLAIN, 13));
         lblSub.setForeground(Theme.MUTED);
@@ -77,6 +79,7 @@ public class LongChuongPanel extends JPanel {
 
         titleRow.add(pnlTitle, BorderLayout.WEST);
 
+        // [UI-LC-04] Nút chính + Thêm lồng chuồng
         RoundedButton btnThem = new RoundedButton("+ Thêm lồng chuồng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(14, 9);
         btnThem.setFont(Theme.font(Font.BOLD, 13));
         btnThem.addActionListener(e -> moDialogThemLong());
@@ -93,6 +96,7 @@ public class LongChuongPanel extends JPanel {
         lblStatBaoTri = new JLabel("0");
 
         pnlStats.add(createStatCard("Tổng số lồng", lblStatTong, "Quy mô hệ thống", Theme.SIDEBAR));
+        // [UI-LC-05] 4 thẻ thống kê: tiêu đề / ghi chú / màu nhấn
         pnlStats.add(createStatCard("Đang lưu trú", lblStatLuuTru, "Thú cưng đang ở", Theme.RED));
         pnlStats.add(createStatCard("Lồng trống", lblStatTrong, "Sẵn sàng đón bé", Theme.GREEN));
         pnlStats.add(createStatCard("Đã đặt hẹn", lblStatDaDat, "Lịch giữ trước", new Color(0xE67E22)));
@@ -103,6 +107,7 @@ public class LongChuongPanel extends JPanel {
         return top;
     }
 
+    // [UI-LC-06] Giao diện 1 thẻ thống kê (bo góc, cỡ chữ)
     private JPanel createStatCard(String title, JLabel valLabel, String note, Color accentColor) {
         RoundedPanel card = new RoundedPanel(12, Color.WHITE, Theme.BORDER);
         card.setLayout(new BoxLayout(card, BoxLayout.Y_AXIS));
@@ -127,6 +132,7 @@ public class LongChuongPanel extends JPanel {
         return card;
     }
 
+    // [CN-LC-02] Đếm lồng theo trạng thái cho 4 thẻ thống kê
     private void updateStats() {
         int tong = bus.demTongSoChuong();
         int luuTru = bus.demChuongTheoTrangThai("Đang lưu trú");
@@ -166,6 +172,7 @@ public class LongChuongPanel extends JPanel {
         pnlClock.setBorder(new EmptyBorder(10, 12, 10, 12));
         pnlClock.setPreferredSize(new Dimension(210, 75));
 
+        // [UI-LC-07] Đồng hồ + ngày ở khung trái
         JLabel lblTime = new JLabel("00:00:00", JLabel.CENTER);
         lblTime.setFont(Theme.font(Font.BOLD, 22));
         lblTime.setForeground(Theme.DARK);
@@ -178,6 +185,7 @@ public class LongChuongPanel extends JPanel {
         pnlClock.add(lblDate);
         left.add(pnlClock, BorderLayout.NORTH);
 
+        // [CN-LC-03] Đồng hồ chạy mỗi giây
         Timer timer = new Timer(1000, e -> {
             lblTime.setText(new SimpleDateFormat("HH:mm:ss").format(new Date()));
             lblDate.setText(new SimpleDateFormat("dd/MM/yyyy").format(new Date()));
@@ -189,6 +197,7 @@ public class LongChuongPanel extends JPanel {
         pnlBtns.setOpaque(false);
 
         RoundedButton btnDatTruoc = createActionButton("Đặt lồng trước (F4)", Theme.ACCENT, Theme.ACCENT_HOVER);
+        // [UI-LC-08] 8 nút thao tác bên trái: chữ + màu nền + màu hover
         RoundedButton btnNhanLong = createActionButton("Nhận lồng / Pet (F5)", Theme.GREEN, new Color(0x278C44));
         RoundedButton btnHuyDat   = createActionButton("Hủy đặt hẹn (F6)", new Color(0xCB4335), new Color(0xB03A2E));
         RoundedButton btnXemCT    = createActionButton("Xem chi tiết (F7)", Theme.SIDEBAR, new Color(0x4C6877));
@@ -200,6 +209,7 @@ public class LongChuongPanel extends JPanel {
 
         // Sự kiện các nút
         btnDatTruoc.addActionListener(e -> moDialogDatTruoc());
+        // [CN-LC-04] Gắn nút -> hàm xử lý (8 nút thao tác)
         btnNhanLong.addActionListener(e -> moDialogNhanLong());
         btnHuyDat.addActionListener(e -> thucHienHuyDat());
         btnXemCT.addActionListener(e -> moDialogXemChiTiet());
@@ -222,6 +232,7 @@ public class LongChuongPanel extends JPanel {
         left.add(pnlBtns, BorderLayout.CENTER);
 
         // Gắn KeyBindings (F4 - F11) cho toàn bộ màn hình
+        // [CN-LC-05] Phím tắt F4-F12 gắn với các nút thao tác
         InputMap im = getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
         ActionMap am = getActionMap();
 
@@ -279,6 +290,7 @@ public class LongChuongPanel extends JPanel {
         lTT.setForeground(Theme.TEXT);
         pnlFilter.add(lTT);
 
+        // [UI-LC-09] Các lựa chọn lọc trạng thái lồng
         cbTrangThai = new JComboBox<>(new String[]{"Tất cả", "Trống", "Đang lưu trú", "Đã đặt", "Bảo trì"});
         cbTrangThai.setFont(compFont);
         cbTrangThai.setPreferredSize(new Dimension(130, 32));
@@ -290,6 +302,7 @@ public class LongChuongPanel extends JPanel {
         lSize.setForeground(Theme.TEXT);
         pnlFilter.add(lSize);
 
+        // [UI-LC-10] Các lựa chọn lọc kích cỡ
         cbKichCo = new JComboBox<>(new String[]{"Tất cả", "Nhỏ", "Vừa", "Lớn", "VIP"});
         cbKichCo.setFont(compFont);
         cbKichCo.setPreferredSize(new Dimension(100, 32));
@@ -301,6 +314,7 @@ public class LongChuongPanel extends JPanel {
         lKV.setForeground(Theme.TEXT);
         pnlFilter.add(lKV);
 
+        // [UI-LC-11] Các lựa chọn lọc khu vực
         cbKhuVuc = new JComboBox<>(new String[]{"Tất cả", "Khu Mèo", "Khu Chó Nhỏ", "Khu Chó Lớn", "Khu VIP", "Khu Loài Khác"});
         cbKhuVuc.setFont(compFont);
         cbKhuVuc.setPreferredSize(new Dimension(145, 32));
@@ -312,6 +326,7 @@ public class LongChuongPanel extends JPanel {
         lTim.setForeground(Theme.TEXT);
         pnlFilter.add(lTim);
 
+        // [UI-LC-12] Chữ gợi ý ô tìm kiếm
         txtTimKiem = new PlaceholderField("Mã lồng, tên thú cưng, SĐT...");
         txtTimKiem.setFont(compFont);
         txtTimKiem.setPreferredSize(new Dimension(150, 32));
@@ -354,6 +369,7 @@ public class LongChuongPanel extends JPanel {
     }
 
     // ================= 4. LOAD & TẠO CARD LỒNG CHUỒNG =================
+    // [CN-LC-06] Lọc theo trạng thái / kích cỡ / khu vực / từ khóa rồi vẽ lại thẻ lồng
     public void loadCages() {
         pnlGrid.removeAll();
         selectedCageCard = null;
@@ -375,6 +391,7 @@ public class LongChuongPanel extends JPanel {
         pnlGrid.repaint();
     }
 
+    // [CN-LC-07] Vẽ 1 thẻ lồng: màu, nhãn, thông tin thú cưng, click chọn
     /**
      * Tạo một Card lồng chuồng hiển thị hình vẽ vector lồng, thông tin thú cưng và trạng thái.
      */
@@ -383,6 +400,7 @@ public class LongChuongPanel extends JPanel {
         String statusLabel = c.getTrangThai();
 
         if (c.isTrong()) {
+            // [UI-LC-13] Màu theo trạng thái lồng: Trống xanh / Đã đặt cam / Lưu trú đỏ / Bảo trì xám
             statusColor = Theme.GREEN;
         } else if (c.isDaDat()) {
             statusColor = new Color(0xE67E22);
@@ -453,6 +471,7 @@ public class LongChuongPanel extends JPanel {
         if (c.isVip()) {
             JLabel lblVip = new JLabel("VIP");
             lblVip.setFont(Theme.font(Font.BOLD, 11));
+            // [UI-LC-14] Màu nhãn VIP trên thẻ lồng
             lblVip.setForeground(new Color(0xD4AC0D));
             cardHead.add(lblVip, BorderLayout.EAST);
         }
@@ -519,6 +538,7 @@ public class LongChuongPanel extends JPanel {
         JLabel lblDetail;
         if (c.isDangLuuTru()) {
             lblDetail = new JLabel(" " + (c.getTenPet() != null ? c.getTenPet() : "Thú cưng") + " (" + (c.getLoaiPet() != null ? c.getLoaiPet() : "") + ")");
+            // [UI-LC-15] Màu dòng mô tả thú cưng đang ở
             lblDetail.setForeground(new Color(0x922B21));
             lblDetail.setFont(Theme.font(Font.BOLD, 12));
         } else if (c.isDaDat()) {
@@ -604,12 +624,14 @@ public class LongChuongPanel extends JPanel {
 
     // ================= 5. CÁC HÀNH ĐỘNG / DIALOG CALLS =================
 
+    // [CN-LC-08] Mở form Đặt trước lồng
     /** F4: Đặt lồng trước */
     public void moDialogDatTruoc() {
         Window owner = SwingUtilities.getWindowAncestor(this);
         new DialogDatChuong(owner, bus, selectedCageId, this::loadCages).setVisible(true);
     }
 
+    // [CN-LC-09] Nhận thú cưng vào lồng: chặn lồng đang có thú / đang bảo trì
     /** F5: Nhận lồng / Check-in */
     public void moDialogNhanLong() {
         if (selectedCageId == null) {
@@ -640,6 +662,7 @@ public class LongChuongPanel extends JPanel {
         }
     }
 
+    // [CN-LC-10] Hủy đặt: chỉ khi lồng đang "Đã đặt"
     /** F6: Hủy đặt lồng */
     public void thucHienHuyDat() {
         if (selectedCageId == null) {
@@ -664,6 +687,7 @@ public class LongChuongPanel extends JPanel {
         }
     }
 
+    // [CN-LC-11] Mở chi tiết lồng
     /** F7: Xem chi tiết */
     public void moDialogXemChiTiet() {
         if (selectedCageId == null) {
@@ -674,6 +698,7 @@ public class LongChuongPanel extends JPanel {
         new DialogChiTietChuong(owner, bus, selectedCageId, this::loadCages).setVisible(true);
     }
 
+    // [CN-LC-12] Chuyển lồng: chặn lồng trống
     /** F8: Chuyển lồng */
     public void moDialogChuyenLong() {
         if (selectedCageId == null) {
@@ -691,6 +716,7 @@ public class LongChuongPanel extends JPanel {
         new DialogChuyenChuong(owner, bus, selectedCageId, this::loadCages).setVisible(true);
     }
 
+    // [CN-LC-13] Thêm dịch vụ / thức ăn: chỉ khi lồng đang có thú
     /** F9: Chăm sóc & Dịch vụ (tương tự Gọi món) */
     public void moDialogChamSoc() {
         if (selectedCageId == null) {
@@ -708,6 +734,7 @@ public class LongChuongPanel extends JPanel {
         new DialogChamSocDichVu(owner, bus, selectedCageId, this::loadCages).setVisible(true);
     }
 
+    // [CN-LC-14] Trả & dọn lồng: xác nhận -> về trạng thái Trống
     /** F10: Trả & Dọn lồng */
     public void thucHienDonLong() {
         if (selectedCageId == null) {
@@ -741,12 +768,14 @@ public class LongChuongPanel extends JPanel {
         }
     }
 
+    // [CN-LC-15] Mở danh sách phiếu đặt trước
     /** F11: Danh sách đặt hẹn */
     public void moDialogDanhSachDat() {
         Window owner = SwingUtilities.getWindowAncestor(this);
         new DialogDanhSachDatChuong(owner, bus, this::loadCages).setVisible(true);
     }
 
+    // [CN-LC-16] Chuyển bảo trì / hoàn tất bảo trì (chặn khi có thú)
     /** F12: Bảo trì / Vệ sinh lồng */
     public void thucHienBaoTri() {
         if (selectedCageId == null) {
@@ -791,6 +820,7 @@ public class LongChuongPanel extends JPanel {
         loadCages();
     }
 
+    // [CN-LC-17] Form Thêm lồng chuồng mới
     /** Thêm lồng chuồng mới */
     public void moDialogThemLong() {
         Window owner = SwingUtilities.getWindowAncestor(this);
@@ -805,6 +835,7 @@ public class LongChuongPanel extends JPanel {
         JPanel head = new JPanel(new BorderLayout());
         head.setBackground(Theme.SIDEBAR);
         head.setBorder(new EmptyBorder(14, 20, 14, 20));
+        // [UI-LC-16] Tiêu đề form Thêm lồng
         JLabel title = new JLabel("THÊM LỒNG CHUỒNG MỚI");
         title.setFont(Theme.font(Font.BOLD, 17));
         title.setForeground(Color.WHITE);
@@ -869,6 +900,7 @@ public class LongChuongPanel extends JPanel {
         lKhu.setBounds(24, y, 120, lh);
         body.add(lKhu);
 
+        // [UI-LC-17] Danh sách khu vực trong form Thêm lồng
         String[] dsKhu = {"Khu Mèo", "Khu Chó Nhỏ", "Khu Chó Lớn", "Khu VIP", "Khu Loài Khác"};
         JComboBox<String> cbKhu = new JComboBox<>(dsKhu);
         cbKhu.setFont(valFont);
@@ -882,6 +914,7 @@ public class LongChuongPanel extends JPanel {
         lSize.setBounds(24, y, 120, lh);
         body.add(lSize);
 
+        // [UI-LC-18] Danh sách kích cỡ trong form Thêm lồng
         String[] dsSize = {"Nhỏ (≤ 5kg)", "Vừa (5-15kg)", "Lớn (15-30kg)", "VIP Suite (≤ 50kg)"};
         JComboBox<String> cbSize = new JComboBox<>(dsSize);
         cbSize.setFont(valFont);
@@ -913,6 +946,7 @@ public class LongChuongPanel extends JPanel {
         body.add(spnGia);
 
         // Auto update tải trọng & gợi ý giá khi đổi kích cỡ / khu vực
+        // [CN-LC-18] Chọn kích cỡ -> tự gán tải trọng + giá theo đêm
         cbSize.addActionListener(e -> {
             int idx = cbSize.getSelectedIndex();
             if (idx == 0) { spnKg.setValue(5.0); spnGia.setValue(120000.0); }
@@ -943,7 +977,9 @@ public class LongChuongPanel extends JPanel {
         btnHuy.addActionListener(e -> dlg.dispose());
         foot.add(btnHuy);
 
+        // [UI-LC-19] Nút Lưu Lồng
         RoundedButton btnLuu = new RoundedButton("Lưu Lồng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
+        // [CN-LC-19] Validate mã lồng (rỗng / trùng) -> bus.themChuong
         btnLuu.addActionListener(e -> {
             String ma = txtMa.getText().trim();
             String ten = txtTen.getText().trim();

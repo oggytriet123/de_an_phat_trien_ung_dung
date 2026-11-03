@@ -15,11 +15,13 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 
+import DAO.DichVuDAO;
 import DAO.KhachHangDAO;
 import DAO.ThuCungDAO;
 import DAO.TiemPhongDAO;
 import Entity.KhachHang;
 import Entity.PhieuTiem;
+import Entity.SanPham;
 import Entity.ThuCung;
 
 /**
@@ -30,6 +32,7 @@ public class TiemPhongPanel extends JPanel implements Refreshable {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final TiemPhongDAO dao = new TiemPhongDAO();
+    private final DichVuDAO dichVuDAO = new DichVuDAO();
     private final List<PhieuTiem> danhSach = new ArrayList<>();
     private final List<PhieuTiem> daLoc = new ArrayList<>();
     private final TiemPhongTableModel model = new TiemPhongTableModel();
@@ -266,14 +269,16 @@ public class TiemPhongPanel extends JPanel implements Refreshable {
             }
         });
 
-        JComboBox<String> cbVaccine = new JComboBox<>(new String[]{
-                "Ti\u00eam vaccine ph\u00f2ng D\u1ea1i (Rabies)",
-                "Ti\u00eam vaccine 4 b\u1ec7nh m\u00e8o (Nobivac Ducat)",
-                "Ti\u00eam vaccine 5 b\u1ec7nh ch\u00f3",
-                "Ti\u00eam vaccine 7 b\u1ec7nh ch\u00f3 (Vanguard Plus 5/L4)"
-        });
+        JComboBox<String> cbVaccine = new JComboBox<>();
         cbVaccine.setFont(Theme.font(Font.PLAIN, 13));
         cbVaccine.setBackground(Color.WHITE);
+        List<SanPham> dsVaccine = dichVuDAO.layDichVuTiemPhong();
+        for (SanPham sp : dsVaccine) {
+            cbVaccine.addItem(sp.getTen());
+        }
+        if (dsVaccine.isEmpty()) {
+            cbVaccine.setEditable(true);
+        }
 
         JComboBox<String> cbBacSi = new JComboBox<>(new String[]{
                 "BS. Nguy\u1ec5n Ho\u00e0i Anh",
