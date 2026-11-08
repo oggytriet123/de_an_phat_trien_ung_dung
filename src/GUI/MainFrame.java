@@ -147,6 +147,7 @@ public class MainFrame extends JFrame {
     public MainFrame(TaiKhoan taiKhoan) {
         super("Pet Station");
         this.taiKhoan = taiKhoan;
+        hoaDonBus.datNhanVienDangNhap(taiKhoan.getMaTaiKhoan());   // nhân viên lập hóa đơn = người đăng nhập
         setIconImage(Icons.appIcon());
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
         addWindowListener(new java.awt.event.WindowAdapter() {
