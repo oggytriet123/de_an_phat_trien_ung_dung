@@ -191,10 +191,9 @@ public class HoaDonDAO {
                                         }
                                     }
                                 }
-                                if (foundMaKH == null && h.getTenKH() != null && !h.getTenKH().trim().isEmpty()) {
-                                    try {
-                                        foundMaKH = new KhachHangDAO().them(h.getTenKH().trim(), sdtChiSo, 0, new java.util.ArrayList<>());
-                                    } catch (Exception ignored) {}
+                                // Không tự tạo khách hàng mới: hóa đơn phải gắn với khách đã đăng ký
+                                if (foundMaKH == null) {
+                                    throw new SQLException("Khách hàng chưa đăng ký, không thể lưu hóa đơn " + h.getMaHD());
                                 }
                                 maKH = foundMaKH;
                                 h.setMaKH(maKH);
@@ -204,9 +203,19 @@ public class HoaDonDAO {
                 }
 
                 if (!exists) {
+                    // Nhân viên lập hóa đơn: chỉ ghi khi thuộc NHANVIEN_BANHANG (ràng buộc FK_HD_NVBH)
+                    String maNV = (h.getMaNV() != null && !h.getMaNV().trim().isEmpty()) ? h.getMaNV().trim() : null;
+                    if (maNV != null) {
+                        try (PreparedStatement chk = con.prepareStatement("SELECT 1 FROM NHANVIEN_BANHANG WHERE maNV = ?")) {
+                            chk.setString(1, maNV);
+                            try (ResultSet rsChk = chk.executeQuery()) {
+                                if (!rsChk.next()) maNV = null;
+                            }
+                        }
+                    }
                     String insSql = "INSERT INTO HOADON (maHD, ngayLap, tongTien, maKH, soO, trangThai, "
-                            + "phuongThuc, ngayTao, ngayThanhToan, tienGiam, maGiamGia, tenKH, soDienThoai) "
-                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                            + "phuongThuc, ngayTao, ngayThanhToan, tienGiam, maGiamGia, tenKH, soDienThoai, maNV_BH) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     try (PreparedStatement ps = con.prepareStatement(insSql)) {
                         ps.setString(1, h.getMaHD());
                         ps.setDate(2, Date.valueOf(h.getNgayTao().toLocalDate()));
@@ -221,6 +230,7 @@ public class HoaDonDAO {
                         ps.setString(11, h.getMaGiamGia() != null ? h.getMaGiamGia().getMa() : null);
                         ps.setString(12, h.getTenKH());
                         ps.setString(13, h.getSdt());
+                        ps.setString(14, maNV);
                         ps.executeUpdate();
                     }
                 } else {
