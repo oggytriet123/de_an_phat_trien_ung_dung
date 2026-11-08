@@ -701,8 +701,11 @@ public class TaoHoaDonPanel extends JPanel {
                 datLoi(ex.getMessage());
                 return;
             }
-            veQuanLy.accept("Đã thanh toán " + ma + " (" + Theme.money(tong) + ", " + phuongThuc
-                    + ") - xem tại Lịch sử hóa đơn");
+            Window w = SwingUtilities.getWindowAncestor(this);
+            DialogXuatHoaDon.hienThi(w, hd, () -> {
+                veQuanLy.accept("Đã thanh toán " + ma + " (" + Theme.money(tong) + ", " + phuongThuc
+                        + ") - xem tại Lịch sử hóa đơn");
+            });
         });
     }
 

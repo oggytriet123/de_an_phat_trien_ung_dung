@@ -175,7 +175,7 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
         table.setRowSelectionAllowed(false);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_ALL_COLUMNS);
 
-        int[] widths = {100, 150, 70, 120, 140, 110, 100, 120, 70};
+        int[] widths = {100, 150, 70, 120, 140, 110, 100, 120, 95};
         for (int i = 0; i < widths.length; i++) table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         table.getColumnModel().getColumn(0).setCellRenderer(new TextCell(true, SwingConstants.LEFT, HoaDon::getMaHD));
         table.getColumnModel().getColumn(1).setCellRenderer(new TextCell(false, SwingConstants.LEFT, HoaDon::getTenKH));
@@ -198,13 +198,21 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
 
         table.addMouseListener(new MouseAdapter() {
             @Override public void mouseClicked(MouseEvent e) {
-                if (!trungXem(e.getPoint())) return;
-                HoaDonPopups.chiTiet(LichSuHoaDonPanel.this, model.rows.get(table.rowAtPoint(e.getPoint())));
+                Point p = e.getPoint();
+                int row = table.rowAtPoint(p);
+                if (row < 0 || row >= model.rows.size()) return;
+                if (trungXem(p)) {
+                    HoaDonPopups.chiTiet(LichSuHoaDonPanel.this, model.rows.get(row));
+                } else if (trungIn(p)) {
+                    Window w = SwingUtilities.getWindowAncestor(LichSuHoaDonPanel.this);
+                    DialogXuatHoaDon.hienThi(w, model.rows.get(row), null);
+                }
             }
         });
         table.addMouseMotionListener(new MouseAdapter() {
             @Override public void mouseMoved(MouseEvent e) {
-                table.setCursor(Cursor.getPredefinedCursor(trungXem(e.getPoint()) ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
+                boolean hand = trungXem(e.getPoint()) || trungIn(e.getPoint());
+                table.setCursor(Cursor.getPredefinedCursor(hand ? Cursor.HAND_CURSOR : Cursor.DEFAULT_CURSOR));
             }
         });
 
@@ -221,7 +229,14 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
         int row = table.rowAtPoint(p), col = table.columnAtPoint(p);
         if (row < 0 || row >= model.rows.size() || col != COL_THAO_TAC) return false;
         Rectangle r = table.getCellRect(row, col, false);
-        return ActionCell.hit(table, p.x - r.x);
+        return ActionCell.hitXem(table, p.x - r.x);
+    }
+
+    private boolean trungIn(Point p) {
+        int row = table.rowAtPoint(p), col = table.columnAtPoint(p);
+        if (row < 0 || row >= model.rows.size() || col != COL_THAO_TAC) return false;
+        Rectangle r = table.getCellRect(row, col, false);
+        return ActionCell.hitIn(table, p.x - r.x);
     }
 
     // ---------------- Tìm kiếm / phân trang ----------------
@@ -395,9 +410,11 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
         }
     }
 
-    /** Ô thao tác: liên kết chữ "Xem". */
+    /** Ô thao tác: liên kết chữ "Xem" và "In". */
     private static class ActionCell extends JPanel implements TableCellRenderer {
-        private static final String LABEL = "Xem";
+        private static final String LBL_XEM = "Xem";
+        private static final String SEP = " · ";
+        private static final String LBL_IN = "In";
         private static final int PAD = 12;
 
         ActionCell() { setOpaque(true); setBackground(Color.WHITE); }
@@ -406,9 +423,19 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
             return this;
         }
 
-        static boolean hit(JComponent ref, int x) {
-            int w = ref.getFontMetrics(Theme.font(Font.BOLD, 13)).stringWidth(LABEL);
-            return x >= PAD - 4 && x <= PAD + w + 4;
+        static boolean hitXem(JComponent ref, int x) {
+            FontMetrics fm = ref.getFontMetrics(Theme.font(Font.BOLD, 13));
+            int wXem = fm.stringWidth(LBL_XEM);
+            return x >= PAD - 4 && x <= PAD + wXem + 2;
+        }
+
+        static boolean hitIn(JComponent ref, int x) {
+            FontMetrics fm = ref.getFontMetrics(Theme.font(Font.BOLD, 13));
+            int wXem = fm.stringWidth(LBL_XEM);
+            int wSep = fm.stringWidth(SEP);
+            int wIn = fm.stringWidth(LBL_IN);
+            int startIn = PAD + wXem + wSep;
+            return x >= startIn - 2 && x <= startIn + wIn + 4;
         }
 
         @Override protected void paintComponent(Graphics g) {
@@ -418,9 +445,19 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
             g2.setColor(Theme.ROW_LINE);
             g2.fillRect(0, getHeight() - 1, getWidth(), 1);
             g2.setFont(Theme.font(Font.BOLD, 13));
-            g2.setColor(Theme.PRIMARY);
             FontMetrics fm = g2.getFontMetrics();
-            g2.drawString(LABEL, PAD, (getHeight() - 1 - fm.getHeight()) / 2 + fm.getAscent());
+            int y = (getHeight() - 1 - fm.getHeight()) / 2 + fm.getAscent();
+
+            g2.setColor(Theme.PRIMARY);
+            g2.drawString(LBL_XEM, PAD, y);
+            int xSep = PAD + fm.stringWidth(LBL_XEM);
+
+            g2.setColor(Theme.MUTED);
+            g2.drawString(SEP, xSep, y);
+            int xIn = xSep + fm.stringWidth(SEP);
+
+            g2.setColor(Theme.GREEN);
+            g2.drawString(LBL_IN, xIn, y);
             g2.dispose();
         }
     }

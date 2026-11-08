@@ -450,8 +450,8 @@ final class HoaDonPopups {
         String[] huongDan = {
             "Xác nhận sau khi đã nhận đủ tiền mặt từ khách.",
             "Xác nhận sau khi giao dịch quẹt thẻ thành công.",
-            "Quét mã QR MoMo / VietQR bên dưới (Hiệu lực: 1 phút).",
-            "Chỉ xác nhận sau khi nhận được thông báo thanh toán ZaloPay thành công.",
+            "Quét mã QR MoMo / VietQR bên dưới (Số tiền tự động hiển thị trên điện thoại).",
+            "Quét mã VietQR bằng ZaloPay / Ngân hàng bên dưới (Số tiền tự động hiển thị).",
         };
         JLabel hint = new JLabel(huongDan[0]);
         hint.setFont(Theme.font(Font.PLAIN, 12));
@@ -465,31 +465,38 @@ final class HoaDonPopups {
         RoundedButton dong = secondary("Đóng", 150);
         RoundedButton xacNhan = primary("Xác nhận thanh toán", 210);
 
-        // Panel QR MoMo có đồng hồ đếm ngược 1 phút
+        // Panel QR động chuẩn EMVCo VietQR có nhúng sẵn số tiền & mã hóa đơn
         JPanel pnlMoMo = new JPanel();
         pnlMoMo.setOpaque(false);
         pnlMoMo.setLayout(new BoxLayout(pnlMoMo, BoxLayout.Y_AXIS));
         pnlMoMo.setAlignmentX(Component.LEFT_ALIGNMENT);
         pnlMoMo.setVisible(false);
 
-        QRPanel qrComp = new QRPanel(layAnhQRMomo());
+        QRPanel qrComp = new QRPanel(VietQRUtil.taoAnhQR(tong, maHD, 210));
         qrComp.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        JLabel lblAutoAmt = new JLabel("✓ Tự động hiện số tiền " + Theme.money(tong) + " (Nội dung: TT " + maHD + ")");
+        lblAutoAmt.setFont(Theme.font(Font.BOLD, 12));
+        lblAutoAmt.setForeground(Theme.GREEN);
+        lblAutoAmt.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel lblTimer = new JLabel("⏱ Mã QR có hiệu lực trong: 01:00");
         lblTimer.setFont(Theme.font(Font.BOLD, 14));
         lblTimer.setForeground(new Color(0x0284C7));
         lblTimer.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel lblSubQR = new JLabel("Vui lòng quét mã trên ứng dụng MoMo hoặc Ngân hàng (VietQR)");
+        JLabel lblSubQR = new JLabel("Quét bằng MoMo, ZaloPay hoặc bất kỳ ứng dụng Ngân hàng (VietQR) nào");
         lblSubQR.setFont(Theme.font(Font.PLAIN, 12));
         lblSubQR.setForeground(Theme.MUTED);
         lblSubQR.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        pnlMoMo.add(Box.createVerticalStrut(10));
-        pnlMoMo.add(qrComp);
         pnlMoMo.add(Box.createVerticalStrut(8));
-        pnlMoMo.add(lblTimer);
+        pnlMoMo.add(qrComp);
+        pnlMoMo.add(Box.createVerticalStrut(6));
+        pnlMoMo.add(lblAutoAmt);
         pnlMoMo.add(Box.createVerticalStrut(4));
+        pnlMoMo.add(lblTimer);
+        pnlMoMo.add(Box.createVerticalStrut(2));
         pnlMoMo.add(lblSubQR);
 
         int[] giayConLai = {60};
@@ -507,7 +514,7 @@ final class HoaDonPopups {
                 timerHolder[0].stop();
                 Overlay.dong(host);
                 JOptionPane.showMessageDialog(host,
-                    "Thanh toán không thành công!\nMã QR MoMo đã hết hạn (quá 1 phút).\nVui lòng thực hiện lại giao dịch.",
+                    "Thanh toán không thành công!\nMã QR đã hết hạn (quá 1 phút).\nVui lòng thực hiện lại giao dịch.",
                     "Thanh toán thất bại",
                     JOptionPane.ERROR_MESSAGE);
             }
@@ -523,8 +530,8 @@ final class HoaDonPopups {
                     chon[0] = mc.ten;
                     hint.setText(huongDan[idx]);
 
-                    if ("MoMo".equalsIgnoreCase(mc.ten)) {
-                        card.setPreferredSize(new Dimension(580, 680));
+                    if ("MoMo".equalsIgnoreCase(mc.ten) || "ZaloPay".equalsIgnoreCase(mc.ten)) {
+                        card.setPreferredSize(new Dimension(580, 705));
                         pnlMoMo.setVisible(true);
                         xacNhan.setText("Hoàn thành");
                         giayConLai[0] = 60;
@@ -599,7 +606,7 @@ final class HoaDonPopups {
         QRPanel(Image img) {
             this.img = img;
             setOpaque(false);
-            Dimension d = new Dimension(190, 190);
+            Dimension d = new Dimension(210, 210);
             setPreferredSize(d);
             setMinimumSize(d);
             setMaximumSize(d);
@@ -609,14 +616,14 @@ final class HoaDonPopups {
             super.paintComponent(g);
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BILINEAR);
+            g2.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_NEAREST_NEIGHBOR);
             int w = getWidth(), h = getHeight();
             g2.setColor(Color.WHITE);
             g2.fillRoundRect(0, 0, w, h, 14, 14);
             g2.setColor(new Color(0xD1D5DB));
             g2.drawRoundRect(0, 0, w - 1, h - 1, 14, 14);
             if (img != null) {
-                g2.drawImage(img, 8, 8, w - 16, h - 16, this);
+                g2.drawImage(img, 6, 6, w - 12, h - 12, this);
             } else {
                 g2.setColor(Theme.MUTED);
                 g2.setFont(Theme.font(Font.PLAIN, 12));
@@ -822,11 +829,21 @@ final class HoaDonPopups {
         body.add(sumRow("Tổng thanh toán", Theme.money(hd.canThanhToan()), true));
         card.add(body, BorderLayout.CENTER);
 
-        RoundedButton dong = primary("Đóng", 130);
+        RoundedButton dong = primary("Đóng", 110);
         Runnable dongPopup = () -> Overlay.dong(host);
         dong.addActionListener(e -> dongPopup.run());
-        JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+
+        RoundedButton inHd = new RoundedButton("In / Xuất hóa đơn", Theme.PRIMARY, Theme.PRIMARY_HOVER, Color.WHITE, null, 8);
+        inHd.setPreferredSize(new Dimension(150, 40));
+        inHd.addActionListener(e -> {
+            dongPopup.run();
+            Window w = SwingUtilities.getWindowAncestor(host);
+            DialogXuatHoaDon.hienThi(w, hd, null);
+        });
+
+        JPanel south = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
         south.setOpaque(false);
+        south.add(inHd);
         south.add(dong);
         card.add(south, BorderLayout.SOUTH);
         Overlay.hien(host, card, dongPopup);
