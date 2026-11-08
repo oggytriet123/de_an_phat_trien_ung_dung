@@ -450,8 +450,8 @@ final class HoaDonPopups {
         String[] huongDan = {
             "Xác nhận sau khi đã nhận đủ tiền mặt từ khách.",
             "Xác nhận sau khi giao dịch quẹt thẻ thành công.",
-            "Quét mã QR MoMo / VietQR bên dưới (Số tiền tự động hiển thị trên điện thoại).",
-            "Quét mã VietQR bằng ZaloPay / Ngân hàng bên dưới (Số tiền tự động hiển thị).",
+            "Phương thức QR MoMo (Đang phát triển / Thử nghiệm) - Vui lòng kiểm tra và xác nhận thủ công.",
+            "Phương thức QR ZaloPay (Đang phát triển / Thử nghiệm) - Vui lòng kiểm tra và xác nhận thủ công.",
         };
         JLabel hint = new JLabel(huongDan[0]);
         hint.setFont(Theme.font(Font.PLAIN, 12));
@@ -472,32 +472,74 @@ final class HoaDonPopups {
         pnlMoMo.setAlignmentX(Component.LEFT_ALIGNMENT);
         pnlMoMo.setVisible(false);
 
-        QRPanel qrComp = new QRPanel(VietQRUtil.taoAnhQR(tong, maHD, 210));
+        // Nhãn trạng thái (Đang phát triển / Thử nghiệm)
+        JLabel lblBetaBadge = new JLabel("⚠ Cổng thanh toán QR (Đang phát triển / Thử nghiệm)");
+        lblBetaBadge.setFont(Theme.font(Font.BOLD, 12));
+        lblBetaBadge.setForeground(Theme.AMBER_TEXT);
+        lblBetaBadge.setOpaque(true);
+        lblBetaBadge.setBackground(Theme.AMBER_PILL);
+        lblBetaBadge.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.AMBER_BORDER, 1, true),
+                new EmptyBorder(4, 12, 4, 12)
+        ));
+        lblBetaBadge.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        QRPanel qrComp = new QRPanel(VietQRUtil.taoAnhQR(tong, maHD, 185));
         qrComp.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel lblAutoAmt = new JLabel("✓ Tự động hiện số tiền " + Theme.money(tong) + " (Nội dung: TT " + maHD + ")");
+        JLabel lblAutoAmt = new JLabel("✓ Quét mã tự động hiện số tiền " + Theme.money(tong) + " (Nội dung: TT " + maHD + ")");
         lblAutoAmt.setFont(Theme.font(Font.BOLD, 12));
         lblAutoAmt.setForeground(Theme.GREEN);
         lblAutoAmt.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JLabel lblTimer = new JLabel("⏱ Mã QR có hiệu lực trong: 01:00");
-        lblTimer.setFont(Theme.font(Font.BOLD, 14));
+        lblTimer.setFont(Theme.font(Font.BOLD, 13));
         lblTimer.setForeground(new Color(0x0284C7));
         lblTimer.setAlignmentX(Component.CENTER_ALIGNMENT);
 
-        JLabel lblSubQR = new JLabel("Quét bằng MoMo, ZaloPay hoặc bất kỳ ứng dụng Ngân hàng (VietQR) nào");
-        lblSubQR.setFont(Theme.font(Font.PLAIN, 12));
-        lblSubQR.setForeground(Theme.MUTED);
-        lblSubQR.setAlignmentX(Component.CENTER_ALIGNMENT);
+        // Khung hướng dẫn xác nhận thủ công
+        JPanel boxHuongDan = new JPanel();
+        boxHuongDan.setLayout(new BoxLayout(boxHuongDan, BoxLayout.Y_AXIS));
+        boxHuongDan.setBackground(Theme.AMBER_BG);
+        boxHuongDan.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Theme.AMBER_BORDER, 1, true),
+                new EmptyBorder(8, 12, 8, 12)
+        ));
+        boxHuongDan.setAlignmentX(Component.CENTER_ALIGNMENT);
+        boxHuongDan.setMaximumSize(new Dimension(520, 90));
 
-        pnlMoMo.add(Box.createVerticalStrut(8));
-        pnlMoMo.add(qrComp);
+        JLabel lblHdTitle = new JLabel("Hướng dẫn xác nhận thủ công:");
+        lblHdTitle.setFont(Theme.font(Font.BOLD, 12));
+        lblHdTitle.setForeground(Theme.AMBER_TEXT);
+
+        JLabel lblHdStep1 = new JLabel("1. Khách quét mã QR trên ứng dụng MoMo / ZaloPay / Ngân hàng để chuyển khoản.");
+        lblHdStep1.setFont(Theme.font(Font.PLAIN, 11));
+        lblHdStep1.setForeground(Theme.TEXT);
+
+        JLabel lblHdStep2 = new JLabel("2. Thu ngân kiểm tra thông báo nhận tiền hoặc màn hình giao dịch thành công của khách.");
+        lblHdStep2.setFont(Theme.font(Font.PLAIN, 11));
+        lblHdStep2.setForeground(Theme.TEXT);
+
+        JLabel lblHdStep3 = new JLabel("3. Nhấn nút \"Xác nhận thủ công\" bên dưới để hoàn tất thanh toán và xuất hóa đơn.");
+        lblHdStep3.setFont(Theme.font(Font.BOLD, 11));
+        lblHdStep3.setForeground(Theme.PRIMARY);
+
+        boxHuongDan.add(lblHdTitle);
+        boxHuongDan.add(Box.createVerticalStrut(3));
+        boxHuongDan.add(lblHdStep1);
+        boxHuongDan.add(lblHdStep2);
+        boxHuongDan.add(lblHdStep3);
+
         pnlMoMo.add(Box.createVerticalStrut(6));
-        pnlMoMo.add(lblAutoAmt);
+        pnlMoMo.add(lblBetaBadge);
+        pnlMoMo.add(Box.createVerticalStrut(6));
+        pnlMoMo.add(qrComp);
         pnlMoMo.add(Box.createVerticalStrut(4));
-        pnlMoMo.add(lblTimer);
+        pnlMoMo.add(lblAutoAmt);
         pnlMoMo.add(Box.createVerticalStrut(2));
-        pnlMoMo.add(lblSubQR);
+        pnlMoMo.add(lblTimer);
+        pnlMoMo.add(Box.createVerticalStrut(6));
+        pnlMoMo.add(boxHuongDan);
 
         int[] giayConLai = {60};
         Timer[] timerHolder = new Timer[1];
@@ -531,9 +573,9 @@ final class HoaDonPopups {
                     hint.setText(huongDan[idx]);
 
                     if ("MoMo".equalsIgnoreCase(mc.ten) || "ZaloPay".equalsIgnoreCase(mc.ten)) {
-                        card.setPreferredSize(new Dimension(580, 705));
+                        card.setPreferredSize(new Dimension(580, 760));
                         pnlMoMo.setVisible(true);
-                        xacNhan.setText("Hoàn thành");
+                        xacNhan.setText("Xác nhận thủ công");
                         giayConLai[0] = 60;
                         lblTimer.setText("⏱ Mã QR có hiệu lực trong: 01:00");
                         lblTimer.setForeground(new Color(0x0284C7));
@@ -541,7 +583,7 @@ final class HoaDonPopups {
                     } else {
                         timerHolder[0].stop();
                         pnlMoMo.setVisible(false);
-                        card.setPreferredSize(new Dimension(580, 450));
+                        card.setPreferredSize(new Dimension(580, 455));
                         xacNhan.setText("Xác nhận thanh toán");
                     }
                     card.revalidate();
@@ -606,7 +648,7 @@ final class HoaDonPopups {
         QRPanel(Image img) {
             this.img = img;
             setOpaque(false);
-            Dimension d = new Dimension(210, 210);
+            Dimension d = new Dimension(185, 185);
             setPreferredSize(d);
             setMinimumSize(d);
             setMaximumSize(d);
@@ -637,13 +679,15 @@ final class HoaDonPopups {
     private static final class MethodCard extends JPanel {
         final String ten;
         private boolean chon;
+        private final boolean laQR;
 
         MethodCard(String ten, boolean chon) {
             this.ten = ten;
             this.chon = chon;
+            this.laQR = "MoMo".equalsIgnoreCase(ten) || "ZaloPay".equalsIgnoreCase(ten);
             setOpaque(false);
             setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-            setPreferredSize(new Dimension(0, 50));
+            setPreferredSize(new Dimension(0, 52));
         }
 
         void setChon(boolean c) { chon = c; repaint(); }
@@ -657,10 +701,22 @@ final class HoaDonPopups {
             g2.fillRoundRect(0, 0, w, h, 8, 8);
             g2.setColor(chon ? Theme.PRIMARY : Theme.BORDER);
             g2.drawRoundRect(0, 0, w - 1, h - 1, 8, 8);
-            g2.setFont(Theme.font(Font.BOLD, 13));
-            g2.setColor(Theme.TEXT);
-            FontMetrics fm = g2.getFontMetrics();
-            g2.drawString(ten, 14, (h - fm.getHeight()) / 2 + fm.getAscent());
+
+            if (laQR) {
+                g2.setFont(Theme.font(Font.BOLD, 13));
+                g2.setColor(Theme.TEXT);
+                g2.drawString(ten + " (QR)", 14, 22);
+
+                g2.setFont(Theme.font(Font.BOLD, 10));
+                g2.setColor(Theme.AMBER_TEXT);
+                g2.drawString("(Đang phát triển / Thử nghiệm)", 14, 39);
+            } else {
+                g2.setFont(Theme.font(Font.BOLD, 13));
+                g2.setColor(Theme.TEXT);
+                FontMetrics fm = g2.getFontMetrics();
+                g2.drawString(ten, 14, (h - fm.getHeight()) / 2 + fm.getAscent());
+            }
+
             if (chon) {
                 g2.setColor(Theme.PRIMARY);
                 g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
