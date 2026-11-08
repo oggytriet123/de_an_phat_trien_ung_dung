@@ -172,15 +172,55 @@ public class HoaDonDAO {
                     }
                 }
 
+                // Đảm bảo maKH tồn tại trong bảng KHACHHANG để không vi phạm ràng buộc ngoại FK_HD_KH
+                String maKH = (h.getMaKH() != null && !h.getMaKH().trim().isEmpty()) ? h.getMaKH() : null;
+                if (maKH != null) {
+                    try (PreparedStatement chk = con.prepareStatement("SELECT 1 FROM KHACHHANG WHERE maKH = ?")) {
+                        chk.setString(1, maKH);
+                        try (ResultSet rsChk = chk.executeQuery()) {
+                            if (!rsChk.next()) {
+                                // Không tìm thấy maKH trong CSDL, thử tra cứu theo số điện thoại
+                                String sdtChiSo = h.getSdt() == null ? "" : h.getSdt().replaceAll("\\D", "");
+                                String foundMaKH = null;
+                                if (!sdtChiSo.isEmpty()) {
+                                    try (PreparedStatement chkSdt = con.prepareStatement(
+                                            "SELECT maKH FROM KHACHHANG WHERE REPLACE(soDienThoai, ' ', '') = ?")) {
+                                        chkSdt.setString(1, sdtChiSo);
+                                        try (ResultSet rsSdt = chkSdt.executeQuery()) {
+                                            if (rsSdt.next()) foundMaKH = rsSdt.getString(1);
+                                        }
+                                    }
+                                }
+                                // Không tự tạo khách hàng mới: hóa đơn phải gắn với khách đã đăng ký
+                                if (foundMaKH == null) {
+                                    throw new SQLException("Khách hàng chưa đăng ký, không thể lưu hóa đơn " + h.getMaHD());
+                                }
+                                maKH = foundMaKH;
+                                h.setMaKH(maKH);
+                            }
+                        }
+                    }
+                }
+
                 if (!exists) {
+                    // Nhân viên lập hóa đơn: chỉ ghi khi thuộc NHANVIEN_BANHANG (ràng buộc FK_HD_NVBH)
+                    String maNV = (h.getMaNV() != null && !h.getMaNV().trim().isEmpty()) ? h.getMaNV().trim() : null;
+                    if (maNV != null) {
+                        try (PreparedStatement chk = con.prepareStatement("SELECT 1 FROM NHANVIEN_BANHANG WHERE maNV = ?")) {
+                            chk.setString(1, maNV);
+                            try (ResultSet rsChk = chk.executeQuery()) {
+                                if (!rsChk.next()) maNV = null;
+                            }
+                        }
+                    }
                     String insSql = "INSERT INTO HOADON (maHD, ngayLap, tongTien, maKH, soO, trangThai, "
-                            + "phuongThuc, ngayTao, ngayThanhToan, tienGiam, maGiamGia, tenKH, soDienThoai) "
-                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                            + "phuongThuc, ngayTao, ngayThanhToan, tienGiam, maGiamGia, tenKH, soDienThoai, maNV_BH) "
+                            + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                     try (PreparedStatement ps = con.prepareStatement(insSql)) {
                         ps.setString(1, h.getMaHD());
                         ps.setDate(2, Date.valueOf(h.getNgayTao().toLocalDate()));
                         ps.setDouble(3, h.canThanhToan());
-                        ps.setString(4, (h.getMaKH() != null && !h.getMaKH().trim().isEmpty()) ? h.getMaKH() : null);
+                        ps.setString(4, maKH);
                         ps.setInt(5, h.getSoO());
                         ps.setString(6, h.getTrangThai());
                         ps.setString(7, h.getPhuongThuc());
@@ -190,6 +230,7 @@ public class HoaDonDAO {
                         ps.setString(11, h.getMaGiamGia() != null ? h.getMaGiamGia().getMa() : null);
                         ps.setString(12, h.getTenKH());
                         ps.setString(13, h.getSdt());
+                        ps.setString(14, maNV);
                         ps.executeUpdate();
                     }
                 } else {
@@ -198,7 +239,7 @@ public class HoaDonDAO {
                             + "tenKH = ?, soDienThoai = ? WHERE maHD = ?";
                     try (PreparedStatement ps = con.prepareStatement(upSql)) {
                         ps.setDouble(1, h.canThanhToan());
-                        ps.setString(2, (h.getMaKH() != null && !h.getMaKH().trim().isEmpty()) ? h.getMaKH() : null);
+                        ps.setString(2, maKH);
                         ps.setInt(3, h.getSoO());
                         ps.setString(4, h.getTrangThai());
                         ps.setString(5, h.getPhuongThuc());

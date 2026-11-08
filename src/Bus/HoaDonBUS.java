@@ -25,11 +25,21 @@ public class HoaDonBUS {
     private final KhachHangBUS khachHang;
     private final HoaDonDAO dao = new HoaDonDAO();
     private int soHoaDonTiepTheo = 1;
+    private String maNVDangNhap = "";                      // nhân viên của phiên đăng nhập hiện tại
 
     /** Mở lên tải các ô đang mở và lịch sử đã thanh toán từ CSDL SQL Server. */
     public HoaDonBUS(KhachHangBUS khachHang) {
         this.khachHang = khachHang;
         taiTuCSDL();
+    }
+
+    /** Gắn nhân viên đang đăng nhập; mọi hóa đơn lưu sau đó đều ghi nhận nhân viên này là người lập. */
+    public synchronized void datNhanVienDangNhap(String maNV) {
+        this.maNVDangNhap = maNV == null ? "" : maNV.trim();
+    }
+
+    public String getNhanVienDangNhap() {
+        return maNVDangNhap;
     }
 
     public synchronized void taiTuCSDL() {
@@ -93,12 +103,16 @@ public class HoaDonBUS {
     }
 
     /**
-     * Một số điện thoại chỉ thuộc về một khách hàng: nếu số đã đăng ký cho khách khác tên thì báo lỗi.
+     * Hóa đơn phải gắn với một khách hàng đã đăng ký: số điện thoại phải có trong danh sách khách hàng
+     * (hệ thống không tự tạo khách mới khi lưu hóa đơn) và tên phải khớp với khách đó.
      * Tên được so khớp không phân biệt hoa thường và dấu.
      */
     public String loiTrungSdt(String ten, String sdt) {
         KhachHang k = khachHang.timTheoSdtAnToan(KhachHangBUS.chuanHoaSdt(sdt));
-        if (k == null) return null;
+        if (k == null) {
+            return "Khách hàng chưa đăng ký. Hãy đăng ký khách hàng trước (Danh Mục > Khách Hàng) "
+                    + "rồi lập hóa đơn.";
+        }
         String a = ChuoiUtil.chuanHoa(KhachHangBUS.chuanHoaTen(ten));
         String b = ChuoiUtil.chuanHoa(KhachHangBUS.chuanHoaTen(k.getHoTen()));
         if (a.equals(b)) return null;
@@ -129,20 +143,24 @@ public class HoaDonBUS {
         String loi = kiemTra(nhap);
         if (loi != null) throw new IllegalArgumentException(loi);
         if (nhap.daThanhToan()) throw new IllegalStateException("Hóa đơn đã thanh toán, không thể sửa.");
+        if (maNVDangNhap.isEmpty()) {
+            throw new IllegalStateException("Chưa xác định nhân viên đăng nhập, không thể lập hóa đơn.");
+        }
         int i = nhap.getSoO() - 1;
         HoaDon cu = cacO[i];
         if (cu != null && !cu.getMaHD().equals(nhap.getMaHD())) {
             throw new IllegalStateException("Ô " + nhap.getSoO() + " đang chứa hóa đơn khác.");
         }
 
-        // Chuẩn hóa thông tin khách và gắn mã khách hàng (khách chưa có thì tự tạo mới)
+        // Gắn hóa đơn với khách hàng đã đăng ký (không tự tạo khách mới) và nhân viên đang đăng nhập
         String ten = KhachHangBUS.chuanHoaTen(nhap.getTenKH());
         String sdt = KhachHangBUS.chuanHoaSdt(nhap.getSdt());
         KhachHang k = khachHang.timTheoSdtAnToan(sdt);
-        if (k == null) k = khachHang.them(ten, sdt, "Thường", "");
+        if (k == null) throw new IllegalArgumentException(loiTrungSdt(ten, sdt));
         nhap.setTenKH(ten);
         nhap.setSdt(KhachHangBUS.dinhDangSdt(sdt));
         nhap.setMaKH(k.getMaKH());
+        if (nhap.getMaNV().isEmpty()) nhap.setMaNV(maNVDangNhap);   // giữ nguyên người lập khi người khác sửa/thanh toán
 
         if (cu == null) {
             nhap.setNgayTao(LocalDateTime.now());

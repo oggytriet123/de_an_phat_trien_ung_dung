@@ -15,6 +15,7 @@ public class HoaDon {
     private String tenKH = "";
     private String sdt = "";
     private String maKH = "";
+    private String maNV = "";               // nhân viên lập hóa đơn (lấy từ phiên đăng nhập)
     private final List<DongGioHang> dong = new ArrayList<>();
     private MaGiamGia maGiamGia;
     private String trangThai = CHUA_THANH_TOAN;
@@ -33,6 +34,7 @@ public class HoaDon {
         h.tenKH = tenKH;
         h.sdt = sdt;
         h.maKH = maKH;
+        h.maNV = maNV;
         for (DongGioHang d : dong) h.dong.add(new DongGioHang(d.getSanPham(), d.getSoLuong()));
         h.maGiamGia = maGiamGia;
         h.trangThai = trangThai;
@@ -90,6 +92,7 @@ public class HoaDon {
     public String getTenKH() { return tenKH; }
     public String getSdt() { return sdt; }
     public String getMaKH() { return maKH; }
+    public String getMaNV() { return maNV; }
     public MaGiamGia getMaGiamGia() { return maGiamGia; }
     public String getTrangThai() { return trangThai; }
     public String getPhuongThuc() { return phuongThuc; }
@@ -101,6 +104,7 @@ public class HoaDon {
     public void setTenKH(String v) { this.tenKH = v == null ? "" : v; }
     public void setSdt(String v) { this.sdt = v == null ? "" : v; }
     public void setMaKH(String v) { this.maKH = v == null ? "" : v; }
+    public void setMaNV(String v) { this.maNV = v == null ? "" : v; }
     public void setMaGiamGia(MaGiamGia m) { this.maGiamGia = m; }
     public void setNgayTao(LocalDateTime t) { this.ngayTao = t; }
     public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
