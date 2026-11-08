@@ -701,11 +701,15 @@ public class TaoHoaDonPanel extends JPanel {
                 datLoi(ex.getMessage());
                 return;
             }
+            HoaDon hdDaThanhToan = hd.saoChep();
+            int viTriO = Math.max(0, hd.getSoO() - 1);
+            hd.getDong().clear();
+            hd.setMaGiamGia(null);
+            batDau(bus.taoNhap(viTriO));
+            veQuanLy.accept("Đã thanh toán " + ma + " (" + Theme.money(tong) + ", " + phuongThuc
+                    + ") - xem tại Lịch sử hóa đơn");
             Window w = SwingUtilities.getWindowAncestor(this);
-            DialogXuatHoaDon.hienThi(w, hd, () -> {
-                veQuanLy.accept("Đã thanh toán " + ma + " (" + Theme.money(tong) + ", " + phuongThuc
-                        + ") - xem tại Lịch sử hóa đơn");
-            });
+            DialogXuatHoaDon.hienThi(w, hdDaThanhToan, null);
         });
     }
 

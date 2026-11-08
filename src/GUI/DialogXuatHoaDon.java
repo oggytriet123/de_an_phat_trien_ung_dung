@@ -114,6 +114,14 @@ public class DialogXuatHoaDon extends JDialog {
                 JComponent.WHEN_IN_FOCUSED_WINDOW);
 
         setDefaultCloseOperation(DISPOSE_ON_CLOSE);
+        addWindowListener(new java.awt.event.WindowAdapter() {
+            @Override
+            public void windowClosed(java.awt.event.WindowEvent e) {
+                if (onDong != null) {
+                    onDong.run();
+                }
+            }
+        });
     }
 
     private JPanel taoHeader() {
@@ -158,9 +166,6 @@ public class DialogXuatHoaDon extends JDialog {
 
     private void dong() {
         dispose();
-        if (onDong != null) {
-            onDong.run();
-        }
     }
 
     /** In trực tiếp hóa đơn qua hệ thống máy in (POS / Laser / Microsoft Print to PDF). */

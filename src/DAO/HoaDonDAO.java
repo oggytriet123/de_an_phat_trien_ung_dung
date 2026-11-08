@@ -283,7 +283,7 @@ public class HoaDonDAO {
 
     public void thanhToan(HoaDon h) throws SQLException {
         luuHoaDon(h);
-        String sql = "UPDATE HOADON SET trangThai = N'Đã thanh toán', phuongThuc = ?, ngayThanhToan = ? WHERE maHD = ?";
+        String sql = "UPDATE HOADON SET trangThai = N'Đã thanh toán', soO = NULL, phuongThuc = ?, ngayThanhToan = ? WHERE maHD = ?";
         try (Connection con = ConnectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, h.getPhuongThuc());
             ps.setTimestamp(2, Timestamp.valueOf(h.getNgayThanhToan() != null ? h.getNgayThanhToan() : LocalDateTime.now()));
