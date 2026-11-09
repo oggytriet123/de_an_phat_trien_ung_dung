@@ -7,6 +7,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -56,6 +57,10 @@ public class HoaDonDAO {
             st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'maDV') IS NULL ALTER TABLE CHITIETHOADON ADD maDV NVARCHAR(50) NULL");
             st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'thanhTien') IS NULL ALTER TABLE CHITIETHOADON ADD thanhTien FLOAT NULL");
             st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'sku_maSP') IS NOT NULL EXEC('UPDATE CHITIETHOADON SET sku = sku_maSP WHERE sku IS NULL AND sku_maSP IS NOT NULL')");
+            st.executeUpdate("IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_HOADON_trangThai_ngay' AND object_id = OBJECT_ID('HOADON')) "
+                    + "CREATE INDEX IX_HOADON_trangThai_ngay ON HOADON(trangThai, ngayThanhToan, ngayLap)");
+            st.executeUpdate("UPDATE h SET h.tongTien = ISNULL((SELECT SUM(c.thanhTien) FROM CHITIETHOADON c WHERE c.maHD = h.maHD), 0) - ISNULL(h.tienGiam, 0) "
+                    + "FROM HOADON h WHERE (h.tongTien = 0 OR h.tongTien IS NULL) AND h.trangThai = N'Đã thanh toán'");
         } catch (SQLException ignored) {
         }
     }
@@ -64,9 +69,10 @@ public class HoaDonDAO {
         List<HoaDon> ds = new ArrayList<>();
         String sql = "SELECT h.maHD, h.soO, ISNULL(h.tenKH, k.hoTen) AS tenKhach, "
                 + "       ISNULL(h.soDienThoai, k.soDienThoai) AS sdt, h.maKH, "
-                + "       k.hangThe, k.diemTichLuy, k.tongChiTieu, "
+                + "       k.hangThe, k.diemTichLuy, "
+                + "       ISNULL((SELECT SUM(h2.tongTien) FROM HOADON h2 WHERE h2.maKH = k.maKH AND h2.trangThai = N'Đã thanh toán'), 0) AS tongChiTieu, "
                 + "       h.maNV_BH, nv.hoTen AS tenNV, nv.tenDangNhap AS tkNV, nv.maQuyen, nv.soDienThoai AS sdtNV, "
-                + "       h.trangThai, h.phuongThuc, h.ngayTao, h.ngayThanhToan, h.maGiamGia, h.tienGiam "
+                + "       h.trangThai, h.phuongThuc, h.ngayTao, h.ngayThanhToan, h.maGiamGia, h.tienGiam, h.tongTien "
                 + "FROM HOADON h "
                 + "LEFT JOIN KHACHHANG k ON h.maKH = k.maKH "
                 + "LEFT JOIN NHANVIEN nv ON h.maNV_BH = nv.maNV "
@@ -87,11 +93,168 @@ public class HoaDonDAO {
         return ds;
     }
 
+    /**
+     * Đếm tổng số hóa đơn đã thanh toán thỏa mãn điều kiện tìm kiếm và khoảng ngày.
+     */
+    public int demLichSu(String tuKhoa, LocalDate tu, LocalDate den) {
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT COUNT(*) FROM HOADON h ");
+        sql.append("LEFT JOIN KHACHHANG k ON h.maKH = k.maKH ");
+        sql.append("WHERE h.trangThai = N'Đã thanh toán' ");
+
+        List<Object> params = new ArrayList<>();
+        ganDieuKienLoc(sql, params, tuKhoa, tu, den);
+
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql.toString())) {
+            for (int i = 0; i < params.size(); i++) {
+                Object p = params.get(i);
+                if (p instanceof java.sql.Date) {
+                    ps.setDate(i + 1, (java.sql.Date) p);
+                } else {
+                    ps.setString(i + 1, (String) p);
+                }
+            }
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    /**
+     * Phân trang danh sách lịch sử hóa đơn trực tiếp tại SQL Server sử dụng OFFSET và FETCH NEXT.
+     * Sắp xếp mới nhất lên trước theo ngày lập hóa đơn (hoặc ngày thanh toán) và mã hóa đơn.
+     * Chỉ tải các cột cần thiết của hóa đơn; không nạp chi tiết hàng hóa vào RAM để tối ưu hiệu năng.
+     */
+    public List<HoaDon> layLichSuPhanTrang(String tuKhoa, LocalDate tu, LocalDate den, int trang, int soLuongMoiTrang) {
+        if (trang < 1) trang = 1;
+        if (soLuongMoiTrang <= 0) soLuongMoiTrang = 10;
+        int offset = (trang - 1) * soLuongMoiTrang;
+
+        List<HoaDon> ds = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT h.maHD, h.soO, ISNULL(h.tenKH, k.hoTen) AS tenKhach, ");
+        sql.append("       ISNULL(h.soDienThoai, k.soDienThoai) AS sdt, h.maKH, ");
+        sql.append("       k.hangThe, k.diemTichLuy, ");
+        sql.append("       ISNULL((SELECT SUM(h2.tongTien) FROM HOADON h2 WHERE h2.maKH = k.maKH AND h2.trangThai = N'Đã thanh toán'), 0) AS tongChiTieu, ");
+        sql.append("       h.maNV_BH, nv.hoTen AS tenNV, nv.tenDangNhap AS tkNV, nv.maQuyen, nv.soDienThoai AS sdtNV, ");
+        sql.append("       h.trangThai, h.phuongThuc, h.ngayTao, h.ngayThanhToan, h.maGiamGia, h.tienGiam, h.tongTien ");
+        sql.append("FROM HOADON h ");
+        sql.append("LEFT JOIN KHACHHANG k ON h.maKH = k.maKH ");
+        sql.append("LEFT JOIN NHANVIEN nv ON h.maNV_BH = nv.maNV ");
+        sql.append("WHERE h.trangThai = N'Đã thanh toán' ");
+
+        List<Object> params = new ArrayList<>();
+        ganDieuKienLoc(sql, params, tuKhoa, tu, den);
+
+        sql.append("ORDER BY ISNULL(h.ngayThanhToan, ISNULL(h.ngayTao, CAST(h.ngayLap AS DATETIME))) DESC, h.maHD DESC ");
+        sql.append("OFFSET ? ROWS FETCH NEXT ? ROWS ONLY");
+
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql.toString())) {
+            int idx = 1;
+            for (Object p : params) {
+                if (p instanceof java.sql.Date) {
+                    ps.setDate(idx++, (java.sql.Date) p);
+                } else {
+                    ps.setString(idx++, (String) p);
+                }
+            }
+            ps.setInt(idx++, offset);
+            ps.setInt(idx, soLuongMoiTrang);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    HoaDon h = docHoaDon(rs);
+                    // Lazy load: không nạp chi tiết hàng hóa ở đây để đảm bảo phân trang cực nhanh
+                    ds.add(h);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ds;
+    }
+
+    private void ganDieuKienLoc(StringBuilder sql, List<Object> params, String tuKhoa, LocalDate tu, LocalDate den) {
+        if (tuKhoa != null && !tuKhoa.trim().isEmpty()) {
+            String kw = "%" + tuKhoa.trim() + "%";
+            sql.append("AND (");
+            sql.append("   h.maHD LIKE ? ");
+            sql.append("   OR ISNULL(h.tenKH, k.hoTen) LIKE ? ");
+            sql.append("   OR ISNULL(h.soDienThoai, k.soDienThoai) LIKE ? ");
+            sql.append("   OR REPLACE(REPLACE(ISNULL(h.soDienThoai, k.soDienThoai), ' ', ''), '-', '') LIKE ? ");
+            sql.append("   OR ISNULL(h.maKH, k.maKH) LIKE ? ");
+            sql.append("   OR CONVERT(VARCHAR(10), ISNULL(h.ngayThanhToan, ISNULL(h.ngayTao, h.ngayLap)), 103) LIKE ? ");
+            sql.append(") ");
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+            params.add(kw);
+        }
+
+        if (tu != null) {
+            sql.append("AND CAST(ISNULL(h.ngayThanhToan, ISNULL(h.ngayTao, h.ngayLap)) AS DATE) >= ? ");
+            params.add(java.sql.Date.valueOf(tu));
+        }
+
+        if (den != null) {
+            sql.append("AND CAST(ISNULL(h.ngayThanhToan, ISNULL(h.ngayTao, h.ngayLap)) AS DATE) <= ? ");
+            params.add(java.sql.Date.valueOf(den));
+        }
+    }
+
+    /**
+     * Tải chi tiết sản phẩm / dịch vụ của hóa đơn khi người dùng bấm xem chi tiết hoặc in hóa đơn (Lazy Loading).
+     */
+    public void napChiTietChoHoaDon(HoaDon h) {
+        if (h == null || !h.getDanhSachChiTiet().isEmpty()) return;
+        try (Connection con = ConnectDB.getConnection()) {
+            napChiTiet(con, h);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<HoaDon> layDanhSachHoaDonCho() {
+        List<HoaDon> ds = new ArrayList<>();
+        String sql = "SELECT h.maHD, h.soO, ISNULL(h.tenKH, k.hoTen) AS tenKhach, "
+                + "       ISNULL(h.soDienThoai, k.soDienThoai) AS sdt, h.maKH, "
+                + "       k.hangThe, k.diemTichLuy, "
+                + "       ISNULL((SELECT SUM(h2.tongTien) FROM HOADON h2 WHERE h2.maKH = k.maKH AND h2.trangThai = N'Đã thanh toán'), 0) AS tongChiTieu, "
+                + "       h.maNV_BH, nv.hoTen AS tenNV, nv.tenDangNhap AS tkNV, nv.maQuyen, nv.soDienThoai AS sdtNV, "
+                + "       h.trangThai, h.phuongThuc, h.ngayTao, h.ngayThanhToan, h.maGiamGia, h.tienGiam "
+                + "FROM HOADON h "
+                + "LEFT JOIN KHACHHANG k ON h.maKH = k.maKH "
+                + "LEFT JOIN NHANVIEN nv ON h.maNV_BH = nv.maNV "
+                + "WHERE h.trangThai = N'Chưa thanh toán' "
+                + "ORDER BY ISNULL(h.ngayTao, GETDATE()) DESC";
+
+        try (Connection con = ConnectDB.getConnection();
+             PreparedStatement ps = con.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                HoaDon h = docHoaDon(rs);
+                napChiTiet(con, h);
+                ds.add(h);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return ds;
+    }
+
     public Map<Integer, HoaDon> layCacODangMo() {
         Map<Integer, HoaDon> map = new HashMap<>();
         String sql = "SELECT h.maHD, h.soO, ISNULL(h.tenKH, k.hoTen) AS tenKhach, "
                 + "       ISNULL(h.soDienThoai, k.soDienThoai) AS sdt, h.maKH, "
-                + "       k.hangThe, k.diemTichLuy, k.tongChiTieu, "
+                + "       k.hangThe, k.diemTichLuy, "
+                + "       ISNULL((SELECT SUM(h2.tongTien) FROM HOADON h2 WHERE h2.maKH = k.maKH AND h2.trangThai = N'Đã thanh toán'), 0) AS tongChiTieu, "
                 + "       h.maNV_BH, nv.hoTen AS tenNV, nv.tenDangNhap AS tkNV, nv.maQuyen, nv.soDienThoai AS sdtNV, "
                 + "       h.trangThai, h.phuongThuc, h.ngayTao, h.ngayThanhToan, h.maGiamGia, h.tienGiam "
                 + "FROM HOADON h "
@@ -169,6 +332,14 @@ public class HoaDonDAO {
         long tienGiam = Math.round(rs.getDouble("tienGiam"));
         if (maGiam != null && !maGiam.trim().isEmpty()) {
             h.setMaGiamGia(new MaGiamGia(maGiam, false, tienGiam, java.time.LocalDate.now().plusYears(1)));
+        }
+
+        try {
+            double tt = rs.getDouble("tongTien");
+            if (!rs.wasNull()) {
+                h.setTongTien(tt);
+            }
+        } catch (SQLException ignored) {
         }
         return h;
     }
@@ -268,7 +439,8 @@ public class HoaDonDAO {
                         ps.setDate(2, Date.valueOf(h.getNgayTao().toLocalDate()));
                         ps.setDouble(3, h.canThanhToan());
                         ps.setString(4, maKH);
-                        ps.setInt(5, h.getSoO());
+                        if (h.getSoO() > 0) ps.setInt(5, h.getSoO());
+                        else ps.setNull(5, java.sql.Types.INTEGER);
                         ps.setString(6, h.getTrangThai());
                         ps.setString(7, h.getPhuongThuc());
                         ps.setTimestamp(8, Timestamp.valueOf(h.getNgayTao()));
@@ -287,7 +459,8 @@ public class HoaDonDAO {
                     try (PreparedStatement ps = con.prepareStatement(upSql)) {
                         ps.setDouble(1, h.canThanhToan());
                         ps.setString(2, maKH);
-                        ps.setInt(3, h.getSoO());
+                        if (h.getSoO() > 0) ps.setInt(3, h.getSoO());
+                        else ps.setNull(3, java.sql.Types.INTEGER);
                         ps.setString(4, h.getTrangThai());
                         ps.setString(5, h.getPhuongThuc());
                         ps.setTimestamp(6, h.getNgayThanhToan() != null ? Timestamp.valueOf(h.getNgayThanhToan()) : null);

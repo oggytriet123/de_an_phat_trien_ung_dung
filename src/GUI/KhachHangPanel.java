@@ -560,99 +560,11 @@ public class KhachHangPanel extends JPanel {
 
     // [CN-KH-09] Form Thêm khách hàng (kèm danh sách thú cưng)
     private void themKhachHang() {
-        Window owner = SwingUtilities.getWindowAncestor(this);
-        JDialog dlg = new JDialog(owner, "Thêm khách hàng", Dialog.ModalityType.APPLICATION_MODAL);
-
-        JTextField tfTen = field();
-        JTextField tfSdt = field();
-        JSpinner spDiem = new JSpinner(new SpinnerNumberModel(0, 0, 1_000_000, 10));
-        spDiem.setFont(Theme.font(Font.PLAIN, 14));
-        spDiem.setPreferredSize(new Dimension(300, 36));
-
-        JPanel petList = new JPanel();
-        petList.setLayout(new BoxLayout(petList, BoxLayout.Y_AXIS));
-        petList.setBackground(Color.WHITE);
-        List<PetRow> petRows = new ArrayList<>();
-        taoDongThuCung(petList, petRows, dlg);
-        JScrollPane petScroll = new JScrollPane(petList);
-        petScroll.setBorder(null);
-        petScroll.setPreferredSize(new Dimension(300, 120));
-        // [UI-KH-14] Nút thêm dòng thú cưng trong form
-        RoundedButton addPet = new RoundedButton("+ Thêm thú cưng", Color.WHITE, new Color(0xF3F6F8), Theme.ACCENT, Theme.BORDER, 8).pad(14, 6);
-        addPet.setFont(Theme.font(Font.PLAIN, 12));
-        addPet.addActionListener(e -> taoDongThuCung(petList, petRows, dlg));
-
-        JLabel err = new JLabel(" ");
-        err.setFont(Theme.font(Font.PLAIN, 12));
-        err.setForeground(Theme.RED);
-
-        JPanel form = new JPanel(new GridBagLayout());
-        form.setBackground(Color.WHITE);
-        form.setBorder(new EmptyBorder(20, 24, 8, 24));
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
-
-        int y = 0;
-        // [UI-KH-15] Nhãn các ô trong form Thêm khách hàng
-        c.gridy = y++; c.insets = new Insets(0, 0, 4, 0); form.add(new JLabel("Họ tên *"), c);
-        c.gridy = y++; c.insets = new Insets(0, 0, 10, 0); form.add(tfTen, c);
-        c.gridy = y++; c.insets = new Insets(0, 0, 4, 0); form.add(new JLabel("Số điện thoại *"), c);
-        c.gridy = y++; c.insets = new Insets(0, 0, 10, 0); form.add(tfSdt, c);
-        c.gridy = y++; c.insets = new Insets(0, 0, 4, 0); form.add(new JLabel("Điểm tích lũy ban đầu:"), c);
-        c.gridy = y++; c.insets = new Insets(0, 0, 10, 0); form.add(spDiem, c);
-
-        JPanel petHead = new JPanel(new BorderLayout());
-        petHead.setBackground(Color.WHITE);
-        // [UI-KH-16] Tiêu đề khối nhập thú cưng của khách
-        petHead.add(new JLabel("Thú cưng [tên · loài · cân nặng kg]"), BorderLayout.WEST);
-        petHead.add(addPet, BorderLayout.EAST);
-        c.gridy = y++; c.insets = new Insets(0, 0, 6, 0); form.add(petHead, c);
-        c.gridy = y++; c.insets = new Insets(0, 0, 8, 0); form.add(petScroll, c);
-        c.gridy = y; c.insets = new Insets(0, 0, 0, 0); form.add(err, c);
-
-        // [UI-KH-17] Nút Lưu (form Thêm)
-        RoundedButton ok = new RoundedButton("Lưu", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(24, 9);
-        RoundedButton cancel = new RoundedButton("Hủy", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(24, 9);
-        JPanel btns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        btns.setBackground(Color.WHITE);
-        btns.setBorder(new EmptyBorder(4, 24, 18, 24));
-        btns.add(cancel); btns.add(ok);
-
-        cancel.addActionListener(e -> dlg.dispose());
-        ok.addActionListener(e -> {
-            String ten = tfTen.getText().trim().replaceAll("\\s+", " ");
-            String sdt = KhachHangBUS.chiSo(tfSdt.getText());
-            if (ten.isEmpty()) { err.setText("Vui lòng nhập họ tên."); return; }
-            // [CN-KH-10] Validate độ dài SĐT khi thêm
-            if (sdt.length() < 9 || sdt.length() > 11) { err.setText("Số điện thoại phải gồm 9–11 chữ số."); return; }
-
-            List<ThuCung> pets = new ArrayList<>();
-            for (PetRow r : petRows) {
-                String tenPet = r.tfTen.getText().trim();
-                if (tenPet.isEmpty()) continue;
-                double can = 0;
-                try { if (!r.tfCan.getText().trim().isEmpty()) can = Double.parseDouble(r.tfCan.getText().trim().replace(',', '.')); }
-                catch (Exception ex) {}
-                pets.add(new ThuCung(null, tenPet, (String) r.cbLoai.getSelectedItem(), can));
-            }
-            try {
-                // [CN-KH-11] Chặn trùng SĐT khi thêm
-                if (bus.tonTaiSoDienThoai(sdt)) { err.setText("Số điện thoại này đã tồn tại."); return; }
-                bus.them(ten, sdt, ((Number) spDiem.getValue()).intValue(), pets);
-                dlg.dispose();
-                taiDuLieu();
-                refresh();
-            } catch (SQLException ex) {
-                err.setText("Lỗi: " + ex.getMessage());
-            }
-        });
-
-        dlg.setLayout(new BorderLayout());
-        dlg.add(form, BorderLayout.CENTER);
-        dlg.add(btns, BorderLayout.SOUTH);
-        dlg.setSize(470, 560);
-        dlg.setLocationRelativeTo(owner);
-        dlg.setVisible(true);
+        KhachHang moi = DialogThemKhachHang.hienThi(this, bus, null, null);
+        if (moi != null) {
+            taiDuLieu();
+            refresh();
+        }
     }
 
     // ---------------- CHỈNH SỬA KHÁCH HÀNG ----------------

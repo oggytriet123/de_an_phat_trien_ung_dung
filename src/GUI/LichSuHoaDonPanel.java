@@ -8,6 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.time.format.ResolverStyle;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.function.Function;
 import javax.swing.*;
@@ -23,7 +24,7 @@ import Entity.HoaDon;
 
 /** Màn hình "Lịch sử hóa đơn": các hóa đơn đã thanh toán thành công, có tìm kiếm, lọc ngày và xem chi tiết. */
 public class LichSuHoaDonPanel extends JPanel implements Refreshable {
-    private static final int PAGE_SIZE = 8;
+    private static final int PAGE_SIZE = 10;
     private static final DateTimeFormatter NGAY_GIO = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     private static final DateTimeFormatter NHAP_NGAY = DateTimeFormatter.ofPattern("d/M/uuuu").withResolverStyle(ResolverStyle.STRICT);
     private static final String[] COLS = {"Mã hóa đơn", "Khách hàng", "Mã KH", "Số điện thoại", "Ngày thanh toán",
@@ -32,7 +33,6 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
     private static final int COL_THAO_TAC = 8;
 
     private final HoaDonBUS bus;
-    private List<HoaDon> filtered = new ArrayList<>();
     private String tuKhoa = "";
     private LocalDate tu, den;
     private int trang = 1;
@@ -71,7 +71,6 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
     }
 
     @Override public void lamMoi() {
-        bus.taiTuCSDL();
         refresh();
     }
 
@@ -201,11 +200,14 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
                 Point p = e.getPoint();
                 int row = table.rowAtPoint(p);
                 if (row < 0 || row >= model.rows.size()) return;
+                HoaDon hd = model.rows.get(row);
                 if (trungXem(p)) {
-                    HoaDonPopups.chiTiet(LichSuHoaDonPanel.this, model.rows.get(row));
+                    bus.napChiTietHoaDon(hd);
+                    HoaDonPopups.chiTiet(LichSuHoaDonPanel.this, hd);
                 } else if (trungIn(p)) {
+                    bus.napChiTietHoaDon(hd);
                     Window w = SwingUtilities.getWindowAncestor(LichSuHoaDonPanel.this);
-                    DialogXuatHoaDon.hienThi(w, model.rows.get(row), null);
+                    DialogXuatHoaDon.hienThi(w, hd, null);
                 }
             }
         });
@@ -278,36 +280,34 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
     }
 
     private void refresh() {
-        boolean coLoc = !tuKhoa.isEmpty() || tu != null || den != null;
-        if (!coLoc) {
-            filtered = new ArrayList<>();
-            model.setRows(filtered);
-            lblTrong.setText("Chế độ tối ưu (No Get All): Vui lòng nhập từ khóa hoặc chọn khoảng ngày để tra cứu lịch sử hóa đơn.");
-            tableCards.show(tableArea, "empty");
-            lblFooter.setText("Chưa nhập điều kiện tìm kiếm.");
-            buildPager(0);
-            revalidate();
-            repaint();
-            return;
+        int tongSoBanGhi = bus.demLichSu(tuKhoa, tu, den);
+        int pages = (int) Math.ceil((double) tongSoBanGhi / PAGE_SIZE);
+        if (pages == 0) {
+            trang = 1;
+        } else if (trang > pages) {
+            trang = pages;
+        } else if (trang < 1) {
+            trang = 1;
         }
 
-        filtered = bus.timLichSu(tuKhoa, tu, den);
-        int pages = Math.max(1, (int) Math.ceil(filtered.size() / (double) PAGE_SIZE));
-        trang = Math.min(Math.max(trang, 1), pages);
-        int from = (trang - 1) * PAGE_SIZE;
-        int to = Math.min(from + PAGE_SIZE, filtered.size());
-        model.setRows(filtered.subList(from, to));
+        List<HoaDon> dsTrang = (tongSoBanGhi > 0)
+                ? bus.layLichSuPhanTrang(tuKhoa, tu, den, trang, PAGE_SIZE)
+                : Collections.emptyList();
+        model.setRows(dsTrang);
 
-        if (filtered.isEmpty()) {
+        boolean coLoc = !tuKhoa.isEmpty() || tu != null || den != null;
+        if (tongSoBanGhi == 0) {
             lblTrong.setText(coLoc ? "Không tìm thấy hóa đơn phù hợp."
                     : "Chưa có hóa đơn nào được thanh toán.");
             tableCards.show(tableArea, "empty");
-            lblFooter.setText(" ");
+            lblFooter.setText("Không có hóa đơn nào.");
         } else {
             tableCards.show(tableArea, "table");
-            lblFooter.setText("Hiển thị " + (from + 1) + "-" + to + " trong " + filtered.size() + " hóa đơn");
+            int from = (trang - 1) * PAGE_SIZE + 1;
+            int to = Math.min(trang * PAGE_SIZE, tongSoBanGhi);
+            lblFooter.setText("Hiển thị " + from + "-" + to + " trong " + tongSoBanGhi + " hóa đơn · Trang " + trang + " / " + pages);
         }
-        buildPager(filtered.isEmpty() ? 0 : pages);
+        buildPager(pages);
         revalidate();
         repaint();
     }
@@ -330,6 +330,27 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
 
     private void buildPager(int pages) {
         pnlPages.removeAll();
+        if (pages <= 0) {
+            pnlPages.revalidate();
+            pnlPages.repaint();
+            return;
+        }
+
+        // Nút Trang trước (vô hiệu hóa nếu đang ở trang đầu tiên)
+        RoundedButton btnPrev = new RoundedButton("‹", Color.WHITE, Theme.FIELD_BG, Theme.TEXT, Theme.BORDER, 8);
+        btnPrev.setFont(Theme.font(Font.BOLD, 14));
+        btnPrev.setPreferredSize(new Dimension(34, 32));
+        btnPrev.setEnabled(trang > 1);
+        btnPrev.setToolTipText("Trang trước");
+        btnPrev.addActionListener(e -> {
+            if (trang > 1) {
+                trang--;
+                refresh();
+            }
+        });
+        pnlPages.add(btnPrev);
+
+        // Các nút số trang
         for (int p : pageList(pages, trang)) {
             RoundedButton b;
             if (p < 0) {
@@ -341,10 +362,25 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
                 b = new RoundedButton(String.valueOf(p), Color.WHITE, Theme.FIELD_BG, Theme.TEXT, Theme.BORDER, 8);
             }
             b.setFont(Theme.font(Font.PLAIN, 13));
-            b.setPreferredSize(new Dimension(32, 32));
+            b.setPreferredSize(new Dimension(34, 32));
             if (p > 0) b.addActionListener(e -> { trang = p; refresh(); });
             pnlPages.add(b);
         }
+
+        // Nút Trang tiếp theo (vô hiệu hóa nếu đang ở trang cuối cùng)
+        RoundedButton btnNext = new RoundedButton("›", Color.WHITE, Theme.FIELD_BG, Theme.TEXT, Theme.BORDER, 8);
+        btnNext.setFont(Theme.font(Font.BOLD, 14));
+        btnNext.setPreferredSize(new Dimension(34, 32));
+        btnNext.setEnabled(trang < pages);
+        btnNext.setToolTipText("Trang tiếp theo");
+        btnNext.addActionListener(e -> {
+            if (trang < pages) {
+                trang++;
+                refresh();
+            }
+        });
+        pnlPages.add(btnNext);
+
         pnlPages.revalidate();
         pnlPages.repaint();
     }
