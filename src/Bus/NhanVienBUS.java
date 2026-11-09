@@ -14,7 +14,7 @@ import java.util.Locale;
 
 import DAO.NhanVienDAO;
 import Entity.NhanVien;
-import Entity.ThongKeNhanVien;
+import DTO.ThongKeNhanVien;
 
 /**
  * Xử lý nghiệp vụ cho hồ sơ Nhân viên (Validation, Mã hóa SHA-256, Bộ lọc, Thống kê).

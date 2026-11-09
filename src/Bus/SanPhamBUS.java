@@ -47,6 +47,10 @@ public class SanPhamBUS {
                 String prefix = dm.length() >= 3 ? dm.substring(0, 3).toUpperCase() : "DV";
                 macDinh(dm, prefix, true);
             }
+            if (dv.getSku() != null && dv.getSku().matches("^DV0*\\d+$")) {
+                String skuMoi = SkuGenerator.generateService(dv.getDanhMuc(), dv.getTen(), dv.getDoiTuong());
+                dv.setMaSKU(skuMoi);
+            }
             dangKy(dv);
         }
 

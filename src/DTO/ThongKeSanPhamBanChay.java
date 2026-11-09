@@ -1,9 +1,9 @@
-package Entity;
+package DTO;
 
 import java.io.Serializable;
 
 /**
- * Model chứa dữ liệu tổng hợp thống kê sản phẩm bán chạy nhất.
+ * Model DTO chứa dữ liệu tổng hợp thống kê sản phẩm bán chạy nhất.
  */
 public class ThongKeSanPhamBanChay implements Serializable {
     private static final long serialVersionUID = 1L;

@@ -774,7 +774,7 @@ public class TaoHoaDonPanel extends JPanel {
             g2.drawString(cat(sp.getTen(), fm, tw), tx, pad + 22);
             g2.setFont(Theme.font(Font.PLAIN, 11));
             g2.setColor(Theme.MUTED);
-            g2.drawString((sp.isDichVu() ? "DV: " : "SKU: ") + sp.getSku(), tx, pad + 42);
+            g2.drawString("SKU: " + sp.getSku(), tx, pad + 42);
 
             g2.setFont(Theme.font(Font.BOLD, 14));
             g2.setColor(Theme.TEXT);

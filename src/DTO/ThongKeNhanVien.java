@@ -1,4 +1,4 @@
-package Entity;
+package DTO;
 
 /**
  * Số liệu thống kê nhân sự cho các thẻ KPI trên giao diện.

@@ -14,7 +14,7 @@ import java.util.Map;
 
 import ConnectDB.ConnectDB;
 import Entity.KhachHang;
-import Entity.ThongKeKhachHang;
+import DTO.ThongKeKhachHang;
 import Entity.ThuCung;
 
 /** Truy cập bảng KHACHHANG (kèm THUCUNG, HOADON để tính thú cưng / giao dịch / chi tiêu). */

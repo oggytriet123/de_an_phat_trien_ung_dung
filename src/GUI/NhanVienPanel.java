@@ -28,7 +28,7 @@ import Bus.NhanVienBUS;
 import DAO.NhanVienDAO;
 import Entity.NhanVien;
 import Entity.TaiKhoan;
-import Entity.ThongKeNhanVien;
+import DTO.ThongKeNhanVien;
 
 /**
  * Giao diện Quản lý & Tra cứu Nhân Viên - Thiết kế tinh gọn, dễ hiểu và chuẩn mực.

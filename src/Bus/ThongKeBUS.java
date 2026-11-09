@@ -15,7 +15,7 @@ import Entity.KhachHang;
 import Entity.PhieuKho;
 import Entity.SanPham;
 import Entity.ThuCung;
-import Entity.ThongKeSanPhamBanChay;
+import DTO.ThongKeSanPhamBanChay;
 
 /**
  * BUS tổng hợp dữ liệu cho phân hệ Báo cáo & Thống kê Pet Station.

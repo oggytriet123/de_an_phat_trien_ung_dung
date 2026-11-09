@@ -1,4 +1,4 @@
-package Entity;
+package DTO;
 
 /** Số liệu tổng hợp hiển thị ở 4 thẻ thống kê của màn hình Khách hàng. */
 public class ThongKeKhachHang {

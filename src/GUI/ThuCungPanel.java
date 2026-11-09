@@ -25,7 +25,7 @@ import javax.swing.table.DefaultTableModel;
 
 import Bus.ThuCungBUS;
 import DAO.ThuCungDAO;
-import Entity.ThongKeThuCung;
+import DTO.ThongKeThuCung;
 import Entity.ThuCung;
 
 /**

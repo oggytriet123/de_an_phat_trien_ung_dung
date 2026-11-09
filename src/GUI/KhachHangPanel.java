@@ -29,7 +29,7 @@ import javax.swing.table.DefaultTableModel;
 
 import Bus.KhachHangBUS;
 import Entity.KhachHang;
-import Entity.ThongKeKhachHang;
+import DTO.ThongKeKhachHang;
 import Entity.ThuCung;
 
 /** Màn hình Quản lý Khách hàng - Đầy đủ Thêm, Sửa, Xóa, Chi tiết và Xuất Excel. */

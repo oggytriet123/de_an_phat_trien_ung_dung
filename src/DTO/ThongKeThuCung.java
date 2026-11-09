@@ -1,4 +1,4 @@
-package Entity;
+package DTO;
 
 /**
  * Số liệu thống kê hồ sơ thú cưng hiển thị trên các thẻ KPI.

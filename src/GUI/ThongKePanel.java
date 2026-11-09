@@ -23,7 +23,7 @@ import Bus.ThongKeBUS;
 import Entity.KhachHang;
 import Entity.PhieuKho;
 import Entity.SanPham;
-import Entity.ThongKeSanPhamBanChay;
+import DTO.ThongKeSanPhamBanChay;
 
 /**
  * Màn hình Báo cáo & Thống kê - Pet Station.

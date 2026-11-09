@@ -12,7 +12,7 @@ import java.util.List;
 
 import ConnectDB.ConnectDB;
 import Entity.NhanVien;
-import Entity.ThongKeNhanVien;
+import DTO.ThongKeNhanVien;
 
 /**
  * Lớp truy xuất cơ sở dữ liệu cho module Quản lý Nhân viên (bảng NHANVIEN & các vai trò phụ thuộc).

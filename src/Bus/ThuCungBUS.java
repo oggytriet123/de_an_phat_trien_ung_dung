@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Locale;
 
 import DAO.ThuCungDAO;
-import Entity.ThongKeThuCung;
+import DTO.ThongKeThuCung;
 import Entity.ThuCung;
 
 /**

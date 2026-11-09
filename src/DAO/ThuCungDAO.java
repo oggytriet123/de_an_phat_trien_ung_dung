@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import ConnectDB.ConnectDB;
-import Entity.ThongKeThuCung;
+import DTO.ThongKeThuCung;
 import Entity.ThuCung;
 
 /**

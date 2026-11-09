@@ -9,7 +9,7 @@ import java.util.List;
 
 import DAO.KhachHangDAO;
 import Entity.KhachHang;
-import Entity.ThongKeKhachHang;
+import DTO.ThongKeKhachHang;
 import Entity.ThuCung;
 
 /** Nghiệp vụ khách hàng, dữ liệu lấy từ SQL Server qua KhachHangDAO. */
