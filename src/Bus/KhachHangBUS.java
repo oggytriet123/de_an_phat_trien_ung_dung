@@ -100,6 +100,32 @@ public class KhachHangBUS {
         return null;
     }
 
+    /**
+     * Tìm kiếm khách hàng theo tên hoặc số điện thoại hoặc mã KH (không phân biệt hoa thường và dấu tiếng Việt).
+     */
+    public List<KhachHang> timKiem(String tuKhoa) {
+        if (tuKhoa == null || tuKhoa.trim().isEmpty()) {
+            return new ArrayList<>(ds);
+        }
+        String kw = ChuoiUtil.chuanHoa(tuKhoa.trim());
+        String kwSo = ChuoiUtil.chiSo(tuKhoa);
+        List<KhachHang> ketQua = new ArrayList<>();
+        for (KhachHang k : ds) {
+            String tenNorm = ChuoiUtil.chuanHoa(k.getHoTen());
+            String maNorm = ChuoiUtil.chuanHoa(k.getMaKH());
+            String sdtChiSo = ChuoiUtil.chiSo(k.getSoDienThoai());
+
+            boolean khopTen = tenNorm.contains(kw);
+            boolean khopMa = maNorm.contains(kw);
+            boolean khopSdt = !kwSo.isEmpty() && sdtChiSo.contains(kwSo);
+
+            if (khopTen || khopMa || khopSdt) {
+                ketQua.add(k);
+            }
+        }
+        return ketQua;
+    }
+
     // [CN-KH-19] Thêm khách hàng (+ thú cưng)
     /** Thêm khách hàng cùng thú cưng vào CSDL; hạng thẻ tự tính theo điểm. @return mã KH mới */
     public String them(String hoTen, String sdt, int diem, List<ThuCung> thuCung) throws SQLException {

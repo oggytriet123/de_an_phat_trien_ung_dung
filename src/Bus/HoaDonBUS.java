@@ -20,7 +20,8 @@ public class HoaDonBUS {
     public static final int SO_O = 20;
     public static final String[] PHUONG_THUC = {"Tiền mặt", "Quẹt thẻ", "MoMo", "ZaloPay"};
 
-    private final HoaDon[] cacO = new HoaDon[SO_O];       // null = ô trống
+    private final HoaDon[] cacO = new HoaDon[SO_O];       // null = ô trống (hỗ trợ tương thích ngược)
+    private final List<HoaDon> dsHoaDonCho = new ArrayList<>(); // Toàn bộ hóa đơn chờ (không giới hạn 20 ô)
     private final List<HoaDon> lichSu = new ArrayList<>(); // mới nhất ở đầu
     private final KhachHangBUS khachHang;
     private final HoaDonDAO dao = new HoaDonDAO();
@@ -44,17 +45,46 @@ public class HoaDonBUS {
 
     public synchronized void taiTuCSDL() {
         for (int i = 0; i < SO_O; i++) cacO[i] = null;
+        dsHoaDonCho.clear();
         lichSu.clear();
 
-        Map<Integer, HoaDon> oDangMo = dao.layCacODangMo();
-        for (Map.Entry<Integer, HoaDon> entry : oDangMo.entrySet()) {
-            if (entry.getKey() >= 0 && entry.getKey() < SO_O) {
-                cacO[entry.getKey()] = entry.getValue();
+        // 1. Tải toàn bộ danh sách hóa đơn chờ từ CSDL
+        List<HoaDon> choTuDb = dao.layDanhSachHoaDonCho();
+        dsHoaDonCho.addAll(choTuDb);
+
+        // Map vào các ô 1..20 nếu có
+        for (HoaDon h : choTuDb) {
+            if (h.getSoO() >= 1 && h.getSoO() <= SO_O) {
+                cacO[h.getSoO() - 1] = h;
             }
         }
 
-        lichSu.addAll(dao.layLichSu());
+        // Không tải toàn bộ lịch sử hóa đơn lên RAM lúc khởi động (tối ưu hóa theo Server-side Pagination)
         soHoaDonTiepTheo = dao.laySoHoaDonTiepTheo();
+    }
+
+    // ------------------------------------------------------------ Hóa đơn chờ động
+    public synchronized List<HoaDon> layDanhSachHoaDonCho() {
+        return Collections.unmodifiableList(dsHoaDonCho);
+    }
+
+    public synchronized HoaDon timHoaDonCho(String maHD) {
+        if (maHD == null) return null;
+        for (HoaDon h : dsHoaDonCho) {
+            if (maHD.equalsIgnoreCase(h.getMaHD())) return h;
+        }
+        return null;
+    }
+
+    /** Tạo bản nháp mới tinh cho chức năng Lập hóa đơn */
+    public HoaDon taoNhapMoi() {
+        return new HoaDon(maTiepTheo(), 0);
+    }
+
+    /** Mở lại bản sao độc lập của một hóa đơn chờ theo mã để chỉnh sửa */
+    public HoaDon moNhap(String maHD) {
+        HoaDon h = timHoaDonCho(maHD);
+        return h != null ? h.saoChep() : null;
     }
 
     // ------------------------------------------------------------ 20 ô
@@ -122,108 +152,167 @@ public class HoaDonBUS {
 
     /** Lỗi đầu tiên của hóa đơn hoặc null nếu hợp lệ. */
     public String kiemTra(HoaDon h) {
-        String e = loiTen(h.getTenKH());
-        if (e == null) e = loiSdt(h.getSdt());
-        if (e == null) e = loiTrungSdt(h.getTenKH(), h.getSdt());
-        if (e == null) e = loiGioHang(h);
-        return e;
+        if (h.getKhachHang() == null && (h.getMaKH() == null || h.getMaKH().trim().isEmpty())) {
+            String eTen = loiTen(h.getTenKH());
+            if (eTen != null) return eTen;
+            String eSdt = loiSdt(h.getSdt());
+            if (eSdt != null) return eSdt;
+            String eTrung = loiTrungSdt(h.getTenKH(), h.getSdt());
+            if (eTrung != null) return eTrung;
+        }
+        if (h.trong()) return "Hóa đơn chưa có sản phẩm hoặc dịch vụ nào.";
+        return null;
     }
 
     // ------------------------------------------------------------ lưu / thanh toán
-    /** @return true nếu hóa đơn này đã được lưu và đang nằm ở ô được gán. */
+    /** @return true nếu hóa đơn này đã được lưu và đang nằm trong danh sách chờ. */
     public boolean daLuu(HoaDon h) {
-        HoaDon g = cacO[h.getSoO() - 1];
-        return g != null && g.getMaHD().equals(h.getMaHD());
+        if (h == null || h.getMaHD() == null) return false;
+        return timHoaDonCho(h.getMaHD()) != null;
     }
 
     /**
-     * Lưu hóa đơn vào ô được gán (Chưa thanh toán) và lưu vào SQL Server.
+     * Lưu hóa đơn (Chưa thanh toán) vào danh sách hóa đơn chờ và lưu vào SQL Server.
      */
-    public void luu(HoaDon nhap) {
+    public synchronized void luu(HoaDon nhap) {
         String loi = kiemTra(nhap);
         if (loi != null) throw new IllegalArgumentException(loi);
         if (nhap.daThanhToan()) throw new IllegalStateException("Hóa đơn đã thanh toán, không thể sửa.");
         if (maNVDangNhap.isEmpty()) {
             throw new IllegalStateException("Chưa xác định nhân viên đăng nhập, không thể lập hóa đơn.");
         }
-        int i = nhap.getSoO() - 1;
-        HoaDon cu = cacO[i];
-        if (cu != null && !cu.getMaHD().equals(nhap.getMaHD())) {
-            throw new IllegalStateException("Ô " + nhap.getSoO() + " đang chứa hóa đơn khác.");
+
+        // Gắn hóa đơn với khách hàng đã đăng ký và nhân viên đang đăng nhập
+        KhachHang k = nhap.getKhachHang();
+        if (k == null && nhap.getMaKH() != null && !nhap.getMaKH().trim().isEmpty()) {
+            k = khachHang.timTheoMa(nhap.getMaKH());
+        }
+        if (k == null) {
+            String sdt = KhachHangBUS.chuanHoaSdt(nhap.getSdt());
+            k = khachHang.timTheoSdtAnToan(sdt);
+        }
+        if (k == null) {
+            throw new IllegalArgumentException("Vui lòng chọn hoặc thêm khách hàng cho hóa đơn.");
         }
 
-        // Gắn hóa đơn với khách hàng đã đăng ký (không tự tạo khách mới) và nhân viên đang đăng nhập
-        String ten = KhachHangBUS.chuanHoaTen(nhap.getTenKH());
-        String sdt = KhachHangBUS.chuanHoaSdt(nhap.getSdt());
-        KhachHang k = khachHang.timTheoSdtAnToan(sdt);
-        if (k == null) throw new IllegalArgumentException(loiTrungSdt(ten, sdt));
         nhap.setKhachHang(k);
-        nhap.setTenKH(ten);
-        nhap.setSdt(KhachHangBUS.dinhDangSdt(sdt));
+        nhap.setTenKH(k.getHoTen());
+        nhap.setSdt(KhachHangBUS.dinhDangSdt(k.getSoDienThoai()));
         nhap.setMaKH(k.getMaKH());
-        if (nhap.getMaNV().isEmpty()) nhap.setMaNV(maNVDangNhap);   // giữ nguyên người lập khi người khác sửa/thanh toán
+
+        if (nhap.getMaNV().isEmpty()) nhap.setMaNV(maNVDangNhap);
         if (nhap.getNhanVien() == null && !nhap.getMaNV().isEmpty()) {
             Entity.NhanVien nv = new Entity.NhanVien();
             nv.setMaNV(nhap.getMaNV());
             nhap.setNhanVien(nv);
         }
 
+        HoaDon cu = timHoaDonCho(nhap.getMaHD());
         if (cu == null) {
             nhap.setNgayTao(LocalDateTime.now());
             soHoaDonTiepTheo++;                       // chỉ cấp số khi lưu lần đầu
+            dsHoaDonCho.add(0, nhap.saoChep());
+        } else {
+            int idx = dsHoaDonCho.indexOf(cu);
+            if (idx >= 0) {
+                dsHoaDonCho.set(idx, nhap.saoChep());
+            }
         }
-        cacO[i] = nhap.saoChep();
+
+        if (nhap.getSoO() >= 1 && nhap.getSoO() <= SO_O) {
+            cacO[nhap.getSoO() - 1] = nhap.saoChep();
+        }
 
         try {
-            dao.luuHoaDon(cacO[i]);
+            dao.luuHoaDon(nhap);
         } catch (SQLException e) {
             e.printStackTrace();
+            throw new RuntimeException("Lỗi lưu hóa đơn vào CSDL: " + e.getMessage(), e);
         }
     }
 
     /**
-     * Xóa hóa đơn đã lưu (chưa thanh toán) khỏi ô và xóa khỏi SQL Server.
+     * Xóa hóa đơn đã lưu (chưa thanh toán) theo mã và xóa khỏi SQL Server.
      */
-    public HoaDon xoa(int viTri) {
-        HoaDon h = cacO[viTri];
-        if (h == null) throw new IllegalStateException("Ô " + (viTri + 1) + " đang trống.");
-        cacO[viTri] = null;
+    public synchronized HoaDon xoaHoaDon(String maHD) {
+        if (maHD == null) return null;
+        HoaDon h = timHoaDonCho(maHD);
+        if (h != null) {
+            dsHoaDonCho.remove(h);
+            if (h.getSoO() >= 1 && h.getSoO() <= SO_O) {
+                cacO[h.getSoO() - 1] = null;
+            }
+        }
         try {
-            dao.xoa(h.getMaHD());
+            dao.xoa(maHD);
         } catch (SQLException e) {
             e.printStackTrace();
+            throw new RuntimeException("Lỗi xóa hóa đơn: " + e.getMessage(), e);
         }
         return h;
     }
 
     /**
-     * Ghi nhận thanh toán đã được xác nhận thành công: hóa đơn rời ô, vào lịch sử và cập nhật vào SQL Server.
+     * Xóa hóa đơn theo vị trí ô (tương thích ngược với các module cũ).
      */
-    public void thanhToan(HoaDon nhap, String phuongThuc) {
+    public HoaDon xoa(int viTri) {
+        if (viTri >= 0 && viTri < SO_O && cacO[viTri] != null) {
+            return xoaHoaDon(cacO[viTri].getMaHD());
+        }
+        if (viTri >= 0 && viTri < dsHoaDonCho.size()) {
+            return xoaHoaDon(dsHoaDonCho.get(viTri).getMaHD());
+        }
+        throw new IllegalStateException("Không tìm thấy hóa đơn cần xóa.");
+    }
+
+    /**
+     * Ghi nhận thanh toán đã được xác nhận thành công: rời danh sách chờ, vào lịch sử và cập nhật vào SQL Server.
+     */
+    public synchronized void thanhToan(HoaDon nhap, String phuongThuc) {
         if (phuongThuc == null || !List.of(PHUONG_THUC).contains(phuongThuc)) {
             throw new IllegalArgumentException("Phương thức thanh toán không hợp lệ.");
         }
         luu(nhap);
-        int i = nhap.getSoO() - 1;
-        HoaDon h = cacO[i];
-        h.danhDauDaThanhToan(phuongThuc, LocalDateTime.now());
-        cacO[i] = null;
+        HoaDon h = timHoaDonCho(nhap.getMaHD());
+        if (h == null) h = nhap;
+        LocalDateTime luc = LocalDateTime.now();
+        h.danhDauDaThanhToan(phuongThuc, luc);
+        dsHoaDonCho.remove(h);
+        if (h.getSoO() >= 1 && h.getSoO() <= SO_O) {
+            cacO[h.getSoO() - 1] = null;
+        }
         lichSu.add(0, h);
 
         try {
             dao.thanhToan(h);
         } catch (SQLException e) {
             e.printStackTrace();
+            throw new RuntimeException("Lỗi thanh toán: " + e.getMessage(), e);
         }
 
         // đồng bộ lại bản nháp đang mở để giao diện biết hóa đơn đã thanh toán
-        nhap.danhDauDaThanhToan(phuongThuc, h.getNgayThanhToan());
+        nhap.danhDauDaThanhToan(phuongThuc, luc);
         khachHang.ghiNhanThanhToan(h.getMaKH(), h.canThanhToan());   // cộng vào tổng chi tiêu của khách
     }
 
     // ------------------------------------------------------------ lịch sử
     public List<HoaDon> layLichSu() {
         return Collections.unmodifiableList(lichSu);
+    }
+
+    /** Đếm tổng số hóa đơn đã thanh toán theo điều kiện tìm kiếm và ngày trực tiếp trên CSDL. */
+    public int demLichSu(String tuKhoa, LocalDate tu, LocalDate den) {
+        return dao.demLichSu(tuKhoa, tu, den);
+    }
+
+    /** Lấy danh sách hóa đơn theo từng trang trực tiếp từ SQL Server (Server-side Pagination). */
+    public List<HoaDon> layLichSuPhanTrang(String tuKhoa, LocalDate tu, LocalDate den, int trang, int soLuongMoiTrang) {
+        return dao.layLichSuPhanTrang(tuKhoa, tu, den, trang, soLuongMoiTrang);
+    }
+
+    /** Tải chi tiết sản phẩm / dịch vụ khi người dùng xem chi tiết hoặc in hóa đơn. */
+    public void napChiTietHoaDon(HoaDon h) {
+        dao.napChiTietChoHoaDon(h);
     }
 
     /** Tìm theo mã hóa đơn, tên khách, mã khách hàng hoặc số điện thoại; lọc theo ngày thanh toán (null = bỏ qua). */

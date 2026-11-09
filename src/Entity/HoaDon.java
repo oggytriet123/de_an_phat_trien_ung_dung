@@ -36,6 +36,7 @@ public class HoaDon {
     private boolean preOrder = false;
     private long tienKhachDua = 0;
     private long tienTraLai = 0;
+    private Double tongTienLuu;
 
     public HoaDon(String maHD, int soO) {
         this.maHD = maHD;
@@ -71,6 +72,7 @@ public class HoaDon {
         h.preOrder = preOrder;
         h.tienKhachDua = tienKhachDua;
         h.tienTraLai = tienTraLai;
+        h.tongTienLuu = tongTienLuu;
         return h;
     }
 
@@ -136,8 +138,15 @@ public class HoaDon {
         return maGiamGia == null ? 0 : maGiamGia.tinhGiam(tamTinh());
     }
 
-    /** Cần thanh toán = tổng hàng - tiền giảm giá. */
+    public void setTongTien(double tongTien) {
+        this.tongTienLuu = (double) Math.round(tongTien);
+    }
+
+    /** Cần thanh toán = tổng hàng - tiền giảm giá. Khi chưa tải chi tiết, dùng tổng tiền lưu từ CSDL. */
     public long canThanhToan() {
+        if (danhSachChiTiet.isEmpty() && tongTienLuu != null && tongTienLuu >= 0) {
+            return tongTienLuu.longValue();
+        }
         return tamTinh() - tienGiam();
     }
 
