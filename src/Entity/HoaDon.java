@@ -34,6 +34,8 @@ public class HoaDon {
     private LocalDateTime ngayTao = LocalDateTime.now();
     private LocalDateTime ngayThanhToan;
     private boolean preOrder = false;
+    private long tienKhachDua = 0;
+    private long tienTraLai = 0;
 
     public HoaDon(String maHD, int soO) {
         this.maHD = maHD;
@@ -67,6 +69,8 @@ public class HoaDon {
         h.ngayTao = ngayTao;
         h.ngayThanhToan = ngayThanhToan;
         h.preOrder = preOrder;
+        h.tienKhachDua = tienKhachDua;
+        h.tienTraLai = tienTraLai;
         return h;
     }
 
@@ -235,6 +239,25 @@ public class HoaDon {
     public void setTrangThai(String trangThai) { this.trangThai = trangThai; }
     public void setPhuongThuc(String phuongThuc) { this.phuongThuc = phuongThuc; }
     public void setNgayThanhToan(LocalDateTime ngayThanhToan) { this.ngayThanhToan = ngayThanhToan; }
+
+    public long getTienKhachDua() {
+        if (tienKhachDua <= 0) return canThanhToan();
+        return tienKhachDua;
+    }
+
+    public void setTienKhachDua(long tienKhachDua) {
+        this.tienKhachDua = tienKhachDua;
+        this.tienTraLai = Math.max(0, tienKhachDua - canThanhToan());
+    }
+
+    public long getTienTraLai() {
+        if (tienKhachDua <= 0) return 0;
+        return Math.max(0, tienKhachDua - canThanhToan());
+    }
+
+    public void setTienTraLai(long tienTraLai) {
+        this.tienTraLai = Math.max(0, tienTraLai);
+    }
 
     public void danhDauDaThanhToan(String phuongThuc, LocalDateTime luc) {
         this.trangThai = DA_THANH_TOAN;

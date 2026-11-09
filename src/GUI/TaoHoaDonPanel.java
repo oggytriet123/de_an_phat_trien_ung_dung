@@ -706,13 +706,14 @@ public class TaoHoaDonPanel extends JPanel {
         if (!kiemTra()) return;
         String ma = hd.getMaHD();
         long tong = hd.canThanhToan();
-        HoaDonPopups.thanhToan(this, ma, tong, phuongThuc -> {
+        HoaDonPopups.thanhToan(this, ma, tong, (phuongThuc, tienKhachDua) -> {
             try {
                 bus.thanhToan(hd, phuongThuc);
             } catch (RuntimeException ex) {
                 datLoi(ex.getMessage());
                 return;
             }
+            hd.setTienKhachDua(tienKhachDua);
             HoaDon hdDaThanhToan = hd.saoChep();
             int viTriO = Math.max(0, hd.getSoO() - 1);
             hd.getDong().clear();

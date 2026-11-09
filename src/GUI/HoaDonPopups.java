@@ -438,7 +438,11 @@ final class HoaDonPopups {
     // Thanh toán
     // =====================================================================
     static void thanhToan(Component host, String maHD, long tong, Consumer<String> onConfirm) {
-        RoundedPanel card = card(580, 450, "Thanh toán hóa đơn", "Chọn phương thức thanh toán cho hóa đơn " + maHD + ".");
+        thanhToan(host, maHD, tong, (pt, tk) -> onConfirm.accept(pt));
+    }
+
+    static void thanhToan(Component host, String maHD, long tong, java.util.function.BiConsumer<String, Long> onConfirm) {
+        RoundedPanel card = card(580, 560, "Thanh toán hóa đơn", "Chọn phương thức thanh toán cho hóa đơn " + maHD + ".");
 
         JLabel tl = new JLabel("Tổng thanh toán");
         tl.setFont(Theme.font(Font.PLAIN, 12));
@@ -448,7 +452,7 @@ final class HoaDonPopups {
         amount.setForeground(Theme.TEXT);
 
         String[] huongDan = {
-            "Xác nhận sau khi đã nhận đủ tiền mặt từ khách.",
+            "Nhập số tiền khách đưa để hệ thống tự động tính tiền thừa trả lại.",
             "Xác nhận sau khi giao dịch quẹt thẻ thành công.",
             "Phương thức QR MoMo (Đang phát triển / Thử nghiệm) - Vui lòng kiểm tra và xác nhận thủ công.",
             "Phương thức QR ZaloPay (Đang phát triển / Thử nghiệm) - Vui lòng kiểm tra và xác nhận thủ công.",
@@ -464,6 +468,81 @@ final class HoaDonPopups {
 
         RoundedButton dong = secondary("Đóng", 150);
         RoundedButton xacNhan = primary("Xác nhận thanh toán", 210);
+
+        // Panel nhập tiền mặt & tính tiền thừa
+        JPanel pnlTienMat = new JPanel();
+        pnlTienMat.setOpaque(false);
+        pnlTienMat.setLayout(new BoxLayout(pnlTienMat, BoxLayout.Y_AXIS));
+        pnlTienMat.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+        long[] tienKhachDua = {tong};
+        JLabel lblTienKhach = new JLabel("Tiền khách đưa (₫):");
+        lblTienKhach.setFont(Theme.font(Font.BOLD, 12));
+        lblTienKhach.setForeground(Theme.TEXT);
+
+        JTextField tfTienKhach = new JTextField(String.valueOf(tong));
+        tfTienKhach.setFont(Theme.font(Font.BOLD, 15));
+        tfTienKhach.setPreferredSize(new Dimension(520, 36));
+        tfTienKhach.setMaximumSize(new Dimension(Integer.MAX_VALUE, 36));
+
+        JLabel lblTienTra = new JLabel("Tiền trả lại khách: 0₫");
+        lblTienTra.setFont(Theme.font(Font.BOLD, 13));
+        lblTienTra.setForeground(Theme.GREEN);
+
+        Runnable capNhatTienTra = () -> {
+            try {
+                String raw = tfTienKhach.getText().replaceAll("[^0-9]", "");
+                long k = raw.isEmpty() ? 0 : Long.parseLong(raw);
+                tienKhachDua[0] = k;
+                long tra = k - tong;
+                if (tra >= 0) {
+                    lblTienTra.setText("Tiền trả lại khách: " + Theme.money(tra));
+                    lblTienTra.setForeground(Theme.GREEN);
+                    xacNhan.setEnabled(true);
+                } else {
+                    lblTienTra.setText("⚠ Khách đưa thiếu: " + Theme.money(-tra));
+                    lblTienTra.setForeground(Theme.RED);
+                    xacNhan.setEnabled(false);
+                }
+            } catch (Exception ex) {
+                lblTienTra.setText("Số tiền không hợp lệ");
+                lblTienTra.setForeground(Theme.RED);
+                xacNhan.setEnabled(false);
+            }
+        };
+
+        tfTienKhach.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { capNhatTienTra.run(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { capNhatTienTra.run(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { capNhatTienTra.run(); }
+        });
+
+        JPanel pnlGoiY = new JPanel(new FlowLayout(FlowLayout.LEFT, 6, 2));
+        pnlGoiY.setOpaque(false);
+        long[] goiY = {tong, ((tong + 9999) / 10000) * 10000, ((tong + 49999) / 50000) * 50000, ((tong + 99999) / 100000) * 100000, 500000, 1000000};
+        java.util.Set<Long> daThem = new java.util.LinkedHashSet<>();
+        daThem.add(tong);
+        for (long v : goiY) {
+            if (v >= tong && daThem.add(v) && daThem.size() <= 4) {
+                String txt = (v == tong) ? "Đúng tiền" : Theme.money(v);
+                RoundedButton btnY = new RoundedButton(txt, Color.WHITE, new Color(0xF1F5F9), Theme.PRIMARY, Theme.BORDER, 6).pad(8, 4);
+                btnY.setFont(Theme.font(Font.PLAIN, 11));
+                btnY.addActionListener(ev -> {
+                    tfTienKhach.setText(String.valueOf(v));
+                    capNhatTienTra.run();
+                });
+                pnlGoiY.add(btnY);
+            }
+        }
+
+        pnlTienMat.add(Box.createVerticalStrut(6));
+        pnlTienMat.add(lblTienKhach);
+        pnlTienMat.add(Box.createVerticalStrut(4));
+        pnlTienMat.add(tfTienKhach);
+        pnlTienMat.add(Box.createVerticalStrut(4));
+        pnlTienMat.add(pnlGoiY);
+        pnlTienMat.add(Box.createVerticalStrut(2));
+        pnlTienMat.add(lblTienTra);
 
         // Panel QR động chuẩn EMVCo VietQR có nhúng sẵn số tiền & mã hóa đơn
         JPanel pnlMoMo = new JPanel();
@@ -574,17 +653,28 @@ final class HoaDonPopups {
 
                     if ("MoMo".equalsIgnoreCase(mc.ten) || "ZaloPay".equalsIgnoreCase(mc.ten)) {
                         card.setPreferredSize(new Dimension(580, 760));
+                        pnlTienMat.setVisible(false);
                         pnlMoMo.setVisible(true);
                         xacNhan.setText("Xác nhận thủ công");
+                        xacNhan.setEnabled(true);
                         giayConLai[0] = 60;
                         lblTimer.setText("⏱ Mã QR có hiệu lực trong: 01:00");
                         lblTimer.setForeground(new Color(0x0284C7));
                         timerHolder[0].restart();
+                    } else if ("Tiền mặt".equalsIgnoreCase(mc.ten)) {
+                        timerHolder[0].stop();
+                        pnlMoMo.setVisible(false);
+                        pnlTienMat.setVisible(true);
+                        card.setPreferredSize(new Dimension(580, 560));
+                        xacNhan.setText("Xác nhận thanh toán");
+                        capNhatTienTra.run();
                     } else {
                         timerHolder[0].stop();
                         pnlMoMo.setVisible(false);
+                        pnlTienMat.setVisible(false);
                         card.setPreferredSize(new Dimension(580, 455));
                         xacNhan.setText("Xác nhận thanh toán");
+                        xacNhan.setEnabled(true);
                     }
                     card.revalidate();
                     card.repaint();
@@ -601,7 +691,7 @@ final class HoaDonPopups {
         body.setOpaque(false);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
         body.setBorder(new EmptyBorder(22, 0, 0, 0));
-        for (JComponent c : new JComponent[] {tl, amount, grid, hint, pnlMoMo}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
+        for (JComponent c : new JComponent[] {tl, amount, grid, hint, pnlTienMat, pnlMoMo}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
         body.add(tl);
         body.add(Box.createVerticalStrut(4));
         body.add(amount);
@@ -609,6 +699,7 @@ final class HoaDonPopups {
         body.add(grid);
         body.add(Box.createVerticalStrut(10));
         body.add(hint);
+        body.add(pnlTienMat);
         body.add(pnlMoMo);
         card.add(body, BorderLayout.CENTER);
 
@@ -620,7 +711,8 @@ final class HoaDonPopups {
         xacNhan.addActionListener(e -> {
             if (timerHolder[0] != null) timerHolder[0].stop();
             Overlay.dong(host);
-            onConfirm.accept(chon[0]);
+            long tk = "Tiền mặt".equalsIgnoreCase(chon[0]) ? tienKhachDua[0] : tong;
+            onConfirm.accept(chon[0], tk);
         });
         card.add(buttons(dong, xacNhan), BorderLayout.SOUTH);
         Overlay.hien(host, card, dongPopup);
