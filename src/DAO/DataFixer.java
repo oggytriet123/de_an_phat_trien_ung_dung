@@ -17,6 +17,12 @@ public class DataFixer {
             try { new ChuongDAO().damBaoCauTrucBang(); } catch (Exception ignored) {}
             try { new PhauThuatDAO().damBaoCauTrucBang(); } catch (Exception ignored) {}
             try { new TiemPhongDAO().damBaoCauTrucBang(); } catch (Exception ignored) {}
+            try { new DoiTacDAO().damBaoCauTrucBang(); } catch (Exception ignored) {}
+            try { new PhieuKhoDAO().damBaoCauTrucBang(); } catch (Exception ignored) {}
+            try { new LichHenDAO().damBaoCauTrucBang(); } catch (Exception ignored) {}
+            try { new HoaDonDAO().damBaoCauTrucBang(); } catch (Exception ignored) {}
+            try { new MaGiamGiaDAO().damBaoCauTrucBang(); } catch (Exception ignored) {}
+            try { new DichVuDAO().damBaoCauTrucBang(); } catch (Exception ignored) {}
             
             // 1. Dọn dẹp dữ liệu cũ (theo thứ tự phụ thuộc khóa ngoại)
             System.out.println("-> Xóa dữ liệu cũ...");
@@ -176,6 +182,7 @@ public class DataFixer {
 
             // 10.1 PHIEU_LUUTRU & CHITIET_DICHVU_CHUONG
             System.out.println("-> Nạp PHIEU_LUUTRU & CHITIET_DICHVU_CHUONG...");
+            try { st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'tongTien') IS NULL ALTER TABLE PHIEU_LUUTRU ADD tongTien FLOAT DEFAULT 0"); } catch (Exception ignored) {}
             st.executeUpdate("INSERT INTO PHIEU_LUUTRU (maPhieu, cageID, maKH, petID, tenPet, loaiPet, tenKhach, sdtKhach, ngayVao, ngayRaDuKien, trangThai, ghiChu, tongTien) VALUES "
                     + "(N'PLT001', N'C-101', N'KH005', N'PET007', N'Buddy', N'Chó Poodle Toy', N'Hoàng Minh Tuấn', '0945678901', GETDATE(), DATEADD(day, 3, GETDATE()), N'Đang lưu trú', N'Ăn 2 bữa/ngày, theo dõi sức khỏe', 750000)");
             st.executeUpdate("INSERT INTO CHITIET_DICHVU_CHUONG (maPhieu, maDV, tenDV, loai, thoiGian, ngaySuDung, soLuong, donGia) VALUES "

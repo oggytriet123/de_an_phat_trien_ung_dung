@@ -14,13 +14,21 @@ import java.util.List;
 import java.util.Map;
 
 import ConnectDB.ConnectDB;
-import Entity.DongGioHang;
+import Entity.ChiTietHoaDon;
 import Entity.HoaDon;
+import Entity.KhachHang;
 import Entity.MaGiamGia;
+import Entity.NhanVien;
 import Entity.SanPham;
 
 /**
- * Xử lý truy xuất và lưu trữ hóa đơn trực tiếp vào SQL Server (HOADON, CHITIETHOADON).
+ * Xử lý truy xuất và lưu trữ thực thể Hóa đơn và Chi tiết hóa đơn
+ * trực tiếp vào cơ sở dữ liệu SQL Server (bảng HOADON và CHITIETHOADON).
+ *
+ * Chuẩn hóa mô hình đa tầng:
+ * - Đảm bảo DAO chỉ đảm nhận nhiệm vụ truy vấn, lưu trữ và ánh xạ dữ liệu (Data Access / Persistence).
+ * - Loại bỏ logic kiểm tra nghiệp vụ và xử lý dữ liệu người dùng (thuộc tầng BUS).
+ * - Ánh xạ quan hệ thực thể đối tượng hoàn chỉnh: HoaDon -> KhachHang, NhanVien, List<ChiTietHoaDon>.
  */
 public class HoaDonDAO {
 
@@ -39,6 +47,7 @@ public class HoaDonDAO {
             st.executeUpdate("IF COL_LENGTH('HOADON', 'maGiamGia') IS NULL ALTER TABLE HOADON ADD maGiamGia NVARCHAR(20) NULL");
             st.executeUpdate("IF COL_LENGTH('HOADON', 'tenKH') IS NULL ALTER TABLE HOADON ADD tenKH NVARCHAR(100) NULL");
             st.executeUpdate("IF COL_LENGTH('HOADON', 'soDienThoai') IS NULL ALTER TABLE HOADON ADD soDienThoai NVARCHAR(20) NULL");
+            st.executeUpdate("IF COL_LENGTH('HOADON', 'maNV_BH') IS NULL ALTER TABLE HOADON ADD maNV_BH NVARCHAR(20) NULL");
 
             st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'tenSP') IS NULL ALTER TABLE CHITIETHOADON ADD tenSP NVARCHAR(150) NULL");
             st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'danhMuc') IS NULL ALTER TABLE CHITIETHOADON ADD danhMuc NVARCHAR(100) NULL");
@@ -55,9 +64,12 @@ public class HoaDonDAO {
         List<HoaDon> ds = new ArrayList<>();
         String sql = "SELECT h.maHD, h.soO, ISNULL(h.tenKH, k.hoTen) AS tenKhach, "
                 + "       ISNULL(h.soDienThoai, k.soDienThoai) AS sdt, h.maKH, "
+                + "       k.hangThe, k.diemTichLuy, k.tongChiTieu, "
+                + "       h.maNV_BH, nv.hoTen AS tenNV, nv.tenDangNhap AS tkNV, nv.maQuyen, nv.soDienThoai AS sdtNV, "
                 + "       h.trangThai, h.phuongThuc, h.ngayTao, h.ngayThanhToan, h.maGiamGia, h.tienGiam "
                 + "FROM HOADON h "
                 + "LEFT JOIN KHACHHANG k ON h.maKH = k.maKH "
+                + "LEFT JOIN NHANVIEN nv ON h.maNV_BH = nv.maNV "
                 + "WHERE h.trangThai = N'Đã thanh toán' "
                 + "ORDER BY ISNULL(h.ngayThanhToan, h.ngayTao) DESC";
 
@@ -79,9 +91,12 @@ public class HoaDonDAO {
         Map<Integer, HoaDon> map = new HashMap<>();
         String sql = "SELECT h.maHD, h.soO, ISNULL(h.tenKH, k.hoTen) AS tenKhach, "
                 + "       ISNULL(h.soDienThoai, k.soDienThoai) AS sdt, h.maKH, "
+                + "       k.hangThe, k.diemTichLuy, k.tongChiTieu, "
+                + "       h.maNV_BH, nv.hoTen AS tenNV, nv.tenDangNhap AS tkNV, nv.maQuyen, nv.soDienThoai AS sdtNV, "
                 + "       h.trangThai, h.phuongThuc, h.ngayTao, h.ngayThanhToan, h.maGiamGia, h.tienGiam "
                 + "FROM HOADON h "
                 + "LEFT JOIN KHACHHANG k ON h.maKH = k.maKH "
+                + "LEFT JOIN NHANVIEN nv ON h.maNV_BH = nv.maNV "
                 + "WHERE h.trangThai = N'Chưa thanh toán' AND h.soO IS NOT NULL";
 
         try (Connection con = ConnectDB.getConnection();
@@ -105,9 +120,43 @@ public class HoaDonDAO {
         int soO = rs.getInt("soO");
         if (rs.wasNull()) soO = 0;
         HoaDon h = new HoaDon(ma, soO);
-        h.setTenKH(rs.getString("tenKhach") == null ? "" : rs.getString("tenKhach"));
-        h.setSdt(rs.getString("sdt") == null ? "" : rs.getString("sdt"));
-        h.setMaKH(rs.getString("maKH") == null ? "" : rs.getString("maKH"));
+
+        // 1. Ánh xạ thực thể KhachHang
+        String maKH = rs.getString("maKH");
+        String tenKhach = rs.getString("tenKhach");
+        String sdt = rs.getString("sdt");
+        if (maKH != null && !maKH.trim().isEmpty()) {
+            String hangThe = rs.getString("hangThe");
+            int diem = rs.getInt("diemTichLuy");
+            long tongChiTieu = Math.round(rs.getDouble("tongChiTieu"));
+            KhachHang kh = new KhachHang(maKH, tenKhach != null ? tenKhach : "",
+                    sdt != null ? sdt : "", hangThe != null ? hangThe : "Thường",
+                    diem, "", null, tongChiTieu);
+            h.setKhachHang(kh);
+        } else {
+            h.setTenKH(tenKhach == null ? "" : tenKhach);
+            h.setSdt(sdt == null ? "" : sdt);
+            h.setMaKH("");
+        }
+
+        // 2. Ánh xạ thực thể NhanVien
+        String maNV = rs.getString("maNV_BH");
+        if (maNV != null && !maNV.trim().isEmpty()) {
+            String tenNV = rs.getString("tenNV");
+            String tkNV = rs.getString("tkNV");
+            int maQuyen = rs.getInt("maQuyen");
+            String sdtNV = rs.getString("sdtNV");
+            NhanVien nv = new NhanVien();
+            nv.setMaNV(maNV);
+            nv.setHoTen(tenNV != null ? tenNV : "");
+            nv.setTenDangNhap(tkNV != null ? tkNV : "");
+            nv.setMaQuyen(maQuyen);
+            nv.setSoDienThoai(sdtNV != null ? sdtNV : "");
+            h.setNhanVien(nv);
+        } else {
+            h.setMaNV("");
+        }
+
         h.setTrangThai(rs.getString("trangThai") == null ? HoaDon.CHUA_THANH_TOAN : rs.getString("trangThai"));
         h.setPhuongThuc(rs.getString("phuongThuc"));
 
@@ -124,7 +173,7 @@ public class HoaDonDAO {
         return h;
     }
 
-    private void napChiTiet(Connection con, HoaDon h) {
+    private void napChiTiet(Connection con, HoaDon h) throws SQLException {
         String sql = "SELECT c.maCTHD, c.soLuong, c.donGia, c.thanhTien, c.sku, c.maDV, "
                 + "       ISNULL(c.tenSP, ISNULL(sp.tenSP, dv.tenDV)) AS ten, "
                 + "       ISNULL(c.danhMuc, ISNULL(dv.loaiDV, N'Sản phẩm')) AS dm, "
@@ -138,6 +187,7 @@ public class HoaDonDAO {
             ps.setString(1, h.getMaHD());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
+                    String maCTHD = rs.getString("maCTHD");
                     String sku = rs.getString("sku");
                     if (sku == null || sku.trim().isEmpty()) sku = rs.getString("maDV");
                     if (sku == null || sku.trim().isEmpty()) sku = "SP";
@@ -145,16 +195,21 @@ public class HoaDonDAO {
                     if (ten == null) ten = "Sản phẩm";
                     String dm = rs.getString("dm");
                     if (dm == null) dm = "Chung";
-                    long gia = Math.round(rs.getDouble("donGia"));
+                    double gia = rs.getDouble("donGia");
+                    double thanhTien = rs.getDouble("thanhTien");
                     boolean isDv = rs.getInt("isDV") == 1;
                     int sl = rs.getInt("soLuong");
 
-                    SanPham spObj = new SanPham(sku, ten, dm, gia, isDv);
-                    h.getDong().add(new DongGioHang(spObj, sl));
+                    SanPham spObj = new SanPham(sku, ten, dm, Math.round(gia), isDv);
+                    ChiTietHoaDon ct = new ChiTietHoaDon(maCTHD, h, spObj, sl, gia, thanhTien > 0 ? thanhTien : gia * sl);
+                    ct.setSku(isDv ? null : sku);
+                    ct.setMaDV(isDv ? sku : null);
+                    ct.setTenSP(ten);
+                    ct.setDanhMuc(dm);
+                    ct.setDichVu(isDv);
+                    h.getDanhSachChiTiet().add(ct);
                 }
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
     }
 
@@ -172,47 +227,39 @@ public class HoaDonDAO {
                     }
                 }
 
-                // Đảm bảo maKH tồn tại trong bảng KHACHHANG để không vi phạm ràng buộc ngoại FK_HD_KH
-                String maKH = (h.getMaKH() != null && !h.getMaKH().trim().isEmpty()) ? h.getMaKH() : null;
+                // Lấy mã khách hàng từ thực thể KhachHang hoặc chuỗi lưu trữ
+                String maKH = h.getKhachHang() != null && h.getKhachHang().getMaKH() != null
+                        ? h.getKhachHang().getMaKH().trim() : (h.getMaKH() != null ? h.getMaKH().trim() : null);
+                if (maKH != null && maKH.isEmpty()) maKH = null;
+
+                // Lấy mã nhân viên từ thực thể NhanVien hoặc chuỗi lưu trữ
+                String maNV = h.getNhanVien() != null && h.getNhanVien().getMaNV() != null
+                        ? h.getNhanVien().getMaNV().trim() : (h.getMaNV() != null ? h.getMaNV().trim() : null);
+                if (maNV != null && maNV.isEmpty()) maNV = null;
+
+                // Đảm bảo ràng buộc toàn vẹn khóa ngoại bảng NHANVIEN_BANHANG nếu CSDL yêu cầu
+                if (maNV != null) {
+                    try (PreparedStatement chk = con.prepareStatement("SELECT 1 FROM NHANVIEN_BANHANG WHERE maNV = ?")) {
+                        chk.setString(1, maNV);
+                        try (ResultSet rsChk = chk.executeQuery()) {
+                            if (!rsChk.next()) maNV = null;
+                        }
+                    } catch (SQLException ignored) {
+                    }
+                }
+
+                // Đảm bảo ràng buộc toàn vẹn khóa ngoại bảng KHACHHANG
                 if (maKH != null) {
                     try (PreparedStatement chk = con.prepareStatement("SELECT 1 FROM KHACHHANG WHERE maKH = ?")) {
                         chk.setString(1, maKH);
                         try (ResultSet rsChk = chk.executeQuery()) {
-                            if (!rsChk.next()) {
-                                // Không tìm thấy maKH trong CSDL, thử tra cứu theo số điện thoại
-                                String sdtChiSo = h.getSdt() == null ? "" : h.getSdt().replaceAll("\\D", "");
-                                String foundMaKH = null;
-                                if (!sdtChiSo.isEmpty()) {
-                                    try (PreparedStatement chkSdt = con.prepareStatement(
-                                            "SELECT maKH FROM KHACHHANG WHERE REPLACE(soDienThoai, ' ', '') = ?")) {
-                                        chkSdt.setString(1, sdtChiSo);
-                                        try (ResultSet rsSdt = chkSdt.executeQuery()) {
-                                            if (rsSdt.next()) foundMaKH = rsSdt.getString(1);
-                                        }
-                                    }
-                                }
-                                // Không tự tạo khách hàng mới: hóa đơn phải gắn với khách đã đăng ký
-                                if (foundMaKH == null) {
-                                    throw new SQLException("Khách hàng chưa đăng ký, không thể lưu hóa đơn " + h.getMaHD());
-                                }
-                                maKH = foundMaKH;
-                                h.setMaKH(maKH);
-                            }
+                            if (!rsChk.next()) maKH = null;
                         }
+                    } catch (SQLException ignored) {
                     }
                 }
 
                 if (!exists) {
-                    // Nhân viên lập hóa đơn: chỉ ghi khi thuộc NHANVIEN_BANHANG (ràng buộc FK_HD_NVBH)
-                    String maNV = (h.getMaNV() != null && !h.getMaNV().trim().isEmpty()) ? h.getMaNV().trim() : null;
-                    if (maNV != null) {
-                        try (PreparedStatement chk = con.prepareStatement("SELECT 1 FROM NHANVIEN_BANHANG WHERE maNV = ?")) {
-                            chk.setString(1, maNV);
-                            try (ResultSet rsChk = chk.executeQuery()) {
-                                if (!rsChk.next()) maNV = null;
-                            }
-                        }
-                    }
                     String insSql = "INSERT INTO HOADON (maHD, ngayLap, tongTien, maKH, soO, trangThai, "
                             + "phuongThuc, ngayTao, ngayThanhToan, tienGiam, maGiamGia, tenKH, soDienThoai, maNV_BH) "
                             + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
@@ -236,7 +283,7 @@ public class HoaDonDAO {
                 } else {
                     String upSql = "UPDATE HOADON SET tongTien = ?, maKH = ?, soO = ?, trangThai = ?, "
                             + "phuongThuc = ?, ngayThanhToan = ?, tienGiam = ?, maGiamGia = ?, "
-                            + "tenKH = ?, soDienThoai = ? WHERE maHD = ?";
+                            + "tenKH = ?, soDienThoai = ?, maNV_BH = ? WHERE maHD = ?";
                     try (PreparedStatement ps = con.prepareStatement(upSql)) {
                         ps.setDouble(1, h.canThanhToan());
                         ps.setString(2, maKH);
@@ -248,12 +295,13 @@ public class HoaDonDAO {
                         ps.setString(8, h.getMaGiamGia() != null ? h.getMaGiamGia().getMa() : null);
                         ps.setString(9, h.getTenKH());
                         ps.setString(10, h.getSdt());
-                        ps.setString(11, h.getMaHD());
+                        ps.setString(11, maNV);
+                        ps.setString(12, h.getMaHD());
                         ps.executeUpdate();
                     }
                 }
 
-                // Cập nhật chi tiết hóa đơn
+                // Cập nhật danh sách ChiTietHoaDon tương ứng bảng CHITIETHOADON
                 try (PreparedStatement del = con.prepareStatement("DELETE FROM CHITIETHOADON WHERE maHD = ?")) {
                     del.setString(1, h.getMaHD());
                     del.executeUpdate();
@@ -263,18 +311,28 @@ public class HoaDonDAO {
                         + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
                 try (PreparedStatement ps = con.prepareStatement(insCt)) {
                     int stt = 1;
-                    for (DongGioHang d : h.getDong()) {
-                        String ctId = h.getMaHD() + "-CT" + String.format("%02d", stt++);
+                    for (ChiTietHoaDon d : h.getDanhSachChiTiet()) {
+                        String ctId = d.getMaCTHD();
+                        if (ctId == null || ctId.trim().isEmpty()) {
+                            ctId = h.getMaHD() + "-CT" + String.format("%02d", stt);
+                            d.setMaCTHD(ctId);
+                        }
+                        stt++;
                         ps.setString(1, ctId);
                         ps.setInt(2, d.getSoLuong());
-                        ps.setDouble(3, d.getSanPham().getGia());
+                        ps.setDouble(3, d.getDonGia());
                         ps.setDouble(4, d.thanhTien());
                         ps.setString(5, h.getMaHD());
-                        boolean isDv = d.getSanPham().isDichVu();
-                        ps.setString(6, isDv ? null : d.getSanPham().getSku());
-                        ps.setString(7, isDv ? d.getSanPham().getSku() : null);
-                        ps.setString(8, d.getSanPham().getTen());
-                        ps.setString(9, d.getSanPham().getDanhMuc());
+                        boolean isDv = d.isDichVu();
+                        String sku = d.getSku();
+                        if (sku == null && d.getSanPham() != null && !isDv) sku = d.getSanPham().getSku();
+                        String maDV = d.getMaDV();
+                        if (maDV == null && d.getSanPham() != null && isDv) maDV = d.getSanPham().getSku();
+
+                        ps.setString(6, isDv ? null : sku);
+                        ps.setString(7, isDv ? (maDV != null ? maDV : sku) : null);
+                        ps.setString(8, d.getTenSP() != null ? d.getTenSP() : (d.getSanPham() != null ? d.getSanPham().getTen() : ""));
+                        ps.setString(9, d.getDanhMuc() != null ? d.getDanhMuc() : (d.getSanPham() != null ? d.getSanPham().getDanhMuc() : ""));
                         ps.setInt(10, isDv ? 1 : 0);
                         ps.addBatch();
                     }
@@ -292,6 +350,7 @@ public class HoaDonDAO {
     }
 
     public void thanhToan(HoaDon h) throws SQLException {
+        h.setTrangThai(HoaDon.DA_THANH_TOAN);
         luuHoaDon(h);
         String sql = "UPDATE HOADON SET trangThai = N'Đã thanh toán', soO = NULL, phuongThuc = ?, ngayThanhToan = ? WHERE maHD = ?";
         try (Connection con = ConnectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {

@@ -16,7 +16,7 @@ import Bus.HoaDonBUS;
 import Bus.KhachHangBUS;
 import Bus.MaGiamGiaBUS;
 import Bus.SanPhamBUS;
-import Entity.DongGioHang;
+import Entity.ChiTietHoaDon;
 import Entity.HoaDon;
 import Entity.KhachHang;
 import Entity.SanPham;
@@ -540,7 +540,7 @@ public class TaoHoaDonPanel extends JPanel {
             empty.add(b);
             pnlDong.add(empty);
         } else {
-            for (DongGioHang d : hd.getDong()) pnlDong.add(dongHang(d));
+            for (ChiTietHoaDon d : hd.getDong()) pnlDong.add(dongHang(d));
         }
 
         long giam = hd.tienGiam();
@@ -564,7 +564,7 @@ public class TaoHoaDonPanel extends JPanel {
         }
     }
 
-    private JComponent dongHang(DongGioHang d) {
+    private JComponent dongHang(ChiTietHoaDon d) {
         SanPham sp = d.getSanPham();
         RoundedPanel box = new RoundedPanel(10, Theme.FIELD_BG, null);
         box.setLayout(new BorderLayout(10, 0));

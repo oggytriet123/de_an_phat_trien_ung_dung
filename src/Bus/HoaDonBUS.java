@@ -157,10 +157,16 @@ public class HoaDonBUS {
         String sdt = KhachHangBUS.chuanHoaSdt(nhap.getSdt());
         KhachHang k = khachHang.timTheoSdtAnToan(sdt);
         if (k == null) throw new IllegalArgumentException(loiTrungSdt(ten, sdt));
+        nhap.setKhachHang(k);
         nhap.setTenKH(ten);
         nhap.setSdt(KhachHangBUS.dinhDangSdt(sdt));
         nhap.setMaKH(k.getMaKH());
         if (nhap.getMaNV().isEmpty()) nhap.setMaNV(maNVDangNhap);   // giữ nguyên người lập khi người khác sửa/thanh toán
+        if (nhap.getNhanVien() == null && !nhap.getMaNV().isEmpty()) {
+            Entity.NhanVien nv = new Entity.NhanVien();
+            nv.setMaNV(nhap.getMaNV());
+            nhap.setNhanVien(nv);
+        }
 
         if (cu == null) {
             nhap.setNgayTao(LocalDateTime.now());

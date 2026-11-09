@@ -18,22 +18,22 @@ set SQL_FILE=data\PetCare_AllInOne.sql
 
 echo Dang thuc thi file SQL de build database PetCare...
 echo [1/4] Thu ket noi Windows Authentication: localhost...
-sqlcmd -S localhost -E -i "%SQL_FILE%" -b
+sqlcmd -S localhost -E -i "%SQL_FILE%" -f 65001 -b
 if %ERRORLEVEL% equ 0 goto success
 
 echo.
 echo [2/4] Thu ket noi Windows Authentication: .\SQLEXPRESS...
-sqlcmd -S .\SQLEXPRESS -E -i "%SQL_FILE%" -b
+sqlcmd -S .\SQLEXPRESS -E -i "%SQL_FILE%" -f 65001 -b
 if %ERRORLEVEL% equ 0 goto success
 
 echo.
-echo [3/4] Thu ket noi SQL Auth (sa/sapassword) theo ConnectDB.java: localhost...
-sqlcmd -S localhost -U sa -P sapassword -i "%SQL_FILE%" -b
+echo [3/4] Thu ket noi SQL Auth (sa/123456) theo ConnectDB.java: localhost...
+sqlcmd -S localhost -U sa -P 123456 -i "%SQL_FILE%" -f 65001 -b
 if %ERRORLEVEL% equ 0 goto success
 
 echo.
 echo [4/4] Thu ket noi SQL Auth (sa/sapassword): .\SQLEXPRESS...
-sqlcmd -S .\SQLEXPRESS -U sa -P sapassword -i "%SQL_FILE%" -b
+sqlcmd -S .\SQLEXPRESS -U sa -P sapassword -i "%SQL_FILE%" -f 65001 -b
 if %ERRORLEVEL% equ 0 goto success
 
 :fail
@@ -43,7 +43,7 @@ echo De build CSDL PetCare bang SQL:
 echo   Cach 1: Mo SSMS (SQL Server Management Studio) hoac Azure Data Studio.
 echo           Mo file: data\PetCare_AllInOne.sql roi bam Execute (F5).
 echo   Cach 2: Chay lenh sqlcmd voi ServerName cua ban:
-echo           sqlcmd -S <Ten_Server_Cua_Ban> -E -i data\PetCare_AllInOne.sql
+echo           sqlcmd -S <Ten_Server_Cua_Ban> -E -i data\PetCare_AllInOne.sql -f 65001
 echo.
 pause
 exit /b 1

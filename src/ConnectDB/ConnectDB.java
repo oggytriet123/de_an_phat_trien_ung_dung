@@ -12,7 +12,7 @@ public final class ConnectDB {
     private static final String URL =
             "jdbc:sqlserver://localhost:1433;databaseName=PetCare;encrypt=true;trustServerCertificate=true;loginTimeout=3";
     private static final String USER = "sa";
-    private static final String PASSWORD = "sapassword";
+    private static final String PASSWORD = "123456";
     private static volatile String activePassword = null;
 
     private ConnectDB() {}

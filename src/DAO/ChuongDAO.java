@@ -67,6 +67,7 @@ public class ChuongDAO {
                     + "ALTER TABLE PHIEU_LUUTRU ADD sdtKhach NVARCHAR(20) NULL");
             st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'tienCoc') IS NULL "
                     + "ALTER TABLE PHIEU_LUUTRU ADD tienCoc FLOAT DEFAULT 0");
+            st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'tongTien') IS NULL ALTER TABLE PHIEU_LUUTRU ADD tongTien FLOAT DEFAULT 0");
             st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'ghiChu') IS NULL "
                     + "ALTER TABLE PHIEU_LUUTRU ADD ghiChu NVARCHAR(500) NULL");
             st.executeUpdate("IF COL_LENGTH('PHIEU_LUUTRU', 'maKH') IS NULL "
@@ -82,6 +83,7 @@ public class ChuongDAO {
                     + "ALTER TABLE CHITIET_DICHVU_CHUONG ADD loai NVARCHAR(50) NULL");
             st.executeUpdate("IF COL_LENGTH('CHITIET_DICHVU_CHUONG', 'thoiGian') IS NULL "
                     + "ALTER TABLE CHITIET_DICHVU_CHUONG ADD thoiGian DATETIME DEFAULT GETDATE()");
+            st.executeUpdate("IF COL_LENGTH('CHITIET_DICHVU_CHUONG', 'ngaySuDung') IS NULL ALTER TABLE CHITIET_DICHVU_CHUONG ADD ngaySuDung DATE NULL");
         } catch (Exception ignored) {
         }
     }

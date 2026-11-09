@@ -9,7 +9,7 @@ import java.util.*;
 
 import ConnectDB.ConnectDB;
 import DAO.HoaDonDAO;
-import Entity.DongGioHang;
+import Entity.ChiTietHoaDon;
 import Entity.HoaDon;
 import Entity.KhachHang;
 import Entity.PhieuKho;
@@ -203,7 +203,7 @@ public class ThongKeBUS {
         map.put("Lưu trú lồng chuồng", 0L);
 
         for (HoaDon hd : layDanhSachHoaDon(tuNgay, denNgay)) {
-            for (DongGioHang d : hd.getDong()) {
+            for (ChiTietHoaDon d : hd.getDong()) {
                 String dm = d.getSanPham().getDanhMuc() != null ? d.getSanPham().getDanhMuc() : "";
                 long tien = d.thanhTien();
                 if (dm.contains("Spa") || dm.contains("Tắm") || dm.contains("Cắt tỉa")) {
@@ -439,7 +439,7 @@ public class ThongKeBUS {
         // 1. Quét toàn bộ hóa đơn đã thanh toán trong khoảng thời gian lọc
         List<HoaDon> hoaDons = layDanhSachHoaDon(tuNgay, denNgay);
         for (HoaDon hd : hoaDons) {
-            for (DongGioHang d : hd.getDong()) {
+            for (ChiTietHoaDon d : hd.getDong()) {
                 SanPham sp = d.getSanPham();
                 if (sp == null || sp.isDichVu()) continue;
                 String sku = sp.getSku();

@@ -21,7 +21,7 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import Entity.DongGioHang;
+import Entity.ChiTietHoaDon;
 import Entity.HoaDon;
 
 /**
@@ -353,7 +353,7 @@ public class DialogXuatHoaDon extends JDialog {
             w.println("  <table>");
             w.println("    <thead><tr><th>Món / Dịch vụ</th><th class=\"num\">SL</th><th class=\"num\">Đơn giá</th><th class=\"num\">Thành tiền</th></tr></thead>");
             w.println("    <tbody>");
-            for (DongGioHang d : hd.getDong()) {
+            for (ChiTietHoaDon d : hd.getDong()) {
                 w.println("      <tr>");
                 w.println("        <td>" + d.getSanPham().getTen() + "</td>");
                 w.println("        <td class=\"num\">" + d.getSoLuong() + "</td>");
@@ -462,7 +462,7 @@ public class DialogXuatHoaDon extends JDialog {
             add(tableHead);
             add(Box.createVerticalStrut(6));
 
-            for (DongGioHang d : hd.getDong()) {
+            for (ChiTietHoaDon d : hd.getDong()) {
                 JPanel row = new JPanel(new BorderLayout(4, 0));
                 row.setOpaque(false);
                 row.setBorder(new EmptyBorder(3, 0, 3, 0));

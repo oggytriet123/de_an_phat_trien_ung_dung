@@ -19,7 +19,7 @@ import javax.swing.event.DocumentListener;
 import Bus.HoaDonBUS;
 import Bus.MaGiamGiaBUS;
 import Bus.SanPhamBUS;
-import Entity.DongGioHang;
+import Entity.ChiTietHoaDon;
 import Entity.HoaDon;
 import Entity.MaGiamGia;
 import Entity.SanPham;
@@ -858,7 +858,7 @@ final class HoaDonPopups {
         JPanel lines = new JPanel();
         lines.setOpaque(false);
         lines.setLayout(new BoxLayout(lines, BoxLayout.Y_AXIS));
-        for (DongGioHang d : hd.getDong()) {
+        for (ChiTietHoaDon d : hd.getDong()) {
             String ten = d.getSanPham().getTen() + "  ·  " + Theme.money(d.getSanPham().getDonGia());
             JPanel r = lineRow(ten, String.valueOf(d.getSoLuong()), Theme.money(d.thanhTien()), false);
             lines.add(r);
