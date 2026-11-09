@@ -393,6 +393,23 @@ public class KhachHangPanel extends JPanel {
     // [CN-KH-07] Lọc + sắp xếp + phân trang rồi vẽ lại bảng
     private void refresh() {
         String kw = norm(txtTim.getText().trim());
+        boolean coDieuKien = !kw.isEmpty() || !hangLoc.equals("Tất cả");
+
+        // Quy tắc tối ưu No-Get-All: Khi chưa có từ khóa tìm kiếm và chưa chọn hạng lọc thì không tải toàn bộ dữ liệu lên bảng
+        if (!coDieuKien) {
+            filtered = new ArrayList<>();
+            tableModel.setRowCount(0);
+            lblFooter.setText("Chế độ tối ưu (No Get All Data): Vui lòng nhập SĐT, Tên hoặc Mã KH để tìm kiếm.");
+            buildPager(1);
+            for (RoundedButton c : chips) {
+                boolean on = c.getText().equalsIgnoreCase(hangLoc);
+                if (on) c.style(Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null);
+                else c.style(Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER);
+            }
+            revalidate();
+            repaint();
+            return;
+        }
         List<KhachHang> list = new ArrayList<>();
         for (KhachHang k : bus.layDanhSach()) {
             if (!hangLoc.equals("Tất cả") && !k.getHangThe().equalsIgnoreCase(hangLoc)) continue;

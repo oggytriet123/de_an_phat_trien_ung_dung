@@ -278,6 +278,19 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
     }
 
     private void refresh() {
+        boolean coLoc = !tuKhoa.isEmpty() || tu != null || den != null;
+        if (!coLoc) {
+            filtered = new ArrayList<>();
+            model.setRows(filtered);
+            lblTrong.setText("Chế độ tối ưu (No Get All): Vui lòng nhập từ khóa hoặc chọn khoảng ngày để tra cứu lịch sử hóa đơn.");
+            tableCards.show(tableArea, "empty");
+            lblFooter.setText("Chưa nhập điều kiện tìm kiếm.");
+            buildPager(0);
+            revalidate();
+            repaint();
+            return;
+        }
+
         filtered = bus.timLichSu(tuKhoa, tu, den);
         int pages = Math.max(1, (int) Math.ceil(filtered.size() / (double) PAGE_SIZE));
         trang = Math.min(Math.max(trang, 1), pages);
@@ -286,7 +299,6 @@ public class LichSuHoaDonPanel extends JPanel implements Refreshable {
         model.setRows(filtered.subList(from, to));
 
         if (filtered.isEmpty()) {
-            boolean coLoc = !tuKhoa.isEmpty() || tu != null || den != null;
             lblTrong.setText(coLoc ? "Không tìm thấy hóa đơn phù hợp."
                     : "Chưa có hóa đơn nào được thanh toán.");
             tableCards.show(tableArea, "empty");

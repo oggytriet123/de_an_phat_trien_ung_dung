@@ -64,6 +64,7 @@ public class TaoHoaDonPanel extends JPanel {
     private final JLabel lblGiam = new JLabel();
     private final JLabel lblTong = new JLabel();
     private final JLabel lblKhach = new JLabel(" ");
+    private final JCheckBox chkPreOrder = new JCheckBox("📦 Đơn đặt trước (Pre-order)");
     private final JLabel lblLoi = new JLabel("");
     private final RoundedButton btnMa = new RoundedButton("+  Nhập mã giảm giá", Theme.PRIMARY_SOFT,
             new Color(0xDCE8FA), Theme.PRIMARY, Theme.PRIMARY_LINE, 8);
@@ -87,6 +88,11 @@ public class TaoHoaDonPanel extends JPanel {
 
         tfMaKH.setEditable(false);
         tfMaKH.setFocusable(false);
+        chkPreOrder.setOpaque(false);
+        chkPreOrder.setFont(Theme.font(Font.BOLD, 12));
+        chkPreOrder.setForeground(Theme.PRIMARY);
+        chkPreOrder.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        chkPreOrder.addActionListener(e -> { if (hd != null) hd.setPreOrder(chkPreOrder.isSelected()); });
         GioiHanNhap.ap(tfTen, 50, null);                       // tên tối đa 50 ký tự
         GioiHanNhap.ap(tfSdt, 16, "[0-9 +.()\\-]");             // số điện thoại: chỉ chữ số và + . ( ) - khoảng trắng
 
@@ -132,6 +138,7 @@ public class TaoHoaDonPanel extends JPanel {
         tfTen.setText(nhap.getTenKH());
         tfSdt.setText(nhap.getSdt());
         tfMaKH.setText(nhap.getMaKH());
+        chkPreOrder.setSelected(nhap.isPreOrder());
         tfTim.setText("");
         dangNap = false;
         danhMuc = SanPhamBUS.TAT_CA;
@@ -218,7 +225,11 @@ public class TaoHoaDonPanel extends JPanel {
 
         lblKhach.setFont(Theme.font(Font.PLAIN, 12));
         lblKhach.setForeground(Theme.MUTED);
-        card.add(lblKhach, BorderLayout.SOUTH);
+        JPanel bottomRow = new JPanel(new BorderLayout());
+        bottomRow.setOpaque(false);
+        bottomRow.add(lblKhach, BorderLayout.WEST);
+        bottomRow.add(chkPreOrder, BorderLayout.EAST);
+        card.add(bottomRow, BorderLayout.SOUTH);
         return card;
     }
 
@@ -632,6 +643,7 @@ public class TaoHoaDonPanel extends JPanel {
         hd.setTenKH(KhachHangBUS.chuanHoaTen(tfTen.getText()));
         hd.setSdt(KhachHangBUS.dinhDangSdt(KhachHangBUS.chuanHoaSdt(tfSdt.getText())));
         hd.setMaKH(tfMaKH.getText().trim());
+        hd.setPreOrder(chkPreOrder.isSelected());
     }
 
     /** Kiểm tra dữ liệu bắt buộc; tô viền đỏ ô lỗi và hiện dòng lỗi (không dùng popup). */

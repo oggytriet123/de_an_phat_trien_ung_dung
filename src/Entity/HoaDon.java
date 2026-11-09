@@ -33,6 +33,7 @@ public class HoaDon {
     private String phuongThuc;
     private LocalDateTime ngayTao = LocalDateTime.now();
     private LocalDateTime ngayThanhToan;
+    private boolean preOrder = false;
 
     public HoaDon(String maHD, int soO) {
         this.maHD = maHD;
@@ -65,6 +66,7 @@ public class HoaDon {
         h.phuongThuc = phuongThuc;
         h.ngayTao = ngayTao;
         h.ngayThanhToan = ngayThanhToan;
+        h.preOrder = preOrder;
         return h;
     }
 
@@ -192,6 +194,19 @@ public class HoaDon {
     public LocalDateTime getNgayTao() { return ngayTao; }
     public LocalDateTime getNgayThanhToan() { return ngayThanhToan; }
     public boolean daThanhToan() { return DA_THANH_TOAN.equals(trangThai); }
+    public boolean isPreOrder() { return preOrder; }
+    public void setPreOrder(boolean preOrder) { this.preOrder = preOrder; }
+
+    /** Tính số phút đơn hàng đã chờ trong hàng đợi. */
+    public long getSoPhutCho() {
+        if (ngayTao == null) return 0;
+        return java.time.Duration.between(ngayTao, LocalDateTime.now()).toMinutes();
+    }
+
+    /** Kiểm tra xem đơn hàng có bị quá hạn ngưỡng 15 phút chưa thanh toán hay không. */
+    public boolean isQuaHan15Phut() {
+        return !daThanhToan() && getSoPhutCho() >= 15;
+    }
 
     public void setSoO(int soO) { this.soO = soO; }
     public void setTenKH(String v) {
