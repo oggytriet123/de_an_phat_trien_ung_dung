@@ -133,7 +133,7 @@ public class HoaDon {
     }
 
     public long tienGiam() {
-        return maGiamGia == null ? 0 : maGiamGia.tinhGiam(tamTinh());
+        return maGiamGia == null ? 0 : maGiamGia.tinhGiam(this);
     }
 
     /** Cần thanh toán = tổng hàng - tiền giảm giá. */

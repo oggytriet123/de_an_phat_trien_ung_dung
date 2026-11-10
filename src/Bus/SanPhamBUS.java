@@ -56,6 +56,11 @@ public class SanPhamBUS {
 
         List<SanPham> spList = dao.layTatCaSanPham();
         for (SanPham sp : spList) {
+            String dm = sp.getDanhMuc();
+            if (dm != null && !dm.isBlank() && !loai.containsKey(dm)) {
+                String prefix = tienToChoLoaiMoi(dm);
+                macDinh(dm, prefix, false);
+            }
             dangKy(sp);
         }
     }

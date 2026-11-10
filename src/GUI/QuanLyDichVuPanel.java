@@ -330,23 +330,30 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
                 c.add(new Cot("Trạng thái", o -> DichVuPopups.nhanTrangThai(false, sp.apply(o).isDangMo()), SwingConstants.CENTER, 130));
             }
             default -> {
-                c.add(new Cot("Mã giảm giá", o -> mg.apply(o).getMa(), SwingConstants.CENTER, 130));
-                c.add(new Cot("Loại giảm", o -> mg.apply(o).isPhanTram() ? "Giảm theo %" : "Giảm theo số tiền", SwingConstants.LEFT, 150));
-                c.add(new Cot("Mức giảm", o -> mucGiam(mg.apply(o)), SwingConstants.RIGHT, 120));
-                c.add(new Cot("Từ ngày", o -> NGAY.format(mg.apply(o).getNgayBatDau()), SwingConstants.CENTER, 115));
-                c.add(new Cot("Đến ngày", o -> NGAY.format(mg.apply(o).getHanDung()), SwingConstants.CENTER, 115));
-                c.add(new Cot("Trạng thái", o -> trangThaiMa(mg.apply(o)), SwingConstants.CENTER, 120));
+                c.add(new Cot("Mã giảm giá", o -> mg.apply(o).getMa(), SwingConstants.CENTER, 115));
+                c.add(new Cot("Hình thức", o -> mg.apply(o).moTaLoaiGiam(), SwingConstants.LEFT, 130));
+                c.add(new Cot("Mức ưu đãi", o -> mucGiam(mg.apply(o)), SwingConstants.RIGHT, 150));
+                c.add(new Cot("Áp dụng cho", o -> mg.apply(o).getDanhMucApDung(), SwingConstants.LEFT, 125));
+                c.add(new Cot("Lượt dùng", o -> mg.apply(o).moTaLuotDung(), SwingConstants.CENTER, 110));
+                c.add(new Cot("Từ ngày", o -> NGAY.format(mg.apply(o).getNgayBatDau()), SwingConstants.CENTER, 105));
+                c.add(new Cot("Đến ngày", o -> NGAY.format(mg.apply(o).getHanDung()), SwingConstants.CENTER, 105));
+                c.add(new Cot("Trạng thái", o -> trangThaiMa(mg.apply(o)), SwingConstants.CENTER, 110));
             }
         }
         return c;
     }
 
     private static String mucGiam(MaGiamGia m) {
+        if (m.laMuaXTangY()) {
+            String pt = m.getGiaTri() >= 100 ? "Free" : ("-" + m.getGiaTri() + "%");
+            return "Mua " + m.getMuaX() + " tặng " + m.getTangY() + " (" + pt + ")";
+        }
         return m.isPhanTram() ? m.getGiaTri() + "%" : Theme.money(m.getGiaTri());
     }
 
     private String trangThaiMa(MaGiamGia m) {
         if (mgBus.daHetHan(m)) return "Hết hạn";
+        if (mgBus.daHetLuot(m)) return "Hết lượt";
         if (mgBus.chuaDenHan(m)) return "Chưa áp dụng";
         return "Còn hạn";
     }
@@ -615,8 +622,10 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
         } else if (o instanceof MaGiamGia m) {
             DichVuPopups.chiTiet(this, "Mã " + m.getMa(), m.moTa(), new String[][] {
                 {"Mã giảm giá", m.getMa()},
-                {"Loại giảm", m.isPhanTram() ? "Giảm theo %" : "Giảm theo số tiền"},
-                {"Mức giảm", mucGiam(m)},
+                {"Hình thức", m.moTaLoaiGiam()},
+                {"Mức ưu đãi", mucGiam(m)},
+                {"Áp dụng cho", m.getDanhMucApDung()},
+                {"Số lượt sử dụng", m.moTaLuotDung()},
                 {"Từ ngày", NGAY.format(m.getNgayBatDau())},
                 {"Đến ngày", NGAY.format(m.getHanDung())},
                 {"Trạng thái", trangThaiMa(m)},
@@ -674,7 +683,7 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
                 thongBao("Đã thêm " + r.getTen() + " (" + r.getSku() + ")");
             });
         } else {
-            HoaDonPopups.taoMaGiamGia(this, mgBus, m -> {
+            HoaDonPopups.taoMaGiamGia(this, mgBus, spBus, m -> {
                 Overlay.dong(this);
                 nhom = "Còn hạn";
                 tuKhoa = "";
@@ -728,11 +737,11 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
                             : new Object[] {s.getSku(), s.getTen(), s.getDanhMuc(), s.getDonGia(), tt});
             }
         } else {
-            th = new String[] {"Mã giảm giá", "Loại giảm", "Giá trị", "Đơn vị", "Từ ngày", "Đến ngày", "Trạng thái"};
+            th = new String[] {"Mã giảm giá", "Hình thức", "Mức ưu đãi", "Áp dụng cho", "Lượt dùng", "Từ ngày", "Đến ngày", "Trạng thái"};
             for (Object o : ketQua) {
                 MaGiamGia m = (MaGiamGia) o;
-                dong.add(new Object[] {m.getMa(), m.isPhanTram() ? "Giảm theo %" : "Giảm theo số tiền", m.getGiaTri(),
-                        m.isPhanTram() ? "%" : "đ", NGAY.format(m.getNgayBatDau()), NGAY.format(m.getHanDung()), trangThaiMa(m)});
+                dong.add(new Object[] {m.getMa(), m.moTaLoaiGiam(), mucGiam(m), m.getDanhMucApDung(),
+                        m.moTaLuotDung(), NGAY.format(m.getNgayBatDau()), NGAY.format(m.getHanDung()), trangThaiMa(m)});
             }
         }
         try {
@@ -792,7 +801,7 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
             Color mau = Theme.TEXT;
             if (col.tieuDe().equals("Trạng thái")) {
                 if (txt.equals("Đang cung cấp") || txt.equals("Đang bán") || txt.equals("Còn hạn")) mau = Theme.SUCCESS;
-                else if (txt.equals("Hết hạn")) mau = Theme.DANGER;
+                else if (txt.equals("Hết hạn") || txt.equals("Hết lượt")) mau = Theme.DANGER;
                 else mau = Theme.AMBER_TEXT;
             }
             setForeground(mau);

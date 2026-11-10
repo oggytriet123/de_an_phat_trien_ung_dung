@@ -19,6 +19,7 @@ import Bus.SanPhamBUS;
 import Entity.ChiTietHoaDon;
 import Entity.HoaDon;
 import Entity.KhachHang;
+import Entity.MaGiamGia;
 import Entity.SanPham;
 
 /**
@@ -450,7 +451,7 @@ public class TaoHoaDonPanel extends JPanel {
         foot.add(Box.createVerticalStrut(8));
 
         btnMa.setPreferredSize(new Dimension(0, 40));
-        btnMa.addActionListener(e -> HoaDonPopups.maGiamGia(this, hd.getMaGiamGia(), mgBus, m -> {
+        btnMa.addActionListener(e -> HoaDonPopups.maGiamGia(this, hd, mgBus, m -> {
             hd.setMaGiamGia(m);
             renderChiTiet(false);
         }));
@@ -584,7 +585,14 @@ public class TaoHoaDonPanel extends JPanel {
         JLabel name = new JLabel(sp.getTen());
         name.setFont(Theme.font(Font.BOLD, 13));
         name.setForeground(Theme.TEXT);
-        JLabel unit = new JLabel(Theme.money(sp.getDonGia()) + (sp.isDichVu() ? " / lần" : " / sp"));
+        String donViTxt = Theme.money(sp.getDonGia()) + (sp.isDichVu() ? " / lần" : " / sp");
+        MaGiamGia mg = hd == null ? null : hd.getMaGiamGia();
+        if (mg != null && mg.laMuaXTangY() && mg.khopSanPham(sp) && d.getSoLuong() >= mg.getMuaX()) {
+            int slTang = (d.getSoLuong() / mg.getMuaX()) * mg.getTangY();
+            String ptTxt = mg.getGiaTri() >= 100 ? "miễn phí" : ("-" + mg.getGiaTri() + "%");
+            donViTxt += "  •  Tặng +" + slTang + " (" + ptTxt + ")";
+        }
+        JLabel unit = new JLabel(donViTxt);
         unit.setFont(Theme.font(Font.PLAIN, 12));
         unit.setForeground(Theme.MUTED);
         JPanel left = new JPanel(new BorderLayout(0, 6));
@@ -712,6 +720,9 @@ public class TaoHoaDonPanel extends JPanel {
             } catch (RuntimeException ex) {
                 datLoi(ex.getMessage());
                 return;
+            }
+            if (hd.getMaGiamGia() != null) {
+                mgBus.ghiNhanSuDung(hd.getMaGiamGia().getMa());
             }
             hd.setTienKhachDua(tienKhachDua);
             HoaDon hdDaThanhToan = hd.saoChep();
