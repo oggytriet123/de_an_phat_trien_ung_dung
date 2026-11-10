@@ -67,6 +67,7 @@ public class CalendarPicker extends JPanel {
 
     private static JPopupMenu createPopup() {
         JPopupMenu popup = new JPopupMenu();
+        popup.setLightWeightPopupEnabled(false);
         popup.setBorder(new LineBorder(Theme.BORDER, 1, true));
         popup.setBackground(Color.WHITE);
         popup.setOpaque(true);
@@ -102,7 +103,7 @@ public class CalendarPicker extends JPanel {
             this.rangeStart = this.rangeEnd;
             this.rangeEnd = tmp;
         }
-        this.currentMonth = YearMonth.from(this.rangeEnd);
+        this.currentMonth = YearMonth.from(this.rangeStart);
 
         initUI();
     }

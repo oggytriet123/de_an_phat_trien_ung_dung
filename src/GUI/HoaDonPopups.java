@@ -63,10 +63,10 @@ final class HoaDonPopups {
             grid.add(trong, BorderLayout.NORTH);
         }
         for (MaGiamGia m : ds) {
-            CodeCard cc = new CodeCard(m, bus.daHetHan(m));
+            CodeCard cc = new CodeCard(m, bus.daHetHan(m), bus.chuaDenHan(m));
             cc.addMouseListener(new MouseAdapter() {
                 @Override public void mouseReleased(MouseEvent e) {
-                    if (cc.hetHan || !SwingUtilities.isLeftMouseButton(e) || !cc.contains(e.getPoint())) return;
+                    if (cc.khongDungDuoc() || !SwingUtilities.isLeftMouseButton(e) || !cc.contains(e.getPoint())) return;
                     tf.setText(cc.m.getMa());
                     tf.requestFocusInWindow();
                 }
@@ -76,7 +76,7 @@ final class HoaDonPopups {
         }
         Runnable dongBo = () -> {
             String cur = tf.getText().trim();
-            for (CodeCard c : cards) c.setChon(!c.hetHan && c.m.getMa().equalsIgnoreCase(cur));
+            for (CodeCard c : cards) c.setChon(!c.khongDungDuoc() && c.m.getMa().equalsIgnoreCase(cur));
         };
         tf.getDocument().addDocumentListener(clearError(err, box));
         tf.getDocument().addDocumentListener(new DocumentListener() {
@@ -142,18 +142,24 @@ final class HoaDonPopups {
         SwingUtilities.invokeLater(tf::requestFocusInWindow);
     }
 
-    /** Nút chọn một mã giảm giá có sẵn. Mã hết hạn bị làm mờ và không chọn được. */
+    /** Nút chọn một mã giảm giá có sẵn. Mã hết hạn hoặc chưa đến ngày áp dụng bị làm mờ và không chọn được. */
     private static final class CodeCard extends JPanel {
         final MaGiamGia m;
         final boolean hetHan;
+        final boolean chuaDen;
         private boolean chon;
 
-        CodeCard(MaGiamGia m, boolean hetHan) {
+        CodeCard(MaGiamGia m, boolean hetHan, boolean chuaDen) {
             this.m = m;
             this.hetHan = hetHan;
+            this.chuaDen = chuaDen;
             setOpaque(false);
             setPreferredSize(new Dimension(0, 64));
-            if (!hetHan) setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            if (!khongDungDuoc()) setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+
+        boolean khongDungDuoc() {
+            return hetHan || chuaDen;
         }
 
         void setChon(boolean c) {
@@ -165,22 +171,26 @@ final class HoaDonPopups {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             int w = getWidth(), h = getHeight();
-            g2.setColor(hetHan ? Theme.FIELD_BG : chon ? Theme.PRIMARY_SOFT : Color.WHITE);
+            g2.setColor(khongDungDuoc() ? Theme.FIELD_BG : chon ? Theme.PRIMARY_SOFT : Color.WHITE);
             g2.fillRoundRect(0, 0, w, h, 8, 8);
             g2.setColor(chon ? Theme.PRIMARY : Theme.BORDER);
             g2.drawRoundRect(0, 0, w - 1, h - 1, 8, 8);
 
             g2.setFont(Theme.font(Font.BOLD, 14));
-            g2.setColor(hetHan ? Theme.MUTED : Theme.TEXT);
+            g2.setColor(khongDungDuoc() ? Theme.MUTED : Theme.TEXT);
             g2.drawString(m.getMa(), 14, 26);
             g2.setFont(Theme.font(Font.PLAIN, 12));
+            String tu = NGAY.format(m.getNgayBatDau());
             String han = NGAY.format(m.getHanDung());
             if (hetHan) {
                 g2.setColor(Theme.DANGER);
                 g2.drawString("Hết hạn " + han, 14, 46);
+            } else if (chuaDen) {
+                g2.setColor(Theme.AMBER_TEXT);
+                g2.drawString("Áp dụng từ " + tu + " - " + han, 14, 46);
             } else {
                 g2.setColor(Theme.MUTED);
-                g2.drawString(m.moTa() + "  ·  HSD " + han, 14, 46);
+                g2.drawString(m.moTa() + "  ·  " + tu + " - " + han, 14, 46);
             }
             if (chon) {
                 g2.setColor(Theme.PRIMARY);
@@ -208,24 +218,51 @@ final class HoaDonPopups {
         return d.isEmpty() || d.length() > 12 ? -1 : Long.parseLong(d);
     }
 
+    private static JButton nutLich(JComponent invoker, PlaceholderField tfTuNgay, PlaceholderField tfDenNgay) {
+        JButton btn = new JButton(Icons.of("calendar", 16, Theme.MUTED));
+        btn.setBorder(new EmptyBorder(0, 8, 0, 10));
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setToolTipText("Chọn khoảng ngày (Từ ngày — Đến ngày)");
+        btn.addActionListener(e -> {
+            LocalDate start = LocalDate.now();
+            LocalDate end = LocalDate.now().plusDays(7);
+            try { start = LocalDate.parse(tfTuNgay.getText().trim(), NHAP_NGAY); } catch (Exception ignored) {}
+            try { end = LocalDate.parse(tfDenNgay.getText().trim(), NHAP_NGAY); } catch (Exception ignored) {}
+            CalendarPicker.showDateRangePicker(invoker, start, end, (tu, den) -> {
+                tfTuNgay.setText(NGAY.format(tu));
+                tfDenNgay.setText(NGAY.format(den));
+            });
+        });
+        return btn;
+    }
+
     /**
-     * Form tạo mã giảm giá mới.
+     * Form tạo mã giảm giá mới (hỗ trợ chọn Từ ngày -> Đến ngày).
      * @param onCreated gọi sau khi tạo thành công
      * @param onBack    gọi khi bấm "Quay lại" hoặc Esc
      */
     static void taoMaGiamGia(Component host, MaGiamGiaBUS bus, Consumer<MaGiamGia> onCreated, Runnable onBack) {
-        RoundedPanel card = card(600, 520, "Tạo mã giảm giá", "Mã mới sẽ xuất hiện trong danh sách mã có sẵn.");
+        RoundedPanel card = card(600, 595, "Tạo mã giảm giá", "Mã mới sẽ xuất hiện trong danh sách mã có sẵn.");
 
         PlaceholderField tfMa = new PlaceholderField("Ví dụ: SALE20");
         PlaceholderField tfGia = new PlaceholderField("Ví dụ: 15");
-        PlaceholderField tfHan = new PlaceholderField("dd/MM/yyyy");
-        tfHan.setText(NGAY.format(LocalDate.now().plusDays(30)));
+        PlaceholderField tfTuNgay = new PlaceholderField("dd/MM/yyyy");
+        PlaceholderField tfDenNgay = new PlaceholderField("dd/MM/yyyy");
+        tfTuNgay.setText(NGAY.format(LocalDate.now()));
+        tfDenNgay.setText(NGAY.format(LocalDate.now().plusDays(30)));
         GioiHanNhap.ap(tfMa, 20, "[A-Za-z0-9_-]");
         GioiHanNhap.ap(tfGia, 12, "[0-9.,]");
-        GioiHanNhap.ap(tfHan, 10, "[0-9/]");
+        GioiHanNhap.ap(tfTuNgay, 10, "[0-9/]");
+        GioiHanNhap.ap(tfDenNgay, 10, "[0-9/]");
         FieldBox bMa = new FieldBox(tfMa, Color.WHITE, 42);
         FieldBox bGia = new FieldBox(tfGia, Color.WHITE, 42);
-        FieldBox bHan = new FieldBox(tfHan, Color.WHITE, 42);
+        FieldBox bTuNgay = new FieldBox(tfTuNgay, Color.WHITE, 42);
+        FieldBox bDenNgay = new FieldBox(tfDenNgay, Color.WHITE, 42);
+        bTuNgay.add(nutLich(bTuNgay, tfTuNgay, tfDenNgay), BorderLayout.EAST);
+        bDenNgay.add(nutLich(bDenNgay, tfTuNgay, tfDenNgay), BorderLayout.EAST);
         JLabel err = errorLabel();
 
         boolean[] phanTram = {true};
@@ -246,19 +283,26 @@ final class HoaDonPopups {
         cPt.addMouseListener(chonLoai);
         cTien.addMouseListener(chonLoai);
         tfGia.setPlaceholder("Ví dụ: 15 (tức 15%)");
-        for (PlaceholderField f : new PlaceholderField[] {tfMa, tfGia, tfHan}) {
+        for (PlaceholderField f : new PlaceholderField[] {tfMa, tfGia, tfTuNgay, tfDenNgay}) {
             f.getDocument().addDocumentListener(new DocumentListener() {
-                private void c() { err.setText(" "); bMa.setError(false); bGia.setError(false); bHan.setError(false); }
+                private void c() {
+                    err.setText(" ");
+                    bMa.setError(false);
+                    bGia.setError(false);
+                    bTuNgay.setError(false);
+                    bDenNgay.setError(false);
+                }
                 @Override public void insertUpdate(DocumentEvent e) { c(); }
                 @Override public void removeUpdate(DocumentEvent e) { c(); }
                 @Override public void changedUpdate(DocumentEvent e) { }
             });
         }
 
-        JPanel hang1 = new JPanel(new GridLayout(1, 2, 14, 0));
-        hang1.setOpaque(false);
-        hang1.add(nhom("Mã giảm giá *", bMa));
-        hang1.add(nhom("Hạn dùng *", bHan));
+        JComponent gMa = nhom("Mã giảm giá *", bMa);
+        JPanel hangNgay = new JPanel(new GridLayout(1, 2, 14, 0));
+        hangNgay.setOpaque(false);
+        hangNgay.add(nhom("Từ ngày *", bTuNgay));
+        hangNgay.add(nhom("Đến ngày *", bDenNgay));
         JPanel loai = new JPanel(new GridLayout(1, 2, 12, 0));
         loai.setOpaque(false);
         loai.add(cPt);
@@ -270,11 +314,14 @@ final class HoaDonPopups {
         body.setBorder(new EmptyBorder(22, 0, 0, 0));
         JLabel lLoai = label("Loại giảm giá");
         JComponent gGia = nhom("Giá trị giảm *", bGia);
-        for (JComponent c : new JComponent[] {hang1, lLoai, loai, gGia, err}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
-        hang1.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+        for (JComponent c : new JComponent[] {gMa, hangNgay, lLoai, loai, gGia, err}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
+        gMa.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+        hangNgay.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
         loai.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
         gGia.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
-        body.add(hang1);
+        body.add(gMa);
+        body.add(Box.createVerticalStrut(14));
+        body.add(hangNgay);
         body.add(Box.createVerticalStrut(14));
         body.add(lLoai);
         body.add(Box.createVerticalStrut(8));
@@ -296,28 +343,38 @@ final class HoaDonPopups {
                 tfGia.requestFocusInWindow();
                 return;
             }
-            LocalDate han;
+            LocalDate tuNgay;
             try {
-                han = LocalDate.parse(tfHan.getText().trim(), NHAP_NGAY);
+                tuNgay = LocalDate.parse(tfTuNgay.getText().trim(), NHAP_NGAY);
             } catch (DateTimeParseException ex) {
-                err.setText("Hạn dùng không hợp lệ. Nhập theo dạng dd/MM/yyyy.");
-                bHan.setError(true);
-                tfHan.requestFocusInWindow();
+                err.setText("Ngày bắt đầu không hợp lệ. Nhập theo dạng dd/MM/yyyy.");
+                bTuNgay.setError(true);
+                tfTuNgay.requestFocusInWindow();
+                return;
+            }
+            LocalDate denNgay;
+            try {
+                denNgay = LocalDate.parse(tfDenNgay.getText().trim(), NHAP_NGAY);
+            } catch (DateTimeParseException ex) {
+                err.setText("Ngày kết thúc không hợp lệ. Nhập theo dạng dd/MM/yyyy.");
+                bDenNgay.setError(true);
+                tfDenNgay.requestFocusInWindow();
                 return;
             }
             try {
-                MaGiamGia m = bus.tao(tfMa.getText(), phanTram[0], gt, han);
+                MaGiamGia m = bus.tao(tfMa.getText(), phanTram[0], gt, tuNgay, denNgay);
                 onCreated.accept(m);
             } catch (IllegalArgumentException ex) {
                 String msg = ex.getMessage();
                 err.setText(msg);
                 if (msg.contains("Mã") || msg.contains("mã")) bMa.setError(true);
-                else if (msg.contains("Hạn")) bHan.setError(true);
+                else if (msg.contains("bắt đầu")) bTuNgay.setError(true);
+                else if (msg.contains("kết thúc") || msg.contains("Hạn")) bDenNgay.setError(true);
                 else bGia.setError(true);
             }
         };
         tao.addActionListener(e -> xong.run());
-        for (PlaceholderField f : new PlaceholderField[] {tfMa, tfGia, tfHan}) f.addActionListener(e -> xong.run());
+        for (PlaceholderField f : new PlaceholderField[] {tfMa, tfGia, tfTuNgay, tfDenNgay}) f.addActionListener(e -> xong.run());
         card.add(buttons(quayLai, tao), BorderLayout.SOUTH);
 
         Overlay.hien(host, card, onBack);

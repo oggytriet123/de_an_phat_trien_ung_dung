@@ -73,18 +73,36 @@ public class MaGiamGiaBUS {
         return m.getHanDung().isBefore(LocalDate.now());
     }
 
-    /**
-     * Tạo mã giảm giá mới (không có ghi chú).
-     */
-    public MaGiamGia tao(String maNhap, boolean phanTram, long giaTri, LocalDate hanDung) {
-        return tao(maNhap, phanTram, giaTri, hanDung, "");
+    public boolean chuaDenHan(MaGiamGia m) {
+        return m.getNgayBatDau() != null && m.getNgayBatDau().isAfter(LocalDate.now());
     }
 
     /**
-     * Tạo mã giảm giá mới có ghi chú/mô tả và lưu vào CSDL.
-     * @throws IllegalArgumentException với nội dung lỗi hiển thị cho nhân viên.
+     * Tạo mã giảm giá mới (không có ghi chú, bắt đầu từ hôm nay).
+     */
+    public MaGiamGia tao(String maNhap, boolean phanTram, long giaTri, LocalDate hanDung) {
+        return tao(maNhap, phanTram, giaTri, LocalDate.now(), hanDung, "");
+    }
+
+    /**
+     * Tạo mã giảm giá mới có từ ngày -> đến ngày (không có ghi chú).
+     */
+    public MaGiamGia tao(String maNhap, boolean phanTram, long giaTri, LocalDate ngayBatDau, LocalDate hanDung) {
+        return tao(maNhap, phanTram, giaTri, ngayBatDau, hanDung, "");
+    }
+
+    /**
+     * Tạo mã giảm giá mới có ghi chú/mô tả (bắt đầu từ hôm nay) và lưu vào CSDL.
      */
     public MaGiamGia tao(String maNhap, boolean phanTram, long giaTri, LocalDate hanDung, String ghiChu) {
+        return tao(maNhap, phanTram, giaTri, LocalDate.now(), hanDung, ghiChu);
+    }
+
+    /**
+     * Tạo mã giảm giá mới có từ ngày -> đến ngày, ghi chú/mô tả và lưu vào CSDL.
+     * @throws IllegalArgumentException với nội dung lỗi hiển thị cho nhân viên.
+     */
+    public MaGiamGia tao(String maNhap, boolean phanTram, long giaTri, LocalDate ngayBatDau, LocalDate hanDung, String ghiChu) {
         String ma = maNhap == null ? "" : maNhap.trim().toUpperCase();
         if (ma.isEmpty()) throw new IllegalArgumentException("Vui lòng nhập mã giảm giá.");
         if (!ma.matches("[A-Z0-9_-]{3,20}")) {
@@ -96,9 +114,11 @@ public class MaGiamGiaBUS {
         } else if (giaTri < 1_000 || giaTri > 100_000_000) {
             throw new IllegalArgumentException("Số tiền giảm phải từ 1.000₫ đến 100.000.000₫.");
         }
-        if (hanDung == null) throw new IllegalArgumentException("Vui lòng nhập hạn dùng (dd/MM/yyyy).");
-        if (hanDung.isBefore(LocalDate.now())) throw new IllegalArgumentException("Hạn dùng không được ở quá khứ.");
-        MaGiamGia m = new MaGiamGia(ma, phanTram, giaTri, hanDung, ghiChu);
+        if (ngayBatDau == null) throw new IllegalArgumentException("Vui lòng nhập ngày bắt đầu (dd/MM/yyyy).");
+        if (hanDung == null) throw new IllegalArgumentException("Vui lòng nhập ngày kết thúc (dd/MM/yyyy).");
+        if (hanDung.isBefore(ngayBatDau)) throw new IllegalArgumentException("Ngày kết thúc phải sau hoặc bằng ngày bắt đầu.");
+        if (hanDung.isBefore(LocalDate.now())) throw new IllegalArgumentException("Ngày kết thúc không được ở quá khứ.");
+        MaGiamGia m = new MaGiamGia(ma, phanTram, giaTri, ngayBatDau, hanDung, ghiChu);
         them(m);
         try {
             dao.them(m);
@@ -122,19 +142,24 @@ public class MaGiamGiaBUS {
             throw new IllegalArgumentException("Số tiền giảm phải từ 1.000₫ đến 100.000.000₫.");
         }
         if (hanDung == null) throw new IllegalArgumentException("Vui lòng nhập hạn dùng (dd/MM/yyyy).");
-        MaGiamGia m = new MaGiamGia(ma, phanTram, giaTri, hanDung, ghiChu);
+        LocalDate ngayBatDau = ds.get(ma).getNgayBatDau();
+        MaGiamGia m = new MaGiamGia(ma, phanTram, giaTri, ngayBatDau, hanDung, ghiChu);
         ds.put(ma, m);
         return m;
     }
 
     /**
-     * @return mã hợp lệ còn hạn.
+     * @return mã hợp lệ còn hạn và đã đến ngày áp dụng.
      */
     public MaGiamGia kiemTra(String nhap) {
         String ma = nhap == null ? "" : nhap.trim().toUpperCase();
         if (ma.isEmpty()) throw new IllegalArgumentException("Vui lòng nhập mã giảm giá.");
         MaGiamGia m = ds.get(ma);
         if (m == null) throw new IllegalArgumentException("Mã giảm giá không tồn tại.");
+        if (chuaDenHan(m)) {
+            throw new IllegalArgumentException("Mã giảm giá chưa đến ngày áp dụng (từ "
+                    + m.getNgayBatDau().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM/yyyy")) + ").");
+        }
         if (m.getHanDung().isBefore(LocalDate.now())) throw new IllegalArgumentException("Mã giảm giá đã hết hạn sử dụng.");
         return m;
     }
