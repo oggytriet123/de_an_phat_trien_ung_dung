@@ -48,7 +48,7 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
     private final SanPhamBUS spBus;
     private final MaGiamGiaBUS mgBus;
     private Tab tab = Tab.DICH_VU;
-    private String nhom = SanPhamBUS.TAT_CA;
+    private String nhom = null;
     private String tuKhoa = "";
     private int sapXep = 0;
     private int trang = 1;
@@ -271,7 +271,7 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
     private void chuyenTab(Tab t) {
         tab = t;
         lblTb.setText(" ");
-        nhom = SanPhamBUS.TAT_CA;
+        nhom = null;
         tuKhoa = "";
         tfTim.setText("");
         sapXep = 0;
@@ -364,15 +364,20 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
     private void dungChips() {
         chips.removeAll();
         List<String> ds = new ArrayList<>();
-        ds.add(SanPhamBUS.TAT_CA);
         if (laHang()) ds.addAll(spBus.layNhom(laDichVu()));
         else { ds.add("Còn hạn"); ds.add("Hết hạn"); }
-        if (!ds.contains(nhom)) nhom = SanPhamBUS.TAT_CA;
+        if (nhom != null && !ds.contains(nhom)) nhom = null;
         for (String ten : ds) {
             Pill p = new Pill(ten, Theme.ACCENT, Color.WHITE, 8);
             p.setSelected(ten.equals(nhom));
             p.addActionListener(e -> {
-                nhom = ten;
+                if (ten.equals(nhom)) {
+                    nhom = null;
+                } else {
+                    nhom = ten;
+                    tuKhoa = "";
+                    tfTim.setText("");
+                }
                 trang = 1;
                 for (Component c : chips.getComponents()) if (c instanceof Pill q) q.setSelected(q.getText().equals(nhom));
                 refresh();
@@ -386,6 +391,10 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
     private void tai() {
         List<Object> r = new ArrayList<>();
         if (laHang()) {
+            if (nhom == null && tuKhoa.trim().isEmpty()) {
+                ketQua = r;
+                return;
+            }
             List<SanPham> l = new ArrayList<>(spBus.locQuanLy(laDichVu(), nhom, tuKhoa));
             Comparator<SanPham> cmp = switch (sapXep) {
                 case 1 -> Comparator.comparing(SanPham::getTen, VI);
@@ -397,12 +406,16 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
             r.addAll(l);
         } else {
             String kw = ChuoiUtil.chuanHoa(tuKhoa);
+            if (nhom == null && kw.isEmpty()) {
+                ketQua = r;
+                return;
+            }
             List<MaGiamGia> goc = mgBus.layDanhSach();
             List<MaGiamGia> l = new ArrayList<>();
             for (MaGiamGia m : goc) {
                 boolean het = mgBus.daHetHan(m);
-                if (nhom.equals("Còn hạn") && het) continue;
-                if (nhom.equals("Hết hạn") && !het) continue;
+                if ("Còn hạn".equals(nhom) && het) continue;
+                if ("Hết hạn".equals(nhom) && !het) continue;
                 if (!kw.isEmpty() && !ChuoiUtil.chuanHoa(m.getMa()).contains(kw)) continue;
                 l.add(m);
             }
@@ -428,8 +441,13 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
         int from = (trang - 1) * PAGE_SIZE, to = Math.min(from + PAGE_SIZE, ketQua.size());
         model.setRows(ketQua.subList(from, to));
         if (ketQua.isEmpty()) {
-            boolean coLoc = !tuKhoa.isEmpty() || !nhom.equals(SanPhamBUS.TAT_CA);
-            lblTrong.setText(coLoc ? "Không tìm thấy kết quả phù hợp." : "Chưa có " + donVi() + " nào. Bấm \"" + btnThem.getText() + "\" để thêm.");
+            if (nhom == null && tuKhoa.isEmpty()) {
+                lblTrong.setText("Nhập từ khóa vào ô tìm kiếm hoặc bấm chọn một danh mục ở trên.");
+            } else if (!tuKhoa.isEmpty()) {
+                lblTrong.setText("Không tìm thấy kết quả phù hợp cho \"" + tuKhoa + "\".");
+            } else {
+                lblTrong.setText("Chưa có " + donVi() + " nào trong nhóm \"" + nhom + "\". Bấm \"" + btnThem.getText() + "\" để thêm.");
+            }
             tableCards.show(tableArea, "empty");
             lblFooter.setText("Hiển thị 0 " + donVi());
         } else {
@@ -639,9 +657,9 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
 
     private void them() {
         if (laHang()) {
-            String macDinh = nhom.equals(SanPhamBUS.TAT_CA) ? null : nhom;
+            String macDinh = nhom;
             DichVuPopups.formMuc(this, spBus, laDichVu(), null, macDinh, r -> {
-                nhom = SanPhamBUS.TAT_CA;
+                nhom = r.getDanhMuc();
                 tuKhoa = "";
                 tfTim.setText("");
                 sapXep = 0;
@@ -654,7 +672,7 @@ public class QuanLyDichVuPanel extends JPanel implements Refreshable {
         } else {
             HoaDonPopups.taoMaGiamGia(this, mgBus, m -> {
                 Overlay.dong(this);
-                nhom = SanPhamBUS.TAT_CA;
+                nhom = "Còn hạn";
                 tuKhoa = "";
                 tfTim.setText("");
                 sapXep = 0;
