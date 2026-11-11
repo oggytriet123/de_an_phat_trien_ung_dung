@@ -142,16 +142,22 @@ public class DonThuocPanel extends JPanel {
         JLabel s1 = new JLabel("›");
         s1.setFont(Theme.font(Font.PLAIN, 12));
         s1.setForeground(Theme.MUTED);
-        JLabel l2 = new JLabel("Điều Trị & Đơn Thuốc");
+        JLabel l2 = new JLabel("Xử Lý");
         l2.setFont(Theme.font(Font.PLAIN, 12));
         l2.setForeground(Theme.MUTED);
         JLabel s2 = new JLabel("›");
         s2.setFont(Theme.font(Font.PLAIN, 12));
         s2.setForeground(Theme.MUTED);
+        JLabel l2b = new JLabel("Điều Trị & Đơn Thuốc");
+        l2b.setFont(Theme.font(Font.PLAIN, 12));
+        l2b.setForeground(Theme.MUTED);
+        JLabel s2b = new JLabel("›");
+        s2b.setFont(Theme.font(Font.PLAIN, 12));
+        s2b.setForeground(Theme.MUTED);
         JLabel l3 = new JLabel("Quản lý Đơn thuốc");
         l3.setFont(Theme.font(Font.BOLD, 12));
         l3.setForeground(Theme.TEXT);
-        p.add(l1); p.add(s1); p.add(l2); p.add(s2); p.add(l3);
+        p.add(l1); p.add(s1); p.add(l2); p.add(s2); p.add(l2b); p.add(s2b); p.add(l3);
         return p;
     }
 

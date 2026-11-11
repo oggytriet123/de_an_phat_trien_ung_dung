@@ -52,12 +52,15 @@ public class MainFrame extends JFrame {
             Item.leaf("Thú Cưng", "paw", "Hồ sơ thú cưng: giống, tuổi, tiêm chủng", ChucNang.THU_CUNG),
             Item.leaf("Nhân Viên", "person", "Danh sách nhân viên cửa hàng", ChucNang.NHAN_VIEN),
             Item.leaf("Sản Phẩm", "box", "Thức ăn, phụ kiện, tồn kho", ChucNang.SAN_PHAM),
+            Item.leaf("Quản Lý Dịch Vụ", "service", "Quản lý dịch vụ, sản phẩm và mã giảm giá", ChucNang.QUAN_LY_DICH_VU),
             Item.leaf("Kho Hàng", "box", "Quản lý kho hàng và tồn kho", ChucNang.KHO_HANG),
             Item.leaf("Danh Mục Bệnh", "list", "Danh mục bệnh và hướng điều trị", ChucNang.DANH_MUC_BENH)),
         new Item("Xử Lý", "sync", null, null,
             Item.leaf("Lập Hoá Đơn",   "invoice",  "Lập hoá đơn bán hàng và dịch vụ",                  ChucNang.HOA_DON),
             Item.leaf("Lịch Sử Hoá Đơn","calendar","Xem lại các hoá đơn đã thanh toán",                 ChucNang.HOA_DON),
-            Item.leaf("Quản Lý Dịch Vụ","service",  "Quản lý dịch vụ, sản phẩm và mã giảm giá",        ChucNang.QUAN_LY_DICH_VU),
+            new Item("Điều Trị & Đơn Thuốc", "medical", null, null,
+                Item.leaf("Quản lý Đơn thuốc", "prescription", "Kê đơn và quản lý đơn thuốc", ChucNang.DON_THUOC),
+                Item.leaf("Phác đồ Điều trị", "protocol", "Thiết lập và theo dõi phác đồ điều trị", ChucNang.PHAC_DO)),
             Item.leaf("Tiêm Phòng",    "paw",      "Tiếp nhận và theo dõi lịch tiêm vaccine thú cưng", ChucNang.TIEM_PHONG),
             Item.leaf("Phẫu Thuật",    "service",  "Tiếp nhận và theo dõi tiến độ ca phẫu thuật",      ChucNang.PHAU_THUAT),
             Item.leaf("Lồng Chuồng",   "cage",     "Quản lý lồng, chuồng gửi thú cưng",                ChucNang.CHUONG),
@@ -69,9 +72,6 @@ public class MainFrame extends JFrame {
                 Item.leaf("Xác nhận lịch hẹn", "check", "Xác nhận các lịch hẹn đang chờ", ChucNang.LICH_HEN),
                 Item.leaf("Hủy lịch hẹn", "close", "Hủy lịch hẹn và ghi nhận lý do", ChucNang.LICH_HEN)),
             Item.leaf("Lịch Sử Nhập / Xuất Kho", "eye", "Lịch sử nhập xuất kho hàng",                   ChucNang.KHO_HANG)),
-        new Item("Điều Trị & Đơn Thuốc", "medical", null, null,
-            Item.leaf("Quản lý Đơn thuốc", "prescription", "Kê đơn và quản lý đơn thuốc", ChucNang.DON_THUOC),
-            Item.leaf("Phác đồ Điều trị", "protocol", "Thiết lập và theo dõi phác đồ điều trị", ChucNang.PHAC_DO)),
         new Item("Tìm Kiếm", "search", null, null,
             Item.leaf("Tìm Nhân Viên", "person", "Tra cứu hồ sơ nhân viên", ChucNang.NHAN_VIEN),
             Item.leaf("Tìm Khách Hàng", "customers", "Tra cứu hồ sơ và thẻ khách hàng", ChucNang.KHACH_HANG),
@@ -262,12 +262,11 @@ public class MainFrame extends JFrame {
             case "Thoát" -> xacNhanThoat();
             case "Trợ Giúp" -> JOptionPane.showMessageDialog(this,
                     "Pet Station - Hệ thống quản lý cửa hàng thú cưng\n\n"
-                    + "• Danh Mục: quản lý khách hàng, thú cưng, nhân viên, sản phẩm, kho hàng, danh mục bệnh\n"
-                    + "• Xử Lý: lập hoá đơn, lịch sử hoá đơn, dịch vụ, tiêm phòng, phẫu thuật, lồng chuồng, đặt lịch hẹn, lịch sử kho\n"
-                    + "• Điều Trị & Đơn Thuốc: quản lý đơn thuốc, phác đồ điều trị\n"
-                    + "• Quản Lý Lịch Hẹn: hồ sơ, quản lý, đổi, xác nhận và hủy lịch hẹn\n"
+                    + "• Hệ Thống: trang chủ, quản lý tài khoản, đăng xuất, thoát\n"
+                    + "• Danh Mục: quản lý khách hàng, thú cưng, nhân viên, sản phẩm, dịch vụ & mã giảm giá, kho hàng, danh mục bệnh\n"
+                    + "• Xử Lý: lập hoá đơn, lịch sử hoá đơn, điều trị & đơn thuốc (đơn thuốc, phác đồ), tiêm phòng, phẫu thuật, lồng chuồng, lịch hẹn, lịch sử kho\n"
                     + "• Tìm Kiếm: tra cứu nhanh thông tin nhân viên, khách hàng, thú cưng\n"
-                    + "• Thống Kê: báo cáo doanh thu, khách hàng, thú cưng",
+                    + "• Thống Kê: báo cáo doanh thu, sản phẩm bán chạy, tồn kho, khách hàng, thú cưng",
                     "Trợ Giúp", JOptionPane.INFORMATION_MESSAGE);
             default -> hienTrang(tab, it);
         }

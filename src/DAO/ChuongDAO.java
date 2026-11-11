@@ -356,13 +356,10 @@ public class ChuongDAO {
                             ps.setString(3, maKH);
                             ps.executeUpdate();
                         }
-                        String maCT = String.format("CT%03d", KhachHangDAO.maxSo(conn, "CHITIETHOADON", "maCTHD", 2, "CT") + 1);
                         try (PreparedStatement ps = conn.prepareStatement(
-                                "INSERT INTO CHITIETHOADON (maCTHD, soLuong, donGia, thanhTien, maHD, sku, maDV) VALUES (?, 1, ?, ?, ?, NULL, N'DV005')")) {
-                            ps.setString(1, maCT);
-                            ps.setDouble(2, tongTien);
-                            ps.setDouble(3, tongTien);
-                            ps.setString(4, maHD);
+                                "INSERT INTO CHITIETHOADON (soLuong, donGia, maHD, sku, maDV) VALUES (1, ?, ?, NULL, N'DV005')")) {
+                            ps.setDouble(1, tongTien);
+                            ps.setString(2, maHD);
                             ps.executeUpdate();
                         }
                         KhachHangDAO.tichDiem(conn, maKH, Math.round(tongTien));

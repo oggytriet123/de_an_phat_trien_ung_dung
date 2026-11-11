@@ -49,13 +49,27 @@ public class HoaDonDAO {
             st.executeUpdate("IF COL_LENGTH('HOADON', 'soDienThoai') IS NULL ALTER TABLE HOADON ADD soDienThoai NVARCHAR(20) NULL");
             st.executeUpdate("IF COL_LENGTH('HOADON', 'maNV_BH') IS NULL ALTER TABLE HOADON ADD maNV_BH NVARCHAR(20) NULL");
 
-            st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'tenSP') IS NULL ALTER TABLE CHITIETHOADON ADD tenSP NVARCHAR(150) NULL");
             st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'danhMuc') IS NULL ALTER TABLE CHITIETHOADON ADD danhMuc NVARCHAR(100) NULL");
             st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'isDichVu') IS NULL ALTER TABLE CHITIETHOADON ADD isDichVu BIT DEFAULT 0");
             st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'sku') IS NULL ALTER TABLE CHITIETHOADON ADD sku NVARCHAR(50) NULL");
             st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'maDV') IS NULL ALTER TABLE CHITIETHOADON ADD maDV NVARCHAR(50) NULL");
-            st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'thanhTien') IS NULL ALTER TABLE CHITIETHOADON ADD thanhTien FLOAT NULL");
             st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'sku_maSP') IS NOT NULL EXEC('UPDATE CHITIETHOADON SET sku = sku_maSP WHERE sku IS NULL AND sku_maSP IS NOT NULL')");
+
+            // Chuẩn hóa bảng CHITIETHOADON: Xóa cột maCTHD, thanhTien, tenSP
+            st.executeUpdate("DECLARE @sql NVARCHAR(MAX) = N''; "
+                    + "SELECT @sql += N'ALTER TABLE CHITIETHOADON DROP CONSTRAINT [' + kc.name + N'];' "
+                    + "FROM sys.key_constraints kc "
+                    + "JOIN sys.index_columns ic ON kc.parent_object_id = ic.object_id AND kc.unique_index_id = ic.index_id "
+                    + "JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id "
+                    + "WHERE kc.parent_object_id = OBJECT_ID('CHITIETHOADON') AND c.name IN ('maCTHD', 'thanhTien', 'tenSP'); "
+                    + "SELECT @sql += N'ALTER TABLE CHITIETHOADON DROP CONSTRAINT [' + dc.name + N'];' "
+                    + "FROM sys.default_constraints dc "
+                    + "JOIN sys.columns c ON dc.parent_object_id = c.object_id AND dc.parent_column_id = c.column_id "
+                    + "WHERE dc.parent_object_id = OBJECT_ID('CHITIETHOADON') AND c.name IN ('maCTHD', 'thanhTien', 'tenSP'); "
+                    + "IF LEN(@sql) > 0 EXEC sp_executesql @sql;");
+            st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'maCTHD') IS NOT NULL ALTER TABLE CHITIETHOADON DROP COLUMN maCTHD");
+            st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'thanhTien') IS NOT NULL ALTER TABLE CHITIETHOADON DROP COLUMN thanhTien");
+            st.executeUpdate("IF COL_LENGTH('CHITIETHOADON', 'tenSP') IS NOT NULL ALTER TABLE CHITIETHOADON DROP COLUMN tenSP");
         } catch (SQLException ignored) {
         }
     }
@@ -174,37 +188,34 @@ public class HoaDonDAO {
     }
 
     private void napChiTiet(Connection con, HoaDon h) throws SQLException {
-        String sql = "SELECT c.maCTHD, c.soLuong, c.donGia, c.thanhTien, c.sku, c.maDV, "
-                + "       ISNULL(c.tenSP, ISNULL(sp.tenSP, dv.tenDV)) AS ten, "
-                + "       ISNULL(c.danhMuc, ISNULL(dv.loaiDV, N'Sản phẩm')) AS dm, "
+        String sql = "SELECT c.soLuong, c.donGia, c.sku, c.maDV, "
+                + "       ISNULL(sp.tenSP, dv.tenDV) AS ten, "
+                + "       ISNULL(c.danhMuc, ISNULL(sp.danhMuc, ISNULL(dv.loaiDV, N'Sản phẩm'))) AS dm, "
                 + "       ISNULL(c.isDichVu, CASE WHEN c.maDV IS NOT NULL THEN 1 ELSE 0 END) AS isDV "
                 + "FROM CHITIETHOADON c "
                 + "LEFT JOIN SANPHAM sp ON c.sku = sp.sku_maSP "
                 + "LEFT JOIN DICHVU dv ON c.maDV = dv.maDV "
-                + "WHERE c.maHD = ? ORDER BY c.maCTHD";
+                + "WHERE c.maHD = ?";
 
         try (PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, h.getMaHD());
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    String maCTHD = rs.getString("maCTHD");
                     String sku = rs.getString("sku");
                     if (sku == null || sku.trim().isEmpty()) sku = rs.getString("maDV");
                     if (sku == null || sku.trim().isEmpty()) sku = "SP";
                     String ten = rs.getString("ten");
-                    if (ten == null) ten = "Sản phẩm";
+                    if (ten == null || ten.trim().isEmpty()) ten = sku;
                     String dm = rs.getString("dm");
                     if (dm == null) dm = "Chung";
                     double gia = rs.getDouble("donGia");
-                    double thanhTien = rs.getDouble("thanhTien");
                     boolean isDv = rs.getInt("isDV") == 1;
                     int sl = rs.getInt("soLuong");
 
                     SanPham spObj = new SanPham(sku, ten, dm, Math.round(gia), isDv);
-                    ChiTietHoaDon ct = new ChiTietHoaDon(maCTHD, h, spObj, sl, gia, thanhTien > 0 ? thanhTien : gia * sl);
+                    ChiTietHoaDon ct = new ChiTietHoaDon(h, spObj, sl, gia);
                     ct.setSku(isDv ? null : sku);
                     ct.setMaDV(isDv ? sku : null);
-                    ct.setTenSP(ten);
                     ct.setDanhMuc(dm);
                     ct.setDichVu(isDv);
                     h.getDanhSachChiTiet().add(ct);
@@ -307,33 +318,23 @@ public class HoaDonDAO {
                     del.executeUpdate();
                 }
 
-                String insCt = "INSERT INTO CHITIETHOADON (maCTHD, soLuong, donGia, thanhTien, maHD, sku, maDV, tenSP, danhMuc, isDichVu) "
-                        + "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                String insCt = "INSERT INTO CHITIETHOADON (soLuong, donGia, maHD, sku, maDV, danhMuc, isDichVu) "
+                        + "VALUES (?, ?, ?, ?, ?, ?, ?)";
                 try (PreparedStatement ps = con.prepareStatement(insCt)) {
-                    int stt = 1;
                     for (ChiTietHoaDon d : h.getDanhSachChiTiet()) {
-                        String ctId = d.getMaCTHD();
-                        if (ctId == null || ctId.trim().isEmpty()) {
-                            ctId = h.getMaHD() + "-CT" + String.format("%02d", stt);
-                            d.setMaCTHD(ctId);
-                        }
-                        stt++;
-                        ps.setString(1, ctId);
-                        ps.setInt(2, d.getSoLuong());
-                        ps.setDouble(3, d.getDonGia());
-                        ps.setDouble(4, d.thanhTien());
-                        ps.setString(5, h.getMaHD());
+                        ps.setInt(1, d.getSoLuong());
+                        ps.setDouble(2, d.getDonGia());
+                        ps.setString(3, h.getMaHD());
                         boolean isDv = d.isDichVu();
                         String sku = d.getSku();
                         if (sku == null && d.getSanPham() != null && !isDv) sku = d.getSanPham().getSku();
                         String maDV = d.getMaDV();
                         if (maDV == null && d.getSanPham() != null && isDv) maDV = d.getSanPham().getSku();
 
-                        ps.setString(6, isDv ? null : sku);
-                        ps.setString(7, isDv ? (maDV != null ? maDV : sku) : null);
-                        ps.setString(8, d.getTenSP() != null ? d.getTenSP() : (d.getSanPham() != null ? d.getSanPham().getTen() : ""));
-                        ps.setString(9, d.getDanhMuc() != null ? d.getDanhMuc() : (d.getSanPham() != null ? d.getSanPham().getDanhMuc() : ""));
-                        ps.setInt(10, isDv ? 1 : 0);
+                        ps.setString(4, isDv ? null : sku);
+                        ps.setString(5, isDv ? (maDV != null ? maDV : sku) : null);
+                        ps.setString(6, d.getDanhMuc() != null ? d.getDanhMuc() : (d.getSanPham() != null ? d.getSanPham().getDanhMuc() : ""));
+                        ps.setInt(7, isDv ? 1 : 0);
                         ps.addBatch();
                     }
                     ps.executeBatch();

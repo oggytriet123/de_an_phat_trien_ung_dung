@@ -6,20 +6,22 @@ import java.util.Objects;
 /**
  * Thực thể Chi tiết Hóa đơn (tương ứng bảng CHITIETHOADON trong CSDL).
  * Đại diện cho một dòng sản phẩm hoặc dịch vụ trong hóa đơn.
+ * 
+ * Đã chuẩn hóa (3NF & OOP):
+ * - Không lưu thuộc tính dẫn xuất thanhTien (tự tính qua soLuong * donGia).
+ * - Không sử dụng maCTHD rời rạc (định danh theo HoaDon và SanPham).
+ * - Không lưu trùng lặp tenSP (truy xuất trực tiếp từ thực thể SanPham).
  */
 public class ChiTietHoaDon implements Serializable {
     private static final long serialVersionUID = 1L;
 
-    private String maCTHD;
     private HoaDon hoaDon;
     private SanPham sanPham;
     private int soLuong = 1;
     private double donGia = 0;
-    private double thanhTien = 0;
     private String sku;            // Mã SKU nếu là sản phẩm hàng hóa (SANPHAM.sku_maSP)
     private String maDV;           // Mã dịch vụ nếu là dịch vụ (DICHVU.maDV)
-    private String tenSP;          // Tên sản phẩm / dịch vụ lưu vết
-    private String danhMuc;        // Tên danh mục lưu vết
+    private String danhMuc;        // Tên danh mục
     private boolean dichVu;        // true nếu là dịch vụ, false nếu là sản phẩm hàng hóa
 
     public ChiTietHoaDon() {
@@ -31,67 +33,44 @@ public class ChiTietHoaDon implements Serializable {
         setSanPham(sanPham);
     }
 
-    public ChiTietHoaDon(String maCTHD, SanPham sanPham, int soLuong, double donGia) {
-        this.maCTHD = maCTHD;
+    public ChiTietHoaDon(SanPham sanPham, int soLuong, double donGia) {
         this.soLuong = Math.max(1, soLuong);
-        this.donGia = donGia;
+        this.donGia = Math.max(0, donGia);
         setSanPham(sanPham);
-        tinhThanhTien();
     }
 
-    public ChiTietHoaDon(String maCTHD, HoaDon hoaDon, SanPham sanPham, int soLuong, double donGia) {
-        this.maCTHD = maCTHD;
+    public ChiTietHoaDon(HoaDon hoaDon, SanPham sanPham, int soLuong, double donGia) {
         this.hoaDon = hoaDon;
         this.soLuong = Math.max(1, soLuong);
-        this.donGia = donGia;
+        this.donGia = Math.max(0, donGia);
         setSanPham(sanPham);
-        tinhThanhTien();
-    }
-
-    public ChiTietHoaDon(String maCTHD, HoaDon hoaDon, SanPham sanPham, int soLuong, double donGia, double thanhTien) {
-        this.maCTHD = maCTHD;
-        this.hoaDon = hoaDon;
-        this.soLuong = Math.max(1, soLuong);
-        this.donGia = donGia;
-        this.thanhTien = thanhTien;
-        setSanPham(sanPham);
-        if (this.thanhTien <= 0) {
-            tinhThanhTien();
-        }
     }
 
     public ChiTietHoaDon saoChep() {
         ChiTietHoaDon c = new ChiTietHoaDon();
-        c.maCTHD = this.maCTHD;
         c.hoaDon = this.hoaDon;
         c.sanPham = this.sanPham;
         c.soLuong = this.soLuong;
         c.donGia = this.donGia;
-        c.thanhTien = this.thanhTien;
         c.sku = this.sku;
         c.maDV = this.maDV;
-        c.tenSP = this.tenSP;
         c.danhMuc = this.danhMuc;
         c.dichVu = this.dichVu;
         return c;
     }
 
     public double tinhThanhTien() {
-        this.thanhTien = this.donGia * this.soLuong;
-        return this.thanhTien;
+        return this.donGia * this.soLuong;
     }
 
     /**
-     * Phương thức trả về thành tiền kiểu long phục vụ hiển thị tiền tệ và tương thích với nghiệp vụ cũ.
+     * Phương thức trả về thành tiền kiểu long phục vụ hiển thị tiền tệ.
      */
     public long thanhTien() {
-        return Math.round(thanhTien > 0 ? thanhTien : (donGia * soLuong));
+        return Math.round(tinhThanhTien());
     }
 
     // Getters & Setters
-    public String getMaCTHD() { return maCTHD; }
-    public void setMaCTHD(String maCTHD) { this.maCTHD = maCTHD; }
-
     public HoaDon getHoaDon() { return hoaDon; }
     public void setHoaDon(HoaDon hoaDon) { this.hoaDon = hoaDon; }
 
@@ -100,10 +79,10 @@ public class ChiTietHoaDon implements Serializable {
     }
 
     public SanPham getSanPham() {
-        if (sanPham == null && (sku != null || maDV != null || tenSP != null)) {
+        if (sanPham == null && (sku != null || maDV != null)) {
             String code = (sku != null && !sku.trim().isEmpty()) ? sku : maDV;
             sanPham = new SanPham(code != null ? code : "SP",
-                    tenSP != null ? tenSP : "Sản phẩm",
+                    code != null ? code : "Sản phẩm",
                     danhMuc != null ? danhMuc : "Chung",
                     Math.round(donGia),
                     dichVu);
@@ -122,31 +101,26 @@ public class ChiTietHoaDon implements Serializable {
                 this.sku = sp.getSku();
                 this.maDV = null;
             }
-            this.tenSP = sp.getTen();
             this.danhMuc = sp.getDanhMuc();
             if (this.donGia <= 0) {
                 this.donGia = sp.getDonGia();
             }
         }
-        tinhThanhTien();
     }
 
     public int getSoLuong() { return soLuong; }
     public void setSoLuong(int soLuong) {
         this.soLuong = Math.max(1, soLuong);
-        tinhThanhTien();
     }
 
     public double getDonGia() { return donGia; }
     public void setDonGia(double donGia) {
         this.donGia = Math.max(0, donGia);
-        tinhThanhTien();
     }
 
     public double getThanhTien() {
-        return thanhTien > 0 ? thanhTien : tinhThanhTien();
+        return tinhThanhTien();
     }
-    public void setThanhTien(double thanhTien) { this.thanhTien = thanhTien; }
 
     public String getSku() {
         if (sku != null) return sku;
@@ -163,11 +137,8 @@ public class ChiTietHoaDon implements Serializable {
     public void setMaDV(String maDV) { this.maDV = maDV; }
 
     public String getTenSP() {
-        if (tenSP != null && !tenSP.trim().isEmpty()) return tenSP;
-        if (sanPham != null) return sanPham.getTen();
-        return "";
+        return sanPham != null ? sanPham.getTen() : "";
     }
-    public void setTenSP(String tenSP) { this.tenSP = tenSP; }
 
     public String getDanhMuc() {
         if (danhMuc != null && !danhMuc.trim().isEmpty()) return danhMuc;
@@ -187,25 +158,24 @@ public class ChiTietHoaDon implements Serializable {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         ChiTietHoaDon that = (ChiTietHoaDon) o;
-        if (maCTHD != null && that.maCTHD != null) {
-            return Objects.equals(maCTHD, that.maCTHD);
-        }
-        return Objects.equals(getSku(), that.getSku()) && Objects.equals(getMaDV(), that.getMaDV());
+        return Objects.equals(getMaHD(), that.getMaHD())
+                && Objects.equals(getSku(), that.getSku())
+                && Objects.equals(getMaDV(), that.getMaDV());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(maCTHD, sku, maDV);
+        return Objects.hash(getMaHD(), getSku(), getMaDV());
     }
 
     @Override
     public String toString() {
         return "ChiTietHoaDon{" +
-                "maCTHD='" + maCTHD + '\'' +
-                ", tenSP='" + getTenSP() + '\'' +
+                "maHD='" + getMaHD() + '\'' +
+                ", sku='" + getSku() + '\'' +
+                ", maDV='" + getMaDV() + '\'' +
                 ", soLuong=" + soLuong +
                 ", donGia=" + donGia +
-                ", thanhTien=" + getThanhTien() +
                 '}';
     }
 }

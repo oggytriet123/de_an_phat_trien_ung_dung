@@ -1,4 +1,4 @@
-﻿-- ============================================================================
+-- ============================================================================
 -- PETCARE MANAGEMENT SYSTEM - MASTER DATABASE SCRIPT
 -- Hệ thống Quản Lý Cửa Hàng & Dịch Vụ Chăm Sóc Thú Cưng PetCare
 -- Mã hóa: UTF-8 with BOM (Mở bằng SSMS tiếng Việt chuẩn 100%)
@@ -199,17 +199,14 @@ CREATE TABLE HOADON (
 GO
 
 CREATE TABLE CHITIETHOADON (
-    maCTHD    NVARCHAR(30) PRIMARY KEY,
     maHD      NVARCHAR(20) NOT NULL,
     sku_maSP  NVARCHAR(20) NULL,
     soLuong   INT DEFAULT 1,
     donGia    FLOAT NOT NULL,
-    tenSP     NVARCHAR(150) NULL,
     danhMuc   NVARCHAR(100) NULL,
     isDichVu  BIT DEFAULT 0,
     sku       NVARCHAR(50) NULL,
     maDV      NVARCHAR(50) NULL,
-    thanhTien FLOAT NULL,
     CONSTRAINT FK_CTHD_HD FOREIGN KEY (maHD)     REFERENCES HOADON(maHD) ON DELETE CASCADE,
     CONSTRAINT FK_CTHD_SP FOREIGN KEY (sku_maSP) REFERENCES SANPHAM(sku_maSP)
 );
@@ -665,48 +662,48 @@ VALUES
 ('HD0002',        '2026-11-02', 320000,   'NV002', 'KH009', NULL, N'Đã thanh toán', N'ZaloPay', '2026-11-02 10:00:00', '2026-11-02 10:05:00', N'Võ Phát Huy', '0917099576');
 GO
 
-INSERT INTO CHITIETHOADON (maCTHD, maHD, sku_maSP, sku, tenSP, danhMuc, soLuong, donGia, thanhTien, isDichVu) VALUES
-('CT001', 'HD20260301001', 'SP001', 'SP001', N'Thức ăn hạt Royal Canin Mini Adult 2kg', N'Thức ăn', 20, 350000, 7000000, 0),
-('CT002', 'HD20260301001', 'SP005', 'SP005', N'Vòng cổ trị ve rận Seresto cho chó', N'Phụ kiện', 11, 650000, 7150000, 0),
-('CT003', 'HD20260301002', 'SP001', 'SP001', N'Thức ăn hạt Royal Canin Mini Adult 2kg', N'Thức ăn', 15, 350000, 5250000, 0),
-('CT004', 'HD20260301002', 'SP005', 'SP005', N'Vòng cổ trị ve rận Seresto cho chó', N'Phụ kiện', 11, 650000, 7150000, 0),
-('CT005', 'HD20260302001', 'SP001', 'SP001', N'Thức ăn hạt Royal Canin Mini Adult 2kg', N'Thức ăn', 10, 350000, 3500000, 0),
-('CT006', 'HD20260302001', 'SP008', 'SP008', N'Gel dinh dưỡng Nourse 120g', N'Thuốc & Y tế', 30, 180000, 5400000, 0),
-('CT-20260302-01', 'HD20260302003', NULL, 'PT001', N'Phẫu thuật chỉnh hình khớp thú cưng', N'Phẫu thuật', 1, 15000000, 15000000, 1),
-('CT-20260302-02', 'HD20260302003', NULL, 'LC-VIP', N'Lưu trú phòng VIP Suite 7 ngày', N'Lưu chuồng', 7, 500000, 3500000, 1),
-('CT-20260302-03', 'HD20260302002', NULL, 'SPA01', N'Spa chăm sóc lông & móng toàn diện', N'Dịch vụ spa', 1, 800000, 800000, 1),
-('CT-20260302-04', 'HD20260302002', NULL, 'LC-MEO', N'Lưu trú phòng Khu Mèo 6 ngày', N'Lưu chuồng', 6, 300000, 1800000, 1),
-('CT-20260302-05', 'HD20260302002', 'SP001', 'SP001', N'Thức ăn hạt Royal Canin Mini Adult 2kg', N'Thức ăn', 6, 350000, 2100000, 0),
-('CT-20260302-06', 'HD20260302002', 'SP005', 'SP005', N'Vòng cổ trị ve rận Seresto cho chó', N'Phụ kiện', 3, 650000, 1950000, 0),
-('CT-20260302-07', 'HD20260302002', 'SP010', 'SP010', N'Cần câu mèo lông vũ gắn chuông', N'Đồ chơi', 4, 37500, 150000, 0),
-('CT-20260303-05', 'HD20260303001', NULL, 'TP001', N'Tiêm phòng dại & 7 bệnh chó mèo (Mỹ)', N'Tiêm phòng', 1, 400000, 400000, 1),
-('CT-20260303-06', 'HD20260303001', NULL, 'LC-VIP', N'Lưu trú phòng VIP Suite 5 ngày', N'Lưu chuồng', 5, 500000, 2500000, 1),
-('CT-20260303-07', 'HD20260303001', 'SP003', 'SP003', N'Cát vệ sinh Cature đậu nành tự nhiên 6L', N'Phụ kiện', 4, 145000, 580000, 0),
-('CT-20260303-08', 'HD20260303001', 'SP006', 'SP006', N'Xương gặm sạch răng Pedigree DentaStix 110g', N'Thức ăn', 13, 48000, 620000, 0),
-('CT-20260303-09', 'HD20260303002', NULL, 'KB001', N'Khám sức khỏe tổng quát định kỳ thú nhỏ', N'Dịch vụ khám', 1, 300000, 300000, 1),
-('CT-20260303-10', 'HD20260303002', NULL, 'LC-LK', N'Lưu trú Khu Loài Khác (Thỏ) 7 ngày', N'Lưu chuồng', 7, 150000, 1050000, 1),
-('CT-20260303-11', 'HD20260303002', 'SP018', 'SP018', N'Cỏ tươi Catnip sấy khô cho mèo & thỏ', N'Đồ chơi', 15, 45000, 675000, 0),
-('CT-20260303-12', 'HD20260303002', 'SP014', 'SP014', N'Bát ăn chống trượt inox 2 ngăn', N'Phụ kiện', 5, 85000, 425000, 0),
-('CT-20260303-13', 'HD20260303002', 'SP016', 'SP016', N'Dây dắt kèm yếm ngực phản quang', N'Phụ kiện', 5, 150000, 750000, 0),
-('CT-20260303-01', 'HD20260303003', NULL, 'SPA01', N'Gói Spa Cắt tỉa tạo kiểu lông toàn diện', N'Dịch vụ spa', 2, 450000, 900000, 1),
-('CT-20260303-02', 'HD20260303003', 'SP001', 'SP001', N'Thức ăn hạt Royal Canin Mini Adult 2kg', N'Thức ăn', 10, 350000, 3500000, 0),
-('CT-20260303-03', 'HD20260303003', 'SP005', 'SP005', N'Vòng cổ trị ve rận Seresto cho chó', N'Phụ kiện', 5, 650000, 3250000, 0),
-('CT-20260303-04', 'HD20260303003', 'SP010', 'SP010', N'Cần câu mèo lông vũ gắn chuông', N'Đồ chơi', 4, 35000, 140000, 0),
-('CT-20260304-06', 'HD20260304001', NULL, 'KB002', N'Khám da liễu & tắm trị liệu ve rận', N'Dịch vụ khám', 1, 450000, 450000, 1),
-('CT-20260304-07', 'HD20260304001', 'SP004', 'SP004', N'Sữa tắm trị ve rận Bio Derma 250ml', N'Thuốc & Y tế', 3, 95000, 285000, 0),
-('CT-20260304-08', 'HD20260304001', 'SP001', 'SP001', N'Thức ăn hạt Royal Canin Mini Adult 2kg', N'Thức ăn', 2, 350000, 700000, 0),
-('CT-20260304-09', 'HD20260304001', 'SP011', 'SP011', N'Bóng cao su đồ chơi gặm sạch răng cho chó', N'Đồ chơi', 1, 65000, 65000, 0),
-('CT-20260304-10', 'HD20260304002', 'SP003', 'SP003', N'Cát vệ sinh Cature đậu nành tự nhiên 6L', N'Phụ kiện', 3, 145000, 435000, 0),
-('CT-20260304-11', 'HD20260304002', 'SP002', 'SP002', N'Pate Whiskas cá thu & cá hồi 85g', N'Thức ăn', 15, 25000, 375000, 0),
-('CT-20260304-12', 'HD20260304002', 'SP010', 'SP010', N'Cần câu mèo lông vũ gắn chuông', N'Đồ chơi', 4, 35000, 140000, 0),
-('CT-20260304-01', 'HD20260304003', NULL, 'TP001', N'Gói tiêm phòng 7 bệnh chó mèo (Mỹ)', N'Tiêm phòng', 4, 400000, 1600000, 1),
-('CT-20260304-02', 'HD20260304003', 'SP008', 'SP008', N'Gel dinh dưỡng Nourse 120g', N'Thuốc & Y tế', 20, 180000, 3600000, 0),
-('CT-20260304-03', 'HD20260304003', 'SP003', 'SP003', N'Cát vệ sinh Cature đậu nành tự nhiên 6L', N'Phụ kiện', 20, 145000, 2900000, 0),
-('CT-20260304-04', 'HD20260304003', 'SP006', 'SP006', N'Xương gặm sạch răng Pedigree DentaStix 110g', N'Thức ăn', 40, 48000, 1920000, 0),
-('CT-20260304-05', 'HD20260304003', 'SP004', 'SP004', N'Sữa tắm trị ve rận Bio Derma 250ml', N'Thuốc & Y tế', 2, 90000, 180000, 0),
+INSERT INTO CHITIETHOADON (maHD, sku_maSP, sku, danhMuc, soLuong, donGia, isDichVu) VALUES
+('HD20260301001', 'SP001', 'SP001', N'Thức ăn', 20, 350000, 0),
+('HD20260301001', 'SP005', 'SP005', N'Phụ kiện', 11, 650000, 0),
+('HD20260301002', 'SP001', 'SP001', N'Thức ăn', 15, 350000, 0),
+('HD20260301002', 'SP005', 'SP005', N'Phụ kiện', 11, 650000, 0),
+('HD20260302001', 'SP001', 'SP001', N'Thức ăn', 10, 350000, 0),
+('HD20260302001', 'SP008', 'SP008', N'Thuốc & Y tế', 30, 180000, 0),
+('HD20260302003', NULL, 'PT001', N'Phẫu thuật', 1, 15000000, 1),
+('HD20260302003', NULL, 'LC-VIP', N'Lưu chuồng', 7, 500000, 1),
+('HD20260302002', NULL, 'SPA01', N'Dịch vụ spa', 1, 800000, 1),
+('HD20260302002', NULL, 'LC-MEO', N'Lưu chuồng', 6, 300000, 1),
+('HD20260302002', 'SP001', 'SP001', N'Thức ăn', 6, 350000, 0),
+('HD20260302002', 'SP005', 'SP005', N'Phụ kiện', 3, 650000, 0),
+('HD20260302002', 'SP010', 'SP010', N'Đồ chơi', 4, 37500, 0),
+('HD20260303001', NULL, 'TP001', N'Tiêm phòng', 1, 400000, 1),
+('HD20260303001', NULL, 'LC-VIP', N'Lưu chuồng', 5, 500000, 1),
+('HD20260303001', 'SP003', 'SP003', N'Phụ kiện', 4, 145000, 0),
+('HD20260303001', 'SP006', 'SP006', N'Thức ăn', 13, 48000, 0),
+('HD20260303002', NULL, 'KB001', N'Dịch vụ khám', 1, 300000, 1),
+('HD20260303002', NULL, 'LC-LK', N'Lưu chuồng', 7, 150000, 1),
+('HD20260303002', 'SP018', 'SP018', N'Đồ chơi', 15, 45000, 0),
+('HD20260303002', 'SP014', 'SP014', N'Phụ kiện', 5, 85000, 0),
+('HD20260303002', 'SP016', 'SP016', N'Phụ kiện', 5, 150000, 0),
+('HD20260303003', NULL, 'SPA01', N'Dịch vụ spa', 2, 450000, 1),
+('HD20260303003', 'SP001', 'SP001', N'Thức ăn', 10, 350000, 0),
+('HD20260303003', 'SP005', 'SP005', N'Phụ kiện', 5, 650000, 0),
+('HD20260303003', 'SP010', 'SP010', N'Đồ chơi', 4, 35000, 0),
+('HD20260304001', NULL, 'KB002', N'Dịch vụ khám', 1, 450000, 1),
+('HD20260304001', 'SP004', 'SP004', N'Thuốc & Y tế', 3, 95000, 0),
+('HD20260304001', 'SP001', 'SP001', N'Thức ăn', 2, 350000, 0),
+('HD20260304001', 'SP011', 'SP011', N'Đồ chơi', 1, 65000, 0),
+('HD20260304002', 'SP003', 'SP003', N'Phụ kiện', 3, 145000, 0),
+('HD20260304002', 'SP002', 'SP002', N'Thức ăn', 15, 25000, 0),
+('HD20260304002', 'SP010', 'SP010', N'Đồ chơi', 4, 35000, 0),
+('HD20260304003', NULL, 'TP001', N'Tiêm phòng', 4, 400000, 1),
+('HD20260304003', 'SP008', 'SP008', N'Thuốc & Y tế', 20, 180000, 0),
+('HD20260304003', 'SP003', 'SP003', N'Phụ kiện', 20, 145000, 0),
+('HD20260304003', 'SP006', 'SP006', N'Thức ăn', 40, 48000, 0),
+('HD20260304003', 'SP004', 'SP004', N'Thuốc & Y tế', 2, 90000, 0),
 -- HD0001 & HD0002: Khách mới KH009 – dịch vụ khám & nha khoa
-('HD0001-CT01', 'HD0001', NULL, NULL, N'Khám tổng quát',      N'Khám & Điều trị', 1, 200000, 200000, 1),
-('HD0002-CT01', 'HD0002', NULL, NULL, N'Lấy cao răng siêu âm', N'Nha khoa',       1, 400000, 400000, 1);
+('HD0001', NULL, 'DV001', N'Khám & Điều trị', 1, 200000, 1),
+('HD0002', NULL, 'DV007', N'Nha khoa',       1, 400000, 1);
 GO
 
 -- ============================================================================

@@ -185,10 +185,8 @@ GO
 
 -- Bảng CHITIETHOADON - Chi tiết mặt hàng hoặc dịch vụ trong hóa đơn
 CREATE TABLE CHITIETHOADON (
-    maCTHD      NVARCHAR(20) PRIMARY KEY,
     soLuong     INT NOT NULL,
     donGia      FLOAT NOT NULL,
-    thanhTien   FLOAT NOT NULL,
     maHD        NVARCHAR(20) NOT NULL,
     sku         NVARCHAR(20) NULL,
     maDV        NVARCHAR(20) NULL,
@@ -543,29 +541,29 @@ GO
 
 -- 15. CHITIETHOADON (Khớp chính xác tổng tiền của HOADON)
 -- HD001: 350k (Royal Canin) + 180k (Whiskas) = 530k
-INSERT INTO CHITIETHOADON (maCTHD, soLuong, donGia, thanhTien, maHD, sku, maDV) VALUES 
-    (N'CT001', 1, 350000, 350000, N'HD001', N'SP001', NULL),
-    (N'CT002', 1, 180000, 180000, N'HD001', N'SP002', NULL);
+INSERT INTO CHITIETHOADON (soLuong, donGia, maHD, sku, maDV) VALUES 
+    (1, 350000, N'HD001', N'SP001', NULL),
+    (1, 180000, N'HD001', N'SP002', NULL);
 
 -- HD002: Tiêm phòng vaccine (350k)
-INSERT INTO CHITIETHOADON (maCTHD, soLuong, donGia, thanhTien, maHD, sku, maDV) VALUES 
-    (N'CT003', 1, 350000, 350000, N'HD002', NULL, N'DV002');
+INSERT INTO CHITIETHOADON (soLuong, donGia, maHD, sku, maDV) VALUES 
+    (1, 350000, N'HD002', NULL, N'DV002');
 
 -- HD003: Vòng cổ (95k) + Thức ăn mèo (180k) + Dịch vụ Tắm (150k) = 425k
-INSERT INTO CHITIETHOADON (maCTHD, soLuong, donGia, thanhTien, maHD, sku, maDV) VALUES 
-    (N'CT004', 1,  95000,  95000, N'HD003', N'SP004', NULL),
-    (N'CT005', 1, 180000, 180000, N'HD003', N'SP002', NULL),
-    (N'CT006', 1, 150000, 150000, N'HD003', NULL, N'DV003');
+INSERT INTO CHITIETHOADON (soLuong, donGia, maHD, sku, maDV) VALUES 
+    (1,  95000, N'HD003', N'SP004', NULL),
+    (1, 180000, N'HD003', N'SP002', NULL),
+    (1, 150000, N'HD003', NULL, N'DV003');
 
 -- HD004: Khám tổng quát (200k)
-INSERT INTO CHITIETHOADON (maCTHD, soLuong, donGia, thanhTien, maHD, sku, maDV) VALUES 
-    (N'CT007', 1, 200000, 200000, N'HD004', NULL, N'DV001');
+INSERT INTO CHITIETHOADON (soLuong, donGia, maHD, sku, maDV) VALUES 
+    (1, 200000, N'HD004', NULL, N'DV001');
 
 -- HD005: 2x Cát vệ sinh (170k) + 1x Royal Canin (350k) + 1x Siêu âm (300k) = 820k
-INSERT INTO CHITIETHOADON (maCTHD, soLuong, donGia, thanhTien, maHD, sku, maDV) VALUES 
-    (N'CT008', 2,  85000, 170000, N'HD005', N'SP005', NULL),
-    (N'CT009', 1, 350000, 350000, N'HD005', N'SP001', NULL),
-    (N'CT010', 1, 300000, 300000, N'HD005', NULL, N'DV006');
+INSERT INTO CHITIETHOADON (soLuong, donGia, maHD, sku, maDV) VALUES 
+    (2,  85000, N'HD005', N'SP005', NULL),
+    (1, 350000, N'HD005', N'SP001', NULL),
+    (1, 300000, N'HD005', NULL, N'DV006');
 GO
 
 -- 16. LICHHEN
