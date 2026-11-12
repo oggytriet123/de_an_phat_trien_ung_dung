@@ -27,7 +27,7 @@ public class KhachHangDAO {
                 + "       hd.ngayGanNhat, ISNULL(hd.tong, 0) "
                 + "FROM KHACHHANG k "
                 + "OUTER APPLY (SELECT MAX(h.ngayLap) AS ngayGanNhat, SUM(h.tongTien) AS tong "
-                + "             FROM HOADON h WHERE h.maKH = k.maKH) hd "
+                + "             FROM HOADON h WHERE h.maKH = k.maKH AND h.trangThai = N'Đã thanh toán') hd "
                 + "ORDER BY k.maKH";
         String sqlPet = "SELECT maKH, ten FROM THUCUNG WHERE maKH IS NOT NULL ORDER BY LEN(petID), petID";
 
@@ -49,7 +49,7 @@ public class KhachHangDAO {
                             hang == null ? "Thường" : hang,
                             rs.getInt(5),
                             p == null || p.isEmpty() ? "—" : String.join(", ", p),
-                            ngay == null ? (rs.getInt(5) > 0 ? LocalDate.of(2026, 3, 2) : null) : ngay.toLocalDate(),
+                            ngay == null ? null : ngay.toLocalDate(),
                             Math.round(rs.getDouble(7)) > 0 ? Math.round(rs.getDouble(7)) : ((long) rs.getInt(5) * SO_TIEN_MOI_DIEM)));
                 }
             }
@@ -347,6 +347,87 @@ public class KhachHangDAO {
             rs.next();
             return new ThongKeKhachHang(rs.getInt(1), rs.getInt(2), rs.getInt(3), rs.getLong(4),
                     Math.round(rs.getDouble(5)), Math.round(rs.getDouble(6)));
+        }
+    }
+
+    /** Lấy danh sách thú cưng chi tiết của một khách hàng */
+    public List<ThuCung> layDanhSachThuCungCuaKhach(String maKH) throws SQLException {
+        List<ThuCung> list = new ArrayList<>();
+        String sql = "SELECT petID, ten, loai, ISNULL(canNang, 0) FROM THUCUNG WHERE maKH = ? ORDER BY LEN(petID), petID";
+        try (Connection con = ConnectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, maKH);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    list.add(new ThuCung(rs.getString(1), rs.getString(2), rs.getString(3), rs.getDouble(4)));
+                }
+            }
+        }
+        return list;
+    }
+
+    /** Cập nhật thông tin khách hàng kèm danh sách thú cưng */
+    public boolean capNhat(String maKH, String hoTen, String sdtChiSo, int diem, List<ThuCung> danhSachPet) throws SQLException {
+        try (Connection con = ConnectDB.getConnection()) {
+            con.setAutoCommit(false);
+            try {
+                String sql = "UPDATE KHACHHANG SET hoTen = ?, soDienThoai = ?, diemTichLuy = ?, hangThe = ? WHERE maKH = ?";
+                try (PreparedStatement ps = con.prepareStatement(sql)) {
+                    ps.setString(1, hoTen);
+                    ps.setString(2, sdtChiSo);
+                    ps.setInt(3, diem);
+                    ps.setString(4, tinhHang(diem));
+                    ps.setString(5, maKH);
+                    ps.executeUpdate();
+                }
+
+                if (danhSachPet != null) {
+                    List<String> petIdGiulai = new ArrayList<>();
+                    for (ThuCung t : danhSachPet) {
+                        if (t.getPetID() != null && !t.getPetID().trim().isEmpty()) {
+                            petIdGiulai.add(t.getPetID().trim());
+                            try (PreparedStatement ps = con.prepareStatement(
+                                    "UPDATE THUCUNG SET ten = ?, loai = ?, canNang = ? WHERE petID = ? AND maKH = ?")) {
+                                ps.setString(1, t.getTen());
+                                String l = loaiChinh(t.getLoai());
+                                if (l == null) ps.setNull(2, java.sql.Types.NVARCHAR); else ps.setString(2, l);
+                                if (t.getCanNang() > 0) ps.setDouble(3, t.getCanNang()); else ps.setNull(3, java.sql.Types.FLOAT);
+                                ps.setString(4, t.getPetID());
+                                ps.setString(5, maKH);
+                                ps.executeUpdate();
+                            }
+                        } else {
+                            taoThuCung(con, maKH, t.getTen(), t.getLoai(), t.getCanNang());
+                        }
+                    }
+
+                    if (!petIdGiulai.isEmpty()) {
+                        StringBuilder sb = new StringBuilder("DELETE FROM THUCUNG WHERE maKH = ? AND petID NOT IN (");
+                        for (int i = 0; i < petIdGiulai.size(); i++) {
+                            if (i > 0) sb.append(",");
+                            sb.append("?");
+                        }
+                        sb.append(")");
+                        try (PreparedStatement ps = con.prepareStatement(sb.toString())) {
+                            ps.setString(1, maKH);
+                            for (int i = 0; i < petIdGiulai.size(); i++) {
+                                ps.setString(i + 2, petIdGiulai.get(i));
+                            }
+                            try { ps.executeUpdate(); } catch (SQLException ignored) {}
+                        }
+                    } else if (danhSachPet.isEmpty()) {
+                        try (PreparedStatement ps = con.prepareStatement("DELETE FROM THUCUNG WHERE maKH = ?")) {
+                            ps.setString(1, maKH);
+                            try { ps.executeUpdate(); } catch (SQLException ignored) {}
+                        }
+                    }
+                }
+
+                con.commit();
+                return true;
+            } catch (SQLException e) {
+                con.rollback();
+                throw e;
+            }
         }
     }
 }

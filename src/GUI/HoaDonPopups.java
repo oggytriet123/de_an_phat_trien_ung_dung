@@ -35,20 +35,23 @@ final class HoaDonPopups {
     // Nhập mã giảm giá
     // =====================================================================
     static void maGiamGia(Component host, MaGiamGia hienTai, MaGiamGiaBUS bus, Consumer<MaGiamGia> onApply) {
-        moMaGiamGia(host, hienTai == null ? "" : hienTai.getMa(), bus, onApply);
+        moMaGiamGia(host, null, hienTai == null ? "" : hienTai.getMa(), bus, onApply);
     }
 
-    /** Popup chọn mã: các mã có sẵn là từng nút bấm chọn, hoặc nhập mã khác, hoặc tạo mã mới. */
-    private static void moMaGiamGia(Component host, String maChon, MaGiamGiaBUS bus, Consumer<MaGiamGia> onApply) {
+    static void maGiamGia(Component host, HoaDon hd, MaGiamGiaBUS bus, Consumer<MaGiamGia> onApply) {
+        MaGiamGia hienTai = hd == null ? null : hd.getMaGiamGia();
+        moMaGiamGia(host, hd, hienTai == null ? "" : hienTai.getMa(), bus, onApply);
+    }
+
+    /** Popup chọn mã: các mã có sẵn là từng nút bấm chọn. */
+    private static void moMaGiamGia(Component host, HoaDon hd, String maChon, MaGiamGiaBUS bus, Consumer<MaGiamGia> onApply) {
         List<MaGiamGia> ds = bus.layDanhSach();
         int hang = Math.max(1, (ds.size() + 1) / 2);
-        int caoDs = Math.min(3, hang) * 74;
-        RoundedPanel card = card(620, 390 + caoDs, "Nhập mã giảm giá",
-                "Chọn mã khuyến mãi có sẵn hoặc nhập mã khác để áp dụng cho hóa đơn.");
+        int caoDs = Math.min(4, Math.max(2, hang)) * 82;
+        RoundedPanel card = card(650, 240 + caoDs, "Chọn mã giảm giá",
+                "Chọn mã khuyến mãi có sẵn để áp dụng cho hóa đơn.");
 
-        PlaceholderField tf = new PlaceholderField("Nhập mã giảm giá");
-        tf.setText(maChon);
-        FieldBox box = new FieldBox(tf, Color.WHITE, 42);
+        final String[] selectedMa = new String[] { maChon == null ? "" : maChon.trim() };
         JLabel err = errorLabel();
 
         // ---- các mã có sẵn dạng nút
@@ -62,28 +65,29 @@ final class HoaDonPopups {
             grid.setLayout(new BorderLayout());
             grid.add(trong, BorderLayout.NORTH);
         }
+
+        Runnable dongBo = () -> {
+            String cur = selectedMa[0];
+            for (CodeCard c : cards) c.setChon(!c.khongDungDuoc() && c.m.getMa().equalsIgnoreCase(cur));
+        };
+
         for (MaGiamGia m : ds) {
-            CodeCard cc = new CodeCard(m, bus.daHetHan(m));
+            CodeCard cc = new CodeCard(m, bus.daHetHan(m), bus.chuaDenHan(m), bus.daHetLuot(m));
             cc.addMouseListener(new MouseAdapter() {
                 @Override public void mouseReleased(MouseEvent e) {
-                    if (cc.hetHan || !SwingUtilities.isLeftMouseButton(e) || !cc.contains(e.getPoint())) return;
-                    tf.setText(cc.m.getMa());
-                    tf.requestFocusInWindow();
+                    if (cc.khongDungDuoc() || !SwingUtilities.isLeftMouseButton(e) || !cc.contains(e.getPoint())) return;
+                    if (selectedMa[0].equalsIgnoreCase(cc.m.getMa())) {
+                        selectedMa[0] = "";
+                    } else {
+                        selectedMa[0] = cc.m.getMa();
+                    }
+                    err.setText(" ");
+                    dongBo.run();
                 }
             });
             cards.add(cc);
             grid.add(cc);
         }
-        Runnable dongBo = () -> {
-            String cur = tf.getText().trim();
-            for (CodeCard c : cards) c.setChon(!c.hetHan && c.m.getMa().equalsIgnoreCase(cur));
-        };
-        tf.getDocument().addDocumentListener(clearError(err, box));
-        tf.getDocument().addDocumentListener(new DocumentListener() {
-            @Override public void insertUpdate(DocumentEvent e) { dongBo.run(); }
-            @Override public void removeUpdate(DocumentEvent e) { dongBo.run(); }
-            @Override public void changedUpdate(DocumentEvent e) { }
-        });
         dongBo.run();
 
         ScrollPanel view = new ScrollPanel(new BorderLayout());
@@ -100,22 +104,16 @@ final class HoaDonPopups {
         sp.setAlignmentX(Component.LEFT_ALIGNMENT);
         SlimScrollBarUI.apply(sp);
 
-        JLabel l1 = label("Mã khuyến mãi có sẵn");
-        JLabel l2 = label("Hoặc nhập mã khác");
+        JLabel l1 = label("Danh sách mã khuyến mãi có sẵn (nhấp để chọn)");
         JPanel body = new JPanel();
         body.setOpaque(false);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
-        body.setBorder(new EmptyBorder(22, 0, 0, 0));
-        for (JComponent c : new JComponent[] {l1, box, l2, err}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
-        box.setMaximumSize(new Dimension(Integer.MAX_VALUE, 42));
+        body.setBorder(new EmptyBorder(18, 0, 0, 0));
+        for (JComponent c : new JComponent[] {l1, err}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
         body.add(l1);
         body.add(Box.createVerticalStrut(10));
         body.add(sp);
-        body.add(Box.createVerticalStrut(16));
-        body.add(l2);
-        body.add(Box.createVerticalStrut(8));
-        body.add(box);
-        body.add(Box.createVerticalStrut(6));
+        body.add(Box.createVerticalStrut(10));
         body.add(err);
         card.add(body, BorderLayout.CENTER);
 
@@ -123,37 +121,45 @@ final class HoaDonPopups {
         RoundedButton apDung = primary("Áp dụng", 150);
         Runnable dong = () -> Overlay.dong(host);
         Runnable ap = () -> {
+            if (selectedMa[0] == null || selectedMa[0].trim().isEmpty()) {
+                err.setText("Vui lòng nhấp chọn một mã giảm giá từ danh sách trên.");
+                return;
+            }
             try {
-                MaGiamGia m = bus.kiemTra(tf.getText());
+                MaGiamGia m = hd != null ? bus.kiemTraChoHoaDon(selectedMa[0], hd) : bus.kiemTra(selectedMa[0]);
                 Overlay.dong(host);
                 onApply.accept(m);
             } catch (IllegalArgumentException ex) {
                 err.setText(ex.getMessage());
-                box.setError(true);
-                tf.requestFocusInWindow();
             }
         };
         boQua.addActionListener(e -> dong.run());
         apDung.addActionListener(e -> ap.run());
-        tf.addActionListener(e -> ap.run());
         card.add(buttons(boQua, apDung), BorderLayout.SOUTH);
 
         Overlay.hien(host, card, dong);
-        SwingUtilities.invokeLater(tf::requestFocusInWindow);
     }
 
-    /** Nút chọn một mã giảm giá có sẵn. Mã hết hạn bị làm mờ và không chọn được. */
+    /** Nút chọn một mã giảm giá có sẵn. Mã hết hạn, hết lượt hoặc chưa đến ngày áp dụng bị làm mờ và không chọn được. */
     private static final class CodeCard extends JPanel {
         final MaGiamGia m;
         final boolean hetHan;
+        final boolean chuaDen;
+        final boolean hetLuot;
         private boolean chon;
 
-        CodeCard(MaGiamGia m, boolean hetHan) {
+        CodeCard(MaGiamGia m, boolean hetHan, boolean chuaDen, boolean hetLuot) {
             this.m = m;
             this.hetHan = hetHan;
+            this.chuaDen = chuaDen;
+            this.hetLuot = hetLuot;
             setOpaque(false);
-            setPreferredSize(new Dimension(0, 64));
-            if (!hetHan) setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+            setPreferredSize(new Dimension(0, 68));
+            if (!khongDungDuoc()) setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        }
+
+        boolean khongDungDuoc() {
+            return hetHan || chuaDen || hetLuot;
         }
 
         void setChon(boolean c) {
@@ -165,27 +171,45 @@ final class HoaDonPopups {
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
             g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
             int w = getWidth(), h = getHeight();
-            g2.setColor(hetHan ? Theme.FIELD_BG : chon ? Theme.PRIMARY_SOFT : Color.WHITE);
+            g2.setColor(khongDungDuoc() ? Theme.FIELD_BG : chon ? Theme.PRIMARY_SOFT : Color.WHITE);
             g2.fillRoundRect(0, 0, w, h, 8, 8);
             g2.setColor(chon ? Theme.PRIMARY : Theme.BORDER);
             g2.drawRoundRect(0, 0, w - 1, h - 1, 8, 8);
 
-            g2.setFont(Theme.font(Font.BOLD, 14));
-            g2.setColor(hetHan ? Theme.MUTED : Theme.TEXT);
-            g2.drawString(m.getMa(), 14, 26);
-            g2.setFont(Theme.font(Font.PLAIN, 12));
+            g2.setFont(Theme.font(Font.BOLD, 13));
+            g2.setColor(khongDungDuoc() ? Theme.MUTED : Theme.TEXT);
+            g2.drawString(m.getMa(), 12, 24);
+
+            if (m.coGioiHanLuot() && !hetLuot) {
+                String luot = "Còn " + m.getSoLuotConLai() + "/" + m.getSoLuotToiDa();
+                g2.setFont(Theme.font(Font.PLAIN, 11));
+                g2.setColor(Theme.PRIMARY);
+                FontMetrics fm = g2.getFontMetrics();
+                int rx = w - fm.stringWidth(luot) - (chon ? 32 : 12);
+                g2.drawString(luot, rx, 23);
+            }
+
+            g2.setFont(Theme.font(Font.PLAIN, 11));
+            String tu = NGAY.format(m.getNgayBatDau());
             String han = NGAY.format(m.getHanDung());
             if (hetHan) {
                 g2.setColor(Theme.DANGER);
-                g2.drawString("Hết hạn " + han, 14, 46);
+                g2.drawString("Hết hạn " + han, 12, 44);
+            } else if (hetLuot) {
+                g2.setColor(Theme.DANGER);
+                g2.drawString("Hết lượt (" + m.getDaSuDung() + "/" + m.getSoLuotToiDa() + ")", 12, 44);
+            } else if (chuaDen) {
+                g2.setColor(Theme.AMBER_TEXT);
+                g2.drawString("Áp dụng từ " + tu + " - " + han, 12, 44);
             } else {
                 g2.setColor(Theme.MUTED);
-                g2.drawString(m.moTa() + "  ·  HSD " + han, 14, 46);
+                g2.drawString(m.moTa(), 12, 42);
+                g2.drawString("HSD: " + tu + " - " + han, 12, 58);
             }
             if (chon) {
                 g2.setColor(Theme.PRIMARY);
                 g2.setStroke(new BasicStroke(2f, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND));
-                int cx = w - 24, cy = 24;
+                int cx = w - 20, cy = 22;
                 g2.drawLine(cx - 5, cy, cx - 1, cy + 4);
                 g2.drawLine(cx - 1, cy + 4, cx + 6, cy - 4);
             }
@@ -208,79 +232,240 @@ final class HoaDonPopups {
         return d.isEmpty() || d.length() > 12 ? -1 : Long.parseLong(d);
     }
 
+    private static JButton nutLich(JComponent invoker, PlaceholderField tfTuNgay, PlaceholderField tfDenNgay) {
+        JButton btn = new JButton(Icons.of("calendar", 16, Theme.MUTED));
+        btn.setBorder(new EmptyBorder(0, 8, 0, 10));
+        btn.setContentAreaFilled(false);
+        btn.setBorderPainted(false);
+        btn.setFocusPainted(false);
+        btn.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        btn.setToolTipText("Chọn khoảng ngày (Từ ngày — Đến ngày)");
+        btn.addActionListener(e -> {
+            LocalDate start = LocalDate.now();
+            LocalDate end = LocalDate.now().plusDays(7);
+            try { start = LocalDate.parse(tfTuNgay.getText().trim(), NHAP_NGAY); } catch (Exception ignored) {}
+            try { end = LocalDate.parse(tfDenNgay.getText().trim(), NHAP_NGAY); } catch (Exception ignored) {}
+            CalendarPicker.showDateRangePicker(invoker, start, end, (tu, den) -> {
+                tfTuNgay.setText(NGAY.format(tu));
+                tfDenNgay.setText(NGAY.format(den));
+            });
+        });
+        return btn;
+    }
+
+    static void taoMaGiamGia(Component host, MaGiamGiaBUS bus, Consumer<MaGiamGia> onCreated, Runnable onBack) {
+        taoMaGiamGia(host, bus, null, onCreated, onBack);
+    }
+
+    /** Một lựa chọn sản phẩm/dịch vụ trong combobox tạo mã khuyến mãi. */
+    private record MucApDung(String giaTriLuu, String hienThi) {
+        @Override public String toString() { return hienThi; }
+    }
+
     /**
-     * Form tạo mã giảm giá mới.
+     * Form tạo mã giảm giá mới (hỗ trợ giới hạn số lượt, chọn sản phẩm cụ thể từ CSDL theo phân loại, và Mua X tặng Y).
      * @param onCreated gọi sau khi tạo thành công
      * @param onBack    gọi khi bấm "Quay lại" hoặc Esc
      */
-    static void taoMaGiamGia(Component host, MaGiamGiaBUS bus, Consumer<MaGiamGia> onCreated, Runnable onBack) {
-        RoundedPanel card = card(600, 520, "Tạo mã giảm giá", "Mã mới sẽ xuất hiện trong danh sách mã có sẵn.");
+    static void taoMaGiamGia(Component host, MaGiamGiaBUS bus, SanPhamBUS spBus,
+                             Consumer<MaGiamGia> onCreated, Runnable onBack) {
+        RoundedPanel card = card(680, 690, "Tạo mã giảm giá",
+                "Thiết lập thời hạn, giới hạn số người dùng và chọn sản phẩm áp dụng từ cơ sở dữ liệu.");
 
         PlaceholderField tfMa = new PlaceholderField("Ví dụ: SALE20");
-        PlaceholderField tfGia = new PlaceholderField("Ví dụ: 15");
-        PlaceholderField tfHan = new PlaceholderField("dd/MM/yyyy");
-        tfHan.setText(NGAY.format(LocalDate.now().plusDays(30)));
+        PlaceholderField tfSoLuot = new PlaceholderField("0 = Không giới hạn");
+        PlaceholderField tfGia = new PlaceholderField("Ví dụ: 15 (tức 15%)");
+        PlaceholderField tfMuaX = new PlaceholderField("VD: 2");
+        PlaceholderField tfTangY = new PlaceholderField("VD: 1");
+        PlaceholderField tfPtTang = new PlaceholderField("100 = Miễn phí");
+        PlaceholderField tfTuNgay = new PlaceholderField("dd/MM/yyyy");
+        PlaceholderField tfDenNgay = new PlaceholderField("dd/MM/yyyy");
+
+        tfSoLuot.setText("0");
+        tfPtTang.setText("100");
+        tfTuNgay.setText(NGAY.format(LocalDate.now()));
+        tfDenNgay.setText(NGAY.format(LocalDate.now().plusDays(30)));
+
         GioiHanNhap.ap(tfMa, 20, "[A-Za-z0-9_-]");
+        GioiHanNhap.ap(tfSoLuot, 9, "[0-9]");
         GioiHanNhap.ap(tfGia, 12, "[0-9.,]");
-        GioiHanNhap.ap(tfHan, 10, "[0-9/]");
+        GioiHanNhap.ap(tfMuaX, 6, "[0-9]");
+        GioiHanNhap.ap(tfTangY, 6, "[0-9]");
+        GioiHanNhap.ap(tfPtTang, 3, "[0-9]");
+        GioiHanNhap.ap(tfTuNgay, 10, "[0-9/]");
+        GioiHanNhap.ap(tfDenNgay, 10, "[0-9/]");
+
         FieldBox bMa = new FieldBox(tfMa, Color.WHITE, 42);
+        FieldBox bSoLuot = new FieldBox(tfSoLuot, Color.WHITE, 42);
         FieldBox bGia = new FieldBox(tfGia, Color.WHITE, 42);
-        FieldBox bHan = new FieldBox(tfHan, Color.WHITE, 42);
+        FieldBox bMuaX = new FieldBox(tfMuaX, Color.WHITE, 42);
+        FieldBox bTangY = new FieldBox(tfTangY, Color.WHITE, 42);
+        FieldBox bPtTang = new FieldBox(tfPtTang, Color.WHITE, 42);
+        FieldBox bTuNgay = new FieldBox(tfTuNgay, Color.WHITE, 42);
+        FieldBox bDenNgay = new FieldBox(tfDenNgay, Color.WHITE, 42);
+        bTuNgay.add(nutLich(bTuNgay, tfTuNgay, tfDenNgay), BorderLayout.EAST);
+        bDenNgay.add(nutLich(bDenNgay, tfTuNgay, tfDenNgay), BorderLayout.EAST);
+
+        // Lấy danh sách sản phẩm & dịch vụ thực tế từ CSDL và phân loại của chúng
+        SanPhamBUS nguonSp = spBus != null ? spBus : new SanPhamBUS();
+        List<SanPham> tatCaSp = nguonSp.layDanhSach();
+        String TAT_CA_PL = "Tất cả phân loại";
+        java.util.LinkedHashSet<String> dsPhanLoai = new java.util.LinkedHashSet<>();
+        dsPhanLoai.add(TAT_CA_PL);
+        for (SanPham s : tatCaSp) {
+            if (!s.isDichVu() && s.getDanhMuc() != null && !s.getDanhMuc().isBlank()) {
+                dsPhanLoai.add(s.getDanhMuc());
+            }
+        }
+        for (SanPham s : tatCaSp) {
+            if (s.isDichVu() && s.getDanhMuc() != null && !s.getDanhMuc().isBlank()) {
+                dsPhanLoai.add(s.getDanhMuc());
+            }
+        }
+
+        JComboBox<String> cbPhanLoai = new JComboBox<>(dsPhanLoai.toArray(new String[0]));
+        cbPhanLoai.setLightWeightPopupEnabled(false);
+        cbPhanLoai.setFont(Theme.font(Font.PLAIN, 13));
+        cbPhanLoai.setBackground(Color.WHITE);
+        cbPhanLoai.setForeground(Theme.TEXT);
+        cbPhanLoai.setPreferredSize(new Dimension(185, 42));
+
+        JComboBox<MucApDung> cbSanPham = new JComboBox<>();
+        cbSanPham.setLightWeightPopupEnabled(false);
+        cbSanPham.setFont(Theme.font(Font.PLAIN, 13));
+        cbSanPham.setBackground(Color.WHITE);
+        cbSanPham.setForeground(Theme.TEXT);
+        cbSanPham.setPreferredSize(new Dimension(0, 42));
+
+        Runnable capNhatDanhSachSp = () -> {
+            String pl = String.valueOf(cbPhanLoai.getSelectedItem());
+            cbSanPham.removeAllItems();
+            if (TAT_CA_PL.equals(pl)) {
+                cbSanPham.addItem(new MucApDung(MaGiamGia.TAT_CA, "Tất cả sản phẩm & dịch vụ"));
+                for (SanPham s : tatCaSp) {
+                    String nhan = "[" + s.getDanhMuc() + "] " + s.getSku() + " - " + s.getTen()
+                            + " (" + Theme.money(s.getDonGia()) + ")";
+                    cbSanPham.addItem(new MucApDung(s.getSku() + " - " + s.getTen(), nhan));
+                }
+            } else {
+                for (SanPham s : tatCaSp) {
+                    if (pl.equalsIgnoreCase(s.getDanhMuc())) {
+                        String nhan = s.getSku() + " - " + s.getTen() + " (" + Theme.money(s.getDonGia()) + ")";
+                        cbSanPham.addItem(new MucApDung(s.getSku() + " - " + s.getTen(), nhan));
+                    }
+                }
+                cbSanPham.addItem(new MucApDung(pl, "Tất cả mặt hàng thuộc phân loại: " + pl));
+            }
+            if (cbSanPham.getItemCount() > 0) cbSanPham.setSelectedIndex(0);
+        };
+        cbPhanLoai.addActionListener(e -> capNhatDanhSachSp.run());
+        capNhatDanhSachSp.run();
+
         JLabel err = errorLabel();
 
-        boolean[] phanTram = {true};
+        // 0 = Giảm theo %, 1 = Giảm theo số tiền, 2 = Mua X tặng Y
+        int[] cheDo = {0};
         MethodCard cPt = new MethodCard("Giảm theo %", true);
         MethodCard cTien = new MethodCard("Giảm theo số tiền", false);
+        MethodCard cMuaTang = new MethodCard("Mua X tặng Y", false);
+
+        CardLayout loaiCards = new CardLayout();
+        JPanel pnlChiTietLoai = new JPanel(loaiCards);
+        pnlChiTietLoai.setOpaque(false);
+
+        JComponent gGia = nhom("Giá trị giảm *", bGia);
+        JPanel hangMuaTang = new JPanel(new GridLayout(1, 3, 12, 0));
+        hangMuaTang.setOpaque(false);
+        hangMuaTang.add(nhom("Mua số lượng (X) *", bMuaX));
+        hangMuaTang.add(nhom("Tặng thêm (Y) *", bTangY));
+        hangMuaTang.add(nhom("Giảm % phần tặng *", bPtTang));
+
+        pnlChiTietLoai.add(gGia, "THUONG");
+        pnlChiTietLoai.add(hangMuaTang, "MUA_TANG");
+
         MouseAdapter chonLoai = new MouseAdapter() {
             @Override public void mouseReleased(MouseEvent e) {
                 MethodCard src = (MethodCard) e.getSource();
                 if (!SwingUtilities.isLeftMouseButton(e) || !src.contains(e.getPoint())) return;
-                phanTram[0] = src == cPt;
-                cPt.setChon(phanTram[0]);
-                cTien.setChon(!phanTram[0]);
-                tfGia.setText("");
-                tfGia.setPlaceholder(phanTram[0] ? "Ví dụ: 15 (tức 15%)" : "Ví dụ: 50000 (tức 50.000₫)");
+                cheDo[0] = src == cPt ? 0 : src == cTien ? 1 : 2;
+                cPt.setChon(cheDo[0] == 0);
+                cTien.setChon(cheDo[0] == 1);
+                cMuaTang.setChon(cheDo[0] == 2);
+                if (cheDo[0] == 2) {
+                    loaiCards.show(pnlChiTietLoai, "MUA_TANG");
+                } else {
+                    loaiCards.show(pnlChiTietLoai, "THUONG");
+                    tfGia.setText("");
+                    tfGia.setPlaceholder(cheDo[0] == 0 ? "Ví dụ: 15 (tức 15%)" : "Ví dụ: 50000 (tức 50.000₫)");
+                }
                 err.setText(" ");
             }
         };
         cPt.addMouseListener(chonLoai);
         cTien.addMouseListener(chonLoai);
-        tfGia.setPlaceholder("Ví dụ: 15 (tức 15%)");
-        for (PlaceholderField f : new PlaceholderField[] {tfMa, tfGia, tfHan}) {
+        cMuaTang.addMouseListener(chonLoai);
+
+        for (PlaceholderField f : new PlaceholderField[] {tfMa, tfSoLuot, tfGia, tfMuaX, tfTangY, tfPtTang, tfTuNgay, tfDenNgay}) {
             f.getDocument().addDocumentListener(new DocumentListener() {
-                private void c() { err.setText(" "); bMa.setError(false); bGia.setError(false); bHan.setError(false); }
+                private void c() {
+                    err.setText(" ");
+                    for (FieldBox b : new FieldBox[] {bMa, bSoLuot, bGia, bMuaX, bTangY, bPtTang, bTuNgay, bDenNgay}) {
+                        b.setError(false);
+                    }
+                }
                 @Override public void insertUpdate(DocumentEvent e) { c(); }
                 @Override public void removeUpdate(DocumentEvent e) { c(); }
                 @Override public void changedUpdate(DocumentEvent e) { }
             });
         }
 
-        JPanel hang1 = new JPanel(new GridLayout(1, 2, 14, 0));
-        hang1.setOpaque(false);
-        hang1.add(nhom("Mã giảm giá *", bMa));
-        hang1.add(nhom("Hạn dùng *", bHan));
-        JPanel loai = new JPanel(new GridLayout(1, 2, 12, 0));
+        JPanel hangMaLuot = new JPanel(new GridLayout(1, 2, 14, 0));
+        hangMaLuot.setOpaque(false);
+        hangMaLuot.add(nhom("Mã giảm giá *", bMa));
+        hangMaLuot.add(nhom("Số lượt sử dụng (0 = Vô hạn)", bSoLuot));
+
+        JPanel hangNgay = new JPanel(new GridLayout(1, 2, 14, 0));
+        hangNgay.setOpaque(false);
+        hangNgay.add(nhom("Từ ngày *", bTuNgay));
+        hangNgay.add(nhom("Đến ngày *", bDenNgay));
+
+        JPanel hangSanPham = new JPanel(new BorderLayout(12, 0));
+        hangSanPham.setOpaque(false);
+        JComponent colPhanLoai = nhom("Phân loại *", cbPhanLoai);
+        colPhanLoai.setPreferredSize(new Dimension(190, 70));
+        hangSanPham.add(colPhanLoai, BorderLayout.WEST);
+        hangSanPham.add(nhom("Sản phẩm / Dịch vụ áp dụng (trên CSDL) *", cbSanPham), BorderLayout.CENTER);
+
+        JPanel loai = new JPanel(new GridLayout(1, 3, 10, 0));
         loai.setOpaque(false);
         loai.add(cPt);
         loai.add(cTien);
+        loai.add(cMuaTang);
 
         JPanel body = new JPanel();
         body.setOpaque(false);
         body.setLayout(new BoxLayout(body, BoxLayout.Y_AXIS));
-        body.setBorder(new EmptyBorder(22, 0, 0, 0));
-        JLabel lLoai = label("Loại giảm giá");
-        JComponent gGia = nhom("Giá trị giảm *", bGia);
-        for (JComponent c : new JComponent[] {hang1, lLoai, loai, gGia, err}) c.setAlignmentX(Component.LEFT_ALIGNMENT);
-        hang1.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+        body.setBorder(new EmptyBorder(18, 0, 0, 0));
+        JLabel lLoai = label("Hình thức khuyến mãi");
+        for (JComponent c : new JComponent[] {hangMaLuot, hangNgay, hangSanPham, lLoai, loai, pnlChiTietLoai, err}) {
+            c.setAlignmentX(Component.LEFT_ALIGNMENT);
+        }
+        hangMaLuot.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+        hangNgay.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+        hangSanPham.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
         loai.setMaximumSize(new Dimension(Integer.MAX_VALUE, 50));
-        gGia.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
-        body.add(hang1);
-        body.add(Box.createVerticalStrut(14));
+        pnlChiTietLoai.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
+        body.add(hangMaLuot);
+        body.add(Box.createVerticalStrut(12));
+        body.add(hangNgay);
+        body.add(Box.createVerticalStrut(12));
+        body.add(hangSanPham);
+        body.add(Box.createVerticalStrut(12));
         body.add(lLoai);
         body.add(Box.createVerticalStrut(8));
         body.add(loai);
-        body.add(Box.createVerticalStrut(14));
-        body.add(gGia);
+        body.add(Box.createVerticalStrut(12));
+        body.add(pnlChiTietLoai);
         body.add(Box.createVerticalStrut(6));
         body.add(err);
         card.add(body, BorderLayout.CENTER);
@@ -289,35 +474,92 @@ final class HoaDonPopups {
         RoundedButton tao = primary("Tạo mã", 150);
         quayLai.addActionListener(e -> onBack.run());
         Runnable xong = () -> {
-            long gt = docSo(tfGia.getText());
-            if (gt < 0) {
-                err.setText("Giá trị giảm phải là số.");
-                bGia.setError(true);
-                tfGia.requestFocusInWindow();
+            String slText = tfSoLuot.getText().trim();
+            long soLuot = slText.isEmpty() ? 0 : docSo(slText);
+            if (soLuot < 0) {
+                err.setText("Số lượt sử dụng không hợp lệ.");
+                bSoLuot.setError(true);
+                tfSoLuot.requestFocusInWindow();
                 return;
             }
-            LocalDate han;
+            LocalDate tuNgay;
             try {
-                han = LocalDate.parse(tfHan.getText().trim(), NHAP_NGAY);
+                tuNgay = LocalDate.parse(tfTuNgay.getText().trim(), NHAP_NGAY);
             } catch (DateTimeParseException ex) {
-                err.setText("Hạn dùng không hợp lệ. Nhập theo dạng dd/MM/yyyy.");
-                bHan.setError(true);
-                tfHan.requestFocusInWindow();
+                err.setText("Ngày bắt đầu không hợp lệ. Nhập theo dạng dd/MM/yyyy.");
+                bTuNgay.setError(true);
+                tfTuNgay.requestFocusInWindow();
                 return;
             }
+            LocalDate denNgay;
             try {
-                MaGiamGia m = bus.tao(tfMa.getText(), phanTram[0], gt, han);
+                denNgay = LocalDate.parse(tfDenNgay.getText().trim(), NHAP_NGAY);
+            } catch (DateTimeParseException ex) {
+                err.setText("Ngày kết thúc không hợp lệ. Nhập theo dạng dd/MM/yyyy.");
+                bDenNgay.setError(true);
+                tfDenNgay.requestFocusInWindow();
+                return;
+            }
+
+            boolean phanTram = cheDo[0] != 1;
+            long gt;
+            int muaX = 0, tangY = 0;
+            if (cheDo[0] == 2) {
+                long mx = docSo(tfMuaX.getText());
+                long ty = docSo(tfTangY.getText());
+                String ptText = tfPtTang.getText().trim();
+                long pt = ptText.isEmpty() ? 100 : docSo(ptText);
+                if (mx <= 0) {
+                    err.setText("Số lượng mua (X) phải từ 1 trở lên.");
+                    bMuaX.setError(true);
+                    tfMuaX.requestFocusInWindow();
+                    return;
+                }
+                if (ty <= 0) {
+                    err.setText("Số lượng tặng thêm (Y) phải từ 1 trở lên.");
+                    bTangY.setError(true);
+                    tfTangY.requestFocusInWindow();
+                    return;
+                }
+                if (pt < 1 || pt > 100) {
+                    err.setText("Phần trăm giảm cho hàng tặng phải từ 1 đến 100%.");
+                    bPtTang.setError(true);
+                    tfPtTang.requestFocusInWindow();
+                    return;
+                }
+                muaX = (int) mx;
+                tangY = (int) ty;
+                gt = pt;
+            } else {
+                gt = docSo(tfGia.getText());
+                if (gt < 0) {
+                    err.setText("Giá trị giảm phải là số.");
+                    bGia.setError(true);
+                    tfGia.requestFocusInWindow();
+                    return;
+                }
+            }
+
+            MucApDung chonSp = (MucApDung) cbSanPham.getSelectedItem();
+            String danhMuc = chonSp != null ? chonSp.giaTriLuu() : MaGiamGia.TAT_CA;
+            try {
+                MaGiamGia m = bus.tao(tfMa.getText(), phanTram, gt, tuNgay, denNgay,
+                        "", (int) soLuot, danhMuc, muaX, tangY);
                 onCreated.accept(m);
             } catch (IllegalArgumentException ex) {
                 String msg = ex.getMessage();
                 err.setText(msg);
                 if (msg.contains("Mã") || msg.contains("mã")) bMa.setError(true);
-                else if (msg.contains("Hạn")) bHan.setError(true);
+                else if (msg.contains("bắt đầu")) bTuNgay.setError(true);
+                else if (msg.contains("kết thúc") || msg.contains("Hạn")) bDenNgay.setError(true);
+                else if (cheDo[0] == 2) bPtTang.setError(true);
                 else bGia.setError(true);
             }
         };
         tao.addActionListener(e -> xong.run());
-        for (PlaceholderField f : new PlaceholderField[] {tfMa, tfGia, tfHan}) f.addActionListener(e -> xong.run());
+        for (PlaceholderField f : new PlaceholderField[] {tfMa, tfSoLuot, tfGia, tfMuaX, tfTangY, tfPtTang, tfTuNgay, tfDenNgay}) {
+            f.addActionListener(e -> xong.run());
+        }
         card.add(buttons(quayLai, tao), BorderLayout.SOUTH);
 
         Overlay.hien(host, card, onBack);
@@ -952,7 +1194,7 @@ final class HoaDonPopups {
         lines.setLayout(new BoxLayout(lines, BoxLayout.Y_AXIS));
         for (ChiTietHoaDon d : hd.getDong()) {
             String ten = d.getSanPham().getTen() + "  ·  " + Theme.money(d.getSanPham().getDonGia());
-            JPanel r = lineRow(ten, String.valueOf(d.getSoLuong()), Theme.money(d.thanhTien()), false);
+            JPanel r = lineRow(ten, String.valueOf(d.getSoLuong()), Theme.money(Math.round(d.getDonGia() * d.getSoLuong())), false);
             lines.add(r);
         }
         ScrollPanel view = new ScrollPanel(new BorderLayout());

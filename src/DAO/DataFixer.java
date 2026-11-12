@@ -85,9 +85,9 @@ public class DataFixer {
             System.out.println("-> Nạp QUYEN_CHUCNANG...");
             st.executeUpdate("INSERT INTO QUYEN_CHUCNANG (maQuyen, maChucNang) VALUES "
                     + "(1,1),(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),(1,9),(1,10),(1,11),(1,12),(1,13),(1,14),(1,15),(1,16),(1,17), "
-                    + "(2,1),(2,2),(2,4),(2,5),(2,6),(2,7),(2,8),(2,10),(2,11),(2,14),(2,17), "
-                    + "(3,1),(3,2),(3,7),(3,9),(3,13),(3,14), "
-                    + "(4,1),(4,2),(4,4),(4,5),(4,6),(4,10),(4,11),(4,12),(4,13),(4,14),(4,15),(4,16)");
+                    + "(2,1),(2,2),(2,4),(2,6),(2,10),(2,11),(2,17), "
+                    + "(3,7),(3,8),(3,9),(3,13), "
+                    + "(4,2),(4,4),(4,5),(4,6),(4,10),(4,11),(4,12),(4,14),(4,15),(4,16)");
 
             // 5. NHANVIEN (Mật khẩu: 123456 hash SHA-256)
             System.out.println("-> Nạp NHANVIEN...");
@@ -162,15 +162,27 @@ public class DataFixer {
 
             // 9. SANPHAM
             System.out.println("-> Nạp SANPHAM...");
-            st.executeUpdate("INSERT INTO SANPHAM (sku_maSP, tenSP, donGia, soLuongTon, hanSuDung, maNV_Kho) VALUES "
-                    + "(N'SP001', N'Thức ăn hạt cho chó Royal Canin 2kg', 350000, 50, '2026-06-15', N'NV003'), "
-                    + "(N'SP002', N'Pate cho mèo Whiskas cá hồi 85g', 25000, 200, '2026-12-30', N'NV003'), "
-                    + "(N'SP003', N'Cát vệ sinh cho mèo Cature đậu nành 6L', 145000, 80, '2027-01-01', N'NV007'), "
-                    + "(N'SP004', N'Sữa tắm trị ve rận Bio Derma 250ml', 95000, 45, '2026-09-20', N'NV007'), "
-                    + "(N'SP005', N'Vòng cổ trị ve rận Seresto cho chó', 650000, 30, '2027-03-15', N'NV003'), "
-                    + "(N'SP006', N'Xương gặm sạch răng Pedigree DentaStix 110g', 48000, 120, '2026-11-10', N'NV003'), "
-                    + "(N'SP007', N'Dung dịch nhỏ mắt cho thú cưng Bioline 50ml', 65000, 60, '2026-08-05', N'NV007'), "
-                    + "(N'SP008', N'Gel dinh dưỡng cho chó mèo Nourse 120g', 180000, 40, '2026-10-25', N'NV003')");
+            st.executeUpdate("INSERT INTO SANPHAM (sku_maSP, tenSP, quyCach, danhMuc, donViTinh, donGia, soLuongTon, hanSuDung, maNV_Kho) VALUES "
+                    + "(N'FOOD001', N'Thức ăn hạt Royal Canin Mini Adult 2kg', N'Túi 2kg', N'Thức ăn', N'bao', 350000.0, 45, '2026-12-31', N'NV003'), "
+                    + "(N'FOOD002', N'Pate Whiskas cá thu & cá hồi 85g', N'Gói 85g', N'Thức ăn', N'gói', 25000.0, 180, '2026-12-31', N'NV003'), "
+                    + "(N'FOOD003', N'Xương gặm sạch răng Pedigree DentaStix 110g', N'Gói 110g', N'Thức ăn', N'gói', 48000.0, 110, '2026-11-10', N'NV003'), "
+                    + "(N'FOOD004', N'Bánh thưởng vị thịt gà SmartHeart 100g', N'Gói 100g', N'Thức ăn', N'gói', 38000.0, 4, '2026-11-20', N'NV003'), "
+                    + "(N'FOOD005', N'Hạt Me-O vị cá ngừ cho mèo lớn 1.2kg', N'Túi 1.2kg', N'Thức ăn', N'bao', 110000.0, 65, '2026-10-30', N'NV003'), "
+                    + "(N'TOY001', N'Cần câu mèo lông vũ gắn chuông', N'Cây 50cm', N'Đồ chơi', N'cái', 35000.0, 60, '2028-01-01', N'NV003'), "
+                    + "(N'TOY002', N'Bóng cao su đồ chơi gặm sạch răng cho chó', N'Quả đk 7cm', N'Đồ chơi', N'cái', 55000.0, 42, '2028-01-01', N'NV003'), "
+                    + "(N'TOY003', N'Cỏ tươi Catnip sấy khô cho mèo', N'Hũ 45g', N'Đồ chơi', N'hũ', 45000.0, 85, '2027-04-15', N'NV003'), "
+                    + "(N'MED001', N'Dung dịch nhỏ mắt Bioline 50ml', N'Lọ 50ml', N'Thuốc', N'chai', 65000.0, 2, '2026-08-05', N'NV007'), "
+                    + "(N'MED002', N'Gel dinh dưỡng Nourse 120g', N'Tuýp 120g', N'Thuốc', N'tuýp', 180000.0, 38, '2026-10-25', N'NV007'), "
+                    + "(N'MED003', N'Thuốc tẩy giun Sanpet cho chó mèo', N'Vỉ 10 viên', N'Thuốc', N'viên', 15000.0, 90, '2027-06-30', N'NV007'), "
+                    + "(N'MED004', N'Bột điện giải và men vi sinh Biotic 5g', N'Gói 5g', N'Thuốc', N'gói', 8000.0, 200, '2027-05-10', N'NV007'), "
+                    + "(N'CARE001', N'Cát vệ sinh Cature đậu nành tự nhiên 6L', N'Túi 6L', N'Chăm sóc và vệ sinh', N'túi', 145000.0, 75, '2027-01-01', N'NV003'), "
+                    + "(N'CARE002', N'Sữa tắm trị ve rận Bio Derma 250ml', N'Chai 250ml', N'Chăm sóc và vệ sinh', N'chai', 95000.0, 3, '2026-09-20', N'NV007'), "
+                    + "(N'CARE003', N'Xịt khử mùi chuồng trại & khay cát Forcans 300ml', N'Chai 300ml', N'Chăm sóc và vệ sinh', N'chai', 125000.0, 32, '2026-12-15', N'NV003'), "
+                    + "(N'ACC001', N'Vòng cổ trị ve rận Seresto cho chó', N'Hộp 1 cái', N'Phụ kiện', N'cái', 650000.0, 25, '2027-03-15', N'NV007'), "
+                    + "(N'ACC002', N'Dây dắt kèm yếm ngực phản quang cho chó', N'Bộ dây + yếm', N'Phụ kiện', N'bộ', 135000.0, 28, '2028-01-01', N'NV003'), "
+                    + "(N'LIV001', N'Bát ăn chống trượt inox 2 ngăn cho thú cưng', N'Cái 2 ngăn', N'Đồ dùng và sinh hoạt', N'cái', 85000.0, 50, '2028-01-01', N'NV003'), "
+                    + "(N'LIV002', N'Lược chải lông tự làm sạch Pet Brush', N'Cây cầm tay', N'Đồ dùng và sinh hoạt', N'cái', 79000.0, 4, '2028-01-01', N'NV003'), "
+                    + "(N'LIV003', N'Tã bỉm thú cưng Dono size M (12 miếng)', N'Bịch 12 miếng', N'Đồ dùng và sinh hoạt', N'gói', 98000.0, 30, '2027-08-20', N'NV003')");
 
             // 10. CHUONGLUUTRU
             System.out.println("-> Nạp CHUONGLUUTRU...");

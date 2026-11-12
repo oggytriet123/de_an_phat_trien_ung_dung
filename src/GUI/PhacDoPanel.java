@@ -135,7 +135,7 @@ public class PhacDoPanel extends JPanel {
         JLabel s1 = new JLabel("›");
         s1.setFont(Theme.font(Font.PLAIN, 12));
         s1.setForeground(Theme.MUTED);
-        JLabel l2 = new JLabel("Điều Trị & Đơn Thuốc");
+        JLabel l2 = new JLabel("Khám & Điều Trị");
         l2.setFont(Theme.font(Font.PLAIN, 12));
         l2.setForeground(Theme.MUTED);
         JLabel s2 = new JLabel("›");

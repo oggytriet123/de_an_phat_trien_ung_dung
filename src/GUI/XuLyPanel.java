@@ -26,7 +26,7 @@ public class XuLyPanel extends JPanel implements Refreshable {
         setLayout(cards);
         this.bus = bus;
         quanLy = new QuanLyHoaDonPanel(bus, this::moO, this::xoaO, this::taoMoi);
-        tao = new TaoHoaDonPanel(bus, spBus, mgBus, khBus, this::veQuanLy);
+        tao = new TaoHoaDonPanel(bus, spBus, mgBus, khBus, () -> veQuanLy(null));
         add(quanLy, TRANG_O);
         add(tao, TRANG_TAO);
         cards.show(this, TRANG_O);

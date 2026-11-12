@@ -18,10 +18,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.JTableHeader;
 
-import DAO.DichVuDAO;
-import DAO.KhachHangDAO;
-import DAO.PhauThuatDAO;
-import DAO.ThuCungDAO;
+import Bus.PhauThuatBUS;
 import Entity.CaPhauThuat;
 import Entity.KhachHang;
 import Entity.SanPham;
@@ -34,8 +31,7 @@ import Entity.ThuCung;
 public class PhauThuatPanel extends JPanel implements Refreshable {
     private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    private final PhauThuatDAO dao = new PhauThuatDAO();
-    private final DichVuDAO dichVuDAO = new DichVuDAO();
+    private final PhauThuatBUS bus = new PhauThuatBUS();
     private final List<CaPhauThuat> danhSach = new ArrayList<>();
     private final List<CaPhauThuat> daLoc = new ArrayList<>();
     private final PhauThuatTableModel model = new PhauThuatTableModel();
@@ -57,7 +53,7 @@ public class PhauThuatPanel extends JPanel implements Refreshable {
 
     public synchronized void taiTuCSDL() {
         danhSach.clear();
-        danhSach.addAll(dao.layTatCa());
+        danhSach.addAll(bus.layTatCa());
         locDuLieu();
     }
 
@@ -137,49 +133,96 @@ public class PhauThuatPanel extends JPanel implements Refreshable {
         toolbar.add(pnlFilters, BorderLayout.EAST);
         card.add(toolbar, BorderLayout.NORTH);
 
-        table.setRowHeight(44);
-        table.setShowGrid(false);
-        table.setIntercellSpacing(new Dimension(0, 0));
-        table.setSelectionBackground(new Color(0xF4F6F8));
+        table.setRowHeight(46);
+        table.setShowGrid(true);
+        table.setShowHorizontalLines(true);
+        table.setShowVerticalLines(false);
+        table.setGridColor(new Color(0xE2E8F0));
+        table.setIntercellSpacing(new Dimension(0, 1));
+        table.setSelectionBackground(new Color(0xEFF6FF));
         table.setSelectionForeground(Theme.TEXT);
         table.setFont(Theme.font(Font.PLAIN, 13));
 
         JTableHeader th = table.getTableHeader();
         th.setFont(Theme.font(Font.BOLD, 12));
-        th.setForeground(Theme.TEXT);
-        th.setBackground(Color.WHITE);
-        th.setPreferredSize(new Dimension(0, 40));
-        th.setBorder(new MatteBorder(0, 0, 1, 0, Theme.BORDER));
+        th.setForeground(new Color(0x475569));
+        th.setBackground(new Color(0xF8FAFC));
+        th.setPreferredSize(new Dimension(0, 42));
+        th.setBorder(new MatteBorder(0, 0, 1, 0, new Color(0xCBD5E1)));
+        th.setDefaultRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object val, boolean isSel, boolean hasFoc, int r, int c) {
+                JLabel l = (JLabel) super.getTableCellRendererComponent(t, val, isSel, hasFoc, r, c);
+                l.setFont(Theme.font(Font.BOLD, 12));
+                l.setForeground(new Color(0x475569));
+                l.setBackground(new Color(0xF8FAFC));
+                l.setBorder(new EmptyBorder(0, 14, 0, 14));
+                return l;
+            }
+        });
 
         table.setDefaultRenderer(Object.class, new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable t, Object val, boolean isSel, boolean hasFoc, int row, int col) {
-                JLabel l = (JLabel) super.getTableCellRendererComponent(t, val, isSel, hasFoc, row, col);
-                l.setBorder(new EmptyBorder(0, 12, 0, 12));
+                Component c = super.getTableCellRendererComponent(t, val, isSel, hasFoc, row, col);
+                JLabel l = (JLabel) c;
+                l.setBorder(new EmptyBorder(0, 14, 0, 14));
                 l.setFont(Theme.font(Font.PLAIN, 13));
+
+                if (!isSel) {
+                    l.setBackground(row % 2 == 1 ? new Color(0xF8FAFC) : Color.WHITE);
+                }
 
                 if (col == 0) {
                     l.setFont(Theme.font(Font.BOLD, 13));
-                    l.setForeground(Theme.TEXT);
+                    l.setForeground(Theme.PRIMARY);
                 } else if (col == 6) {
                     if (val instanceof Number n) {
-                        l.setText(String.format("%,d\u0111", n.longValue()));
+                        l.setText(String.format("%,d đ", n.longValue()));
                     }
-                    l.setForeground(Theme.TEXT);
+                    l.setFont(Theme.font(Font.BOLD, 13));
+                    l.setForeground(new Color(0x0F172A));
                 } else if (col == 7) {
                     String st = String.valueOf(val);
-                    l.setFont(Theme.font(Font.BOLD, 12));
-                    if ("Ch\u1edd ph\u1eabu thu\u1eadt".equalsIgnoreCase(st)) l.setForeground(Theme.ORANGE);
-                    else if ("\u0110ang ph\u1eabu thu\u1eadt".equalsIgnoreCase(st)) l.setForeground(Theme.PRIMARY);
-                    else if ("Theo d\u00f5i h\u1eadu ph\u1eabu".equalsIgnoreCase(st)) l.setForeground(Theme.PEACH_TEXT);
-                    else if ("Ho\u00e0n th\u00e0nh".equalsIgnoreCase(st)) l.setForeground(Theme.GREEN);
-                    else l.setForeground(Theme.TEXT);
+                    JPanel pnlBadge = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 8));
+                    pnlBadge.setOpaque(true);
+                    pnlBadge.setBackground(isSel ? t.getSelectionBackground() : (row % 2 == 1 ? new Color(0xF8FAFC) : Color.WHITE));
+
+                    JLabel badge = new JLabel(st);
+                    badge.setFont(Theme.font(Font.BOLD, 11));
+                    badge.setOpaque(true);
+                    badge.setBorder(new EmptyBorder(3, 10, 3, 10));
+
+                    if ("Chờ phẫu thuật".equalsIgnoreCase(st)) {
+                        badge.setBackground(new Color(0xFEF3C7));
+                        badge.setForeground(new Color(0x92400E));
+                    } else if ("Đang phẫu thuật".equalsIgnoreCase(st)) {
+                        badge.setBackground(new Color(0xDBEAFE));
+                        badge.setForeground(new Color(0x1E40AF));
+                    } else if ("Theo dõi hậu phẫu".equalsIgnoreCase(st)) {
+                        badge.setBackground(new Color(0xF3E8FF));
+                        badge.setForeground(new Color(0x6B21A8));
+                    } else if ("Hoàn thành".equalsIgnoreCase(st)) {
+                        badge.setBackground(new Color(0xDCFCE7));
+                        badge.setForeground(new Color(0x166534));
+                    } else {
+                        badge.setBackground(new Color(0xF1F5F9));
+                        badge.setForeground(new Color(0x475569));
+                    }
+                    pnlBadge.add(badge);
+                    return pnlBadge;
                 } else {
                     l.setForeground(Theme.TEXT);
                 }
                 return l;
             }
         });
+
+        // Cân đối độ rộng các cột
+        int[] colWidths = {90, 130, 100, 140, 105, 180, 110, 145, 130};
+        for (int i = 0; i < colWidths.length && i < table.getColumnModel().getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setPreferredWidth(colWidths[i]);
+        }
 
         JScrollPane sp = new JScrollPane(table);
         sp.setBorder(BorderFactory.createEmptyBorder());
@@ -218,8 +261,8 @@ public class PhauThuatPanel extends JPanel implements Refreshable {
         List<KhachHang> dsKh = new ArrayList<>();
         List<ThuCung> dsTc = new ArrayList<>();
         try {
-            dsKh = new KhachHangDAO().layTatCa();
-            dsTc = new ThuCungDAO().layTatCa();
+            dsKh = bus.layDanhSachKhachHang();
+            dsTc = bus.layDanhSachThuCung();
         } catch (Exception ignored) {}
 
         JComboBox<String> cbKh = new JComboBox<>();
@@ -285,7 +328,7 @@ public class PhauThuatPanel extends JPanel implements Refreshable {
         JTextField txtChiPhi = new JTextField("0");
         txtChiPhi.setFont(Theme.font(Font.PLAIN, 13));
 
-        List<SanPham> dsPhauThuat = dichVuDAO.layDichVuPhauThuat();
+        List<SanPham> dsPhauThuat = bus.layDichVuPhauThuat();
         for (SanPham sp : dsPhauThuat) {
             cbPhauThuat.addItem(sp.getTen());
         }
@@ -358,7 +401,7 @@ public class PhauThuatPanel extends JPanel implements Refreshable {
                 }
             } catch (Exception ignored) { }
 
-            String ma = dao.maTiepTheo();
+            String ma = bus.maTiepTheo();
             String homNay = LocalDate.now().format(DATE_FMT);
             String bs = (String) cbBacSi.getSelectedItem();
 
@@ -366,7 +409,7 @@ public class PhauThuatPanel extends JPanel implements Refreshable {
                     (String) cbPhauThuat.getSelectedItem(), homNay, "08:30", bs, cp, "Ch\u1edd ph\u1eabu thu\u1eadt", txtGhiChu.getText().trim());
 
             try {
-                dao.them(cpt);
+                bus.them(cpt);
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }
@@ -414,7 +457,7 @@ public class PhauThuatPanel extends JPanel implements Refreshable {
         }
         c.setTrangThai(ttMoi);
         try {
-            dao.capNhat(c);
+            bus.capNhat(c);
         } catch (SQLException ex) {
             ex.printStackTrace();
         }
@@ -433,7 +476,7 @@ public class PhauThuatPanel extends JPanel implements Refreshable {
         if (cf == JOptionPane.YES_OPTION) {
             danhSach.remove(c);
             try {
-                dao.xoa(c.getMaCa());
+                bus.xoa(c.getMaCa());
             } catch (SQLException ex) {
                 ex.printStackTrace();
             }

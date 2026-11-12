@@ -412,7 +412,7 @@ public class DialogXuatHoaDon extends JDialog {
                 w.println("        <td><span class=\"sku-tag\">" + sku + "</span><br>" + d.getSanPham().getTen() + "</td>");
                 w.println("        <td class=\"num\">" + d.getSoLuong() + "</td>");
                 w.println("        <td class=\"num\">" + Theme.money(d.getSanPham().getDonGia()) + "</td>");
-                w.println("        <td class=\"num bold\">" + Theme.money(d.thanhTien()) + "</td>");
+                w.println("        <td class=\"num bold\">" + Theme.money(Math.round(d.getDonGia() * d.getSoLuong())) + "</td>");
                 w.println("      </tr>");
             }
             w.println("    </tbody>");
@@ -592,7 +592,7 @@ public class DialogXuatHoaDon extends JDialog {
 
                 JLabel lblSl = new JLabel(String.valueOf(d.getSoLuong()), SwingConstants.CENTER);
                 JLabel lblGia = new JLabel(Theme.money(d.getSanPham().getDonGia()), SwingConstants.RIGHT);
-                JLabel lblTien = new JLabel(Theme.money(d.thanhTien()), SwingConstants.RIGHT);
+                JLabel lblTien = new JLabel(Theme.money(Math.round(d.getDonGia() * d.getSoLuong())), SwingConstants.RIGHT);
                 lblSl.setFont(Theme.font(Font.PLAIN, 12));
                 lblGia.setFont(Theme.font(Font.PLAIN, 12));
                 lblTien.setFont(Theme.font(Font.BOLD, 12));

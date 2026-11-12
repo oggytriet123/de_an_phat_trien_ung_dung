@@ -23,7 +23,7 @@ import javax.swing.table.AbstractTableModel;
 import javax.swing.table.JTableHeader;
 import javax.swing.table.TableCellRenderer;
 
-import GUI.LichHenData.LichHen;
+import Entity.LichHen;
 
 /**
  * Mục "Quản Lý Lịch Hẹn": 5 màn hình dùng chung một khung giao diện (bám theo màn Lịch sử Nhập / Xuất Kho):
@@ -635,14 +635,14 @@ public class LichHenPanel extends JPanel {
     // ---------------- Thêm / Cập nhật ----------------
     private void moForm(LichHen edit) {
         boolean isEdit = edit != null;
-        JDialog d = newDialog(isEdit ? "Cáº­p nháº­t lá»‹ch háº¹n" : "ThÃªm lá»‹ch háº¹n");
+        JDialog d = newDialog(isEdit ? "Cập nhật lịch hẹn" : "Thêm lịch hẹn");
 
-        // Táº£i danh sÃ¡ch khÃ¡ch hÃ ng vÃ  thÃº cÆ°ng tá»« CSDL (nhÆ° á»Ÿ panel KhÃ¡ch HÃ ng)
+        // Tải danh sách khách hàng và thú cưng qua BUS (chuẩn mô hình 3 lớp)
         List<Entity.KhachHang> dsKh = new ArrayList<>();
         List<Entity.ThuCung> dsTc = new ArrayList<>();
         try {
-            dsKh = new DAO.KhachHangDAO().layTatCa();
-            dsTc = new DAO.ThuCungDAO().layTatCa();
+            dsKh = new Bus.KhachHangBUS().layDanhSach();
+            dsTc = new Bus.ThuCungBUS().layDanhSach();
         } catch (Exception ignored) {}
 
         JComboBox<String> cbKh = new JComboBox<>();
@@ -663,7 +663,7 @@ public class LichHenPanel extends JPanel {
             cbKh.addItem(edit.khachHang);
             cbTc.addItem(edit.thuCung);
         } else {
-            cbKh.addItem("-- Chá»n khÃ¡ch hÃ ng cÃ³ sáºµn --");
+            cbKh.addItem("-- Chọn khách hàng có sẵn --");
         }
 
         for (Entity.KhachHang kh : dsKh) {
@@ -693,13 +693,13 @@ public class LichHenPanel extends JPanel {
                         cbTc.addItem(petLabel);
                     }
                     cbTc.setSelectedIndex(0);
-                } else if (khChon.getThuCung() != null && !khChon.getThuCung().isEmpty() && !khChon.getThuCung().equals("â€”")) {
+                } else if (khChon.getThuCung() != null && !khChon.getThuCung().isEmpty() && !khChon.getThuCung().equals("—")) {
                     for (String p : khChon.getThuCung().split(",")) {
                         cbTc.addItem(p.trim());
                     }
                     cbTc.setSelectedIndex(0);
                 } else {
-                    cbTc.addItem("Nháº­p tÃªn thÃº cÆ°ng...");
+                    cbTc.addItem("Nhập tên thú cưng...");
                 }
             }
         });
@@ -719,45 +719,45 @@ public class LichHenPanel extends JPanel {
 
         JPanel body = new JPanel(new GridBagLayout());
         body.setOpaque(false);
-        addField(body, 0, 0, 1, "KhÃ¡ch hÃ ng *", cbKh);
-        addField(body, 1, 0, 1, "Sá»‘ Ä‘iá»‡n thoáº¡i *", boxed(tfSdt));
-        addField(body, 0, 1, 1, "ThÃº cÆ°ng *", cbTc);
-        addField(body, 1, 1, 1, "Dá»‹ch vá»¥", cbDv);
-        addField(body, 0, 2, 1, "BÃ¡c sÄ© phá»¥ trÃ¡ch", cbBs);
-        addField(body, 1, 2, 1, "NgÃ y háº¹n", dbNgay);
-        addField(body, 0, 3, 1, "Giá» háº¹n", cbGio);
-        if (isEdit) addField(body, 1, 3, 1, "Tráº¡ng thÃ¡i", cbTt);
+        addField(body, 0, 0, 1, "Khách hàng *", cbKh);
+        addField(body, 1, 0, 1, "Số điện thoại *", boxed(tfSdt));
+        addField(body, 0, 1, 1, "Thú cưng *", cbTc);
+        addField(body, 1, 1, 1, "Dịch vụ", cbDv);
+        addField(body, 0, 2, 1, "Bác sĩ phụ trách", cbBs);
+        addField(body, 1, 2, 1, "Ngày hẹn", dbNgay);
+        addField(body, 0, 3, 1, "Giờ hẹn", cbGio);
+        if (isEdit) addField(body, 1, 3, 1, "Trạng thái", cbTt);
         RoundedPanel noteBox = new RoundedPanel(8, Color.WHITE, Theme.BORDER);
         noteBox.setLayout(new BorderLayout());
         noteBox.add(taGhiChu);
-        addField(body, 0, 4, 2, "Ghi chÃº", noteBox);
+        addField(body, 0, 4, 2, "Ghi chú", noteBox);
 
         JLabel err = errorLabel();
-        RoundedButton save = primaryButton(isEdit ? "LÆ°u thay Ä‘á»•i" : "ThÃªm lá»‹ch háº¹n");
+        RoundedButton save = primaryButton(isEdit ? "Lưu thay đổi" : "Thêm lịch hẹn");
         save.addActionListener(e -> {
             Object khObj = cbKh.getSelectedItem();
             String kh = (khObj != null) ? khObj.toString().trim() : "";
             if (kh.contains("(") && kh.endsWith(")")) {
                 kh = kh.substring(0, kh.lastIndexOf('(')).trim();
             }
-            if (kh.equals("-- Chá»n khÃ¡ch hÃ ng cÃ³ sáºµn --")) kh = "";
+            if (kh.equals("-- Chọn khách hàng có sẵn --")) kh = "";
 
             String sdt = tfSdt.getText().trim();
             Object tcObj = cbTc.getSelectedItem();
             String tc = (tcObj != null) ? tcObj.toString().trim() : "";
-            if (tc.equals("Nháº­p tÃªn thÃº cÆ°ng...")) tc = "";
+            if (tc.equals("Nhập tên thú cưng...")) tc = "";
 
             if (kh.isEmpty() || sdt.isEmpty() || tc.isEmpty()) {
-                err.setText("Vui lÃ²ng chá»n hoáº·c nháº­p Ä‘á»§ khÃ¡ch hÃ ng, sá»‘ Ä‘iá»‡n thoáº¡i vÃ  thÃº cÆ°ng.");
+                err.setText("Vui lòng chọn hoặc nhập đủ khách hàng, số điện thoại và thú cưng.");
                 return;
             }
             if (!sdt.replaceAll("\\s", "").matches("\\d{9,11}")) {
-                err.setText("Sá»‘ Ä‘iá»‡n thoáº¡i pháº£i gá»“m 9â€“11 chá»¯ sá»‘.");
+                err.setText("Số điện thoại phải gồm 9–11 chữ số.");
                 return;
             }
             LocalDate ngay = dbNgay.value;
             if (!isEdit && ngay.isBefore(LocalDate.now())) {
-                err.setText("NgÃ y háº¹n khÃ´ng Ä‘Æ°á»£c á»Ÿ quÃ¡ khá»©.");
+                err.setText("Ngày hẹn không được ở quá khứ.");
                 return;
             }
             LocalTime gio = LocalTime.parse((String) cbGio.getSelectedItem());
@@ -765,7 +765,7 @@ public class LichHenPanel extends JPanel {
             String tt = isEdit ? (String) cbTt.getSelectedItem() : LichHenData.CHO_XAC_NHAN;
             boolean conHieuLuc = !LichHenData.HOAN_TAT.equals(tt) && !LichHenData.DA_HUY.equals(tt);
             if (conHieuLuc && LichHenData.biTrung(bs, ngay, gio, isEdit ? edit.ma : null)) {
-                err.setText(bs + " Ä‘Ã£ cÃ³ lá»‹ch lÃºc " + gio.format(LichHenData.TIME_FMT) + " ngÃ y "
+                err.setText(bs + " đã có lịch lúc " + gio.format(LichHenData.TIME_FMT) + " ngày "
                         + ngay.format(CalendarPicker.DATE_FMT) + ".");
                 return;
             }
@@ -782,7 +782,7 @@ public class LichHenPanel extends JPanel {
             d.dispose();
             if (isEdit) LichHenData.capNhat(l); else LichHenData.them(l);
         });
-        RoundedButton cancel = secondaryButton("Há»§y bá»");
+        RoundedButton cancel = secondaryButton("Hủy bỏ");
         cancel.addActionListener(e -> d.dispose());
         showDialog(d, body, cancel, save, err);
     }

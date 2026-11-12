@@ -11,15 +11,18 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import java.time.format.DateTimeFormatter;
+
 import ConnectDB.ConnectDB;
-import GUI.LichHenData;
-import GUI.LichHenData.LichHen;
+import Entity.LichHen;
 
 /**
  * Quản lý lịch hẹn (bảng LICHHEN) trong SQL Server:
  * Tự động đồng bộ với KHACHHANG, THUCUNG, DICHVU, NHANVIEN_BACSI.
  */
 public class LichHenDAO {
+
+    private static final DateTimeFormatter TIME_FMT = DateTimeFormatter.ofPattern("HH:mm");
 
     public LichHenDAO() {
         damBaoCauTrucBang();
@@ -77,13 +80,13 @@ public class LichHenDAO {
                 }
 
                 l.trangThai = rs.getString("trangThai");
-                if (l.trangThai == null || l.trangThai.trim().isEmpty()) l.trangThai = LichHenData.CHO_XAC_NHAN;
+                if (l.trangThai == null || l.trangThai.trim().isEmpty()) l.trangThai = "Chờ xác nhận";
 
                 l.khachHang = rs.getString("khachHang") != null ? rs.getString("khachHang") : "Khách vãng lai";
                 l.sdt = rs.getString("sdt") != null ? rs.getString("sdt") : "";
                 l.thuCung = rs.getString("thuCung") != null ? rs.getString("thuCung") : "Thú cưng";
                 l.dichVu = rs.getString("dichVu") != null ? rs.getString("dichVu") : "Khám tổng quát";
-                l.bacSi = rs.getString("bacSi") != null ? rs.getString("bacSi") : LichHenData.BAC_SI[0];
+                l.bacSi = rs.getString("bacSi") != null ? rs.getString("bacSi") : "BS. Nguyễn Hoài Anh";
                 l.ghiChu = rs.getString("ghiChu") != null ? rs.getString("ghiChu") : "";
 
                 String nk = rs.getString("nhatKy");
@@ -109,8 +112,8 @@ public class LichHenDAO {
         try (Connection con = ConnectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, l.ma);
             ps.setDate(2, Date.valueOf(l.ngay));
-            String g = l.gio.format(LichHenData.TIME_FMT);
-            ps.setString(3, g + " - " + l.gio.plusHours(1).format(LichHenData.TIME_FMT));
+            String g = l.gio.format(TIME_FMT);
+            ps.setString(3, g + " - " + l.gio.plusHours(1).format(TIME_FMT));
             ps.setString(4, g);
             ps.setString(5, l.trangThai);
             ps.setString(6, l.khachHang);
@@ -130,8 +133,8 @@ public class LichHenDAO {
                 + "WHERE maLH = ?";
         try (Connection con = ConnectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setDate(1, Date.valueOf(l.ngay));
-            String g = l.gio.format(LichHenData.TIME_FMT);
-            ps.setString(2, g + " - " + l.gio.plusHours(1).format(LichHenData.TIME_FMT));
+            String g = l.gio.format(TIME_FMT);
+            ps.setString(2, g + " - " + l.gio.plusHours(1).format(TIME_FMT));
             ps.setString(3, g);
             ps.setString(4, l.trangThai);
             ps.setString(5, l.khachHang);

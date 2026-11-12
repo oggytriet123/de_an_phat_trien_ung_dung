@@ -142,7 +142,7 @@ public class DonThuocPanel extends JPanel {
         JLabel s1 = new JLabel("›");
         s1.setFont(Theme.font(Font.PLAIN, 12));
         s1.setForeground(Theme.MUTED);
-        JLabel l2 = new JLabel("Điều Trị & Đơn Thuốc");
+        JLabel l2 = new JLabel("Khám & Điều Trị");
         l2.setFont(Theme.font(Font.PLAIN, 12));
         l2.setForeground(Theme.MUTED);
         JLabel s2 = new JLabel("›");
@@ -945,7 +945,10 @@ public class DonThuocPanel extends JPanel {
         btnAddKho.addActionListener(e -> {
             List<SanPham> spThuoc = new ArrayList<>();
             for (SanPham sp : khoHangBus.layDanhSach()) {
-                if ("Thuốc & Y tế".equals(sp.getDanhMuc()) || sp.getMaSKU().startsWith("TH")) spThuoc.add(sp);
+                if ("Thuốc".equals(sp.getDanhMuc()) || "Thuốc & Y tế".equals(sp.getDanhMuc())
+                        || sp.getMaSKU().startsWith("MED") || sp.getMaSKU().startsWith("TH")) {
+                    spThuoc.add(sp);
+                }
             }
             if (spThuoc.isEmpty()) spThuoc = khoHangBus.layDanhSach();
             if (spThuoc.isEmpty()) {

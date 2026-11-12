@@ -12,6 +12,7 @@ import java.util.List;
 
 import ConnectDB.ConnectDB;
 import DTO.ThongKeThuCung;
+import Entity.KhachHangOption;
 import Entity.ThuCung;
 
 /**
@@ -86,30 +87,8 @@ public class ThuCungDAO {
         return ds;
     }
 
-    /**
-     * Thông tin cơ bản khách hàng để đổ vào ComboBox chọn chủ nuôi.
-     */
-    public static class KhachHangOption {
-        public final String maKH;
-        public final String hoTen;
-        public final String soDienThoai;
-        public final String hangThe;
-
-        public KhachHangOption(String maKH, String hoTen, String soDienThoai, String hangThe) {
-            this.maKH = maKH;
-            this.hoTen = hoTen;
-            this.soDienThoai = soDienThoai;
-            this.hangThe = hangThe;
-        }
-
-        @Override
-        public String toString() {
-            String sdtStr = (soDienThoai == null || soDienThoai.isEmpty()) ? "" : " - " + soDienThoai;
-            return hoTen + sdtStr + " (" + maKH + ")";
-        }
-    }
-
     // [CN-TC-21] SELECT chủ nuôi cho combobox
+    // Entity.KhachHangOption được dùng độc lập trong package Entity
     /**
      * Lấy danh sách khách hàng phục vụ việc chọn chủ nuôi cho thú cưng.
      */

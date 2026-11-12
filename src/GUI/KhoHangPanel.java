@@ -33,13 +33,13 @@ import Entity.SanPham;
 /** Màn hình Quản lý Kho hàng - Bám sát thiết kế tham chiếu. */
 public class KhoHangPanel extends JPanel {
     private static final int PAGE_SIZE = 7;
-    private static final String[] CATEGORIES = {"Tất cả", "Thức ăn", "Đồ chơi", "Thuốc & Y tế", "Phụ kiện", "Sắp hết hàng"};
+    private static final String[] CATEGORIES = {"Thức ăn", "Đồ chơi", "Thuốc", "Chăm sóc và vệ sinh", "Phụ kiện", "Đồ dùng và sinh hoạt", "Sắp hết hàng"};
     private static final String[] SORTS = {"Tồn kho thấp nhất", "Tồn kho cao nhất", "Giá cao nhất", "Giá thấp nhất", "Tên A-Z"};
 
     private final KhoHangBUS bus = new KhoHangBUS();
     public KhoHangBUS getBus() { return bus; }
     private List<SanPham> filtered = new ArrayList<>();
-    private String danhMucLoc = "Tất cả";
+    private String danhMucLoc = "";
     private String sapXep = SORTS[0];
     private int trang = 1;
 
@@ -120,10 +120,10 @@ public class KhoHangPanel extends JPanel {
         JPanel row = new JPanel(new GridLayout(1, 4, 16, 0));
         row.setOpaque(false);
 
-        lblStatTong = new JLabel("320");
-        lblStatSapHet = new JLabel("12");
-        lblStatGiaTri = new JLabel("420,5 triệu đ");
-        lblStatNhap = new JLabel("85 triệu đ");
+        lblStatTong = new JLabel("0");
+        lblStatSapHet = new JLabel("0");
+        lblStatGiaTri = new JLabel("0 đ");
+        lblStatNhap = new JLabel("0 đ");
 
         row.add(statCard("Tổng mã SKU", lblStatTong, "+18 mã SKU trong tháng", Theme.GREEN, Theme.TEXT));
         row.add(statCard("Sản phẩm sắp hết", lblStatSapHet, "Cần bổ sung hàng để duy trì tồn kho", Theme.ORANGE, Theme.ORANGE));
@@ -217,7 +217,15 @@ public class KhoHangPanel extends JPanel {
             RoundedButton chip = new RoundedButton(c, Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(14, 7);
             chip.setFont(Theme.font(Font.PLAIN, 13));
             chip.setPreferredSize(new Dimension(chip.getPreferredSize().width, 34));
-            chip.addActionListener(e -> { danhMucLoc = c; trang = 1; refresh(); });
+            chip.addActionListener(e -> {
+                if (danhMucLoc.equals(c)) {
+                    danhMucLoc = "";
+                } else {
+                    danhMucLoc = c;
+                }
+                trang = 1;
+                refresh();
+            });
             chips.add(chip);
             row2.add(chip);
         }
@@ -246,8 +254,8 @@ public class KhoHangPanel extends JPanel {
         h.setPreferredSize(new Dimension(0, 38));
         h.setDefaultRenderer(new HeaderCell());
 
-        // Cột và renderers
-        int[] widths = {85, 330, 110, 115, 105, 115, 120};
+        // Cột và renderers: Giảm cột Tên SP từ 330 xuống 260, tăng cột Danh mục từ 110 lên 180 để không bị che chữ
+        int[] widths = {85, 260, 180, 115, 105, 115, 120};
         for (int i = 0; i < widths.length; i++) table.getColumnModel().getColumn(i).setPreferredWidth(widths[i]);
         table.getColumnModel().getColumn(0).setCellRenderer(new SkuCell());
         table.getColumnModel().getColumn(1).setCellRenderer(new ProductCell());
@@ -304,7 +312,7 @@ public class KhoHangPanel extends JPanel {
         for (SanPham sp : bus.layDanhSach()) {
             if ("Sắp hết hàng".equals(danhMucLoc)) {
                 if (sp.getSoLuongTon() > 5) continue;
-            } else if (!"Tất cả".equals(danhMucLoc) && !danhMucLoc.equals(sp.getDanhMuc())) {
+            } else if (!danhMucLoc.isEmpty() && !danhMucLoc.equals(sp.getDanhMuc())) {
                 continue;
             }
 
@@ -339,6 +347,8 @@ public class KhoHangPanel extends JPanel {
         // Cập nhật thẻ thống kê
         if (lblStatTong != null) lblStatTong.setText(Theme.number(bus.getTongSKU()));
         if (lblStatSapHet != null) lblStatSapHet.setText(Theme.number(bus.getSoSapHet()));
+        if (lblStatGiaTri != null) lblStatGiaTri.setText(bus.getTongGiaTriTonKho());
+        if (lblStatNhap != null) lblStatNhap.setText(bus.getNhapKhoTrongThang());
 
         buildPager(pages);
         revalidate();
@@ -454,7 +464,7 @@ public class KhoHangPanel extends JPanel {
         PlaceholderField tfQuyCach = new PlaceholderField("Ví dụ: Hộp 3 ống, Túi 2 kg...");
         setupField(tfQuyCach);
 
-        String[] catOpts = {"Thức ăn", "Đồ chơi", "Thuốc & Y tế", "Phụ kiện"};
+        String[] catOpts = {"Thức ăn", "Đồ chơi", "Thuốc", "Chăm sóc và vệ sinh", "Phụ kiện", "Đồ dùng và sinh hoạt"};
         JComboBox<String> cbCat = new JComboBox<>(catOpts);
         styleComboBox(cbCat);
 
@@ -631,7 +641,7 @@ public class KhoHangPanel extends JPanel {
         java.util.List<String> nccList = new java.util.ArrayList<>();
         nccList.add("Chọn hoặc nhập tên nhà cung cấp...");
         try {
-            for (Entity.DoiTac dt : new DAO.DoiTacDAO().layTatCa()) nccList.add(dt.getTenDT());
+            for (String ncc : bus.layDanhSachNhaCungCap()) nccList.add(ncc);
         } catch (Exception ignored) {}
         String[] nccArr = nccList.toArray(new String[0]);
         String[] nccDummy = {
@@ -874,14 +884,14 @@ public class KhoHangPanel extends JPanel {
                 String loai = (String) cbLoai.getSelectedItem();
                 String dt = (String) cbNcc.getSelectedItem();
                 if (dt == null || dt.contains("Chọn")) dt = "Nhà cung cấp đối tác";
-                DAO.PhieuKhoDAO pkDao = new DAO.PhieuKhoDAO();
-                String maMoi = pkDao.maTiepTheo(!"Xuất kho".equals(loai));
+                Bus.PhieuKhoBUS pkBus = new Bus.PhieuKhoBUS();
+                String maMoi = pkBus.maTiepTheo(!"Xuất kho".equals(loai));
                 String ngayStr = java.time.LocalDate.now().format(CalendarPicker.DATE_FMT);
                 String gioStr = java.time.LocalTime.now().format(java.time.format.DateTimeFormatter.ofPattern("HH:mm"));
                 long tong = 0;
                 for (PhieuItem it : items) tong += (it.donGia * it.soLuong);
                 Entity.PhieuKho pk = new Entity.PhieuKho(maMoi, loai == null ? "Nhập mới" : loai, ngayStr, gioStr, "Lê Tuấn Anh", dt, tong, "Hoàn tất");
-                pkDao.them(pk);
+                pkBus.them(pk);
             } catch (Exception ignored) {}
 
             refresh();

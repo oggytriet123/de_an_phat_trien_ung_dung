@@ -120,4 +120,22 @@ public class PhieuKhoDAO {
         } catch (SQLException ignored) {}
         return String.format("%s%04d", prefix, max + 1);
     }
+
+    /**
+     * Tổng giá trị nhập kho trong tháng hiện tại (hoặc 30 ngày gần nhất).
+     * @return tổng tiền, 0 nếu không kết nối được DB
+     */
+    public long getTongNhapKhoTrongThang() {
+        String sql = "SELECT ISNULL(SUM(tongGiaTri), 0) FROM PHIEUKHO "
+                + "WHERE loaiPhieu LIKE N'%Nhập%' "
+                + "  AND (trangThai IS NULL OR trangThai NOT LIKE N'%hủy%') "
+                + "  AND (MONTH(ngayLap) = MONTH(GETDATE()) AND YEAR(ngayLap) = YEAR(GETDATE()) "
+                + "       OR DATEDIFF(day, ngayLap, GETDATE()) BETWEEN 0 AND 30)";
+        try (Connection con = ConnectDB.getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            if (rs.next()) return rs.getLong(1);
+        } catch (Exception ignored) {}
+        return 0L;
+    }
 }

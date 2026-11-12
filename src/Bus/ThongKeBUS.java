@@ -1,13 +1,9 @@
 package Bus;
 
-import java.sql.Connection;
-import java.sql.ResultSet;
-import java.sql.Statement;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
-import ConnectDB.ConnectDB;
 import DAO.HoaDonDAO;
 import Entity.ChiTietHoaDon;
 import Entity.HoaDon;
@@ -189,6 +185,39 @@ public class ThongKeBUS {
     }
 
     /**
+     * Dữ liệu biểu đồ cột Bar Chart: Doanh thu vs Chi phí gom theo từng tháng trong năm (1..12).
+     */
+    public Map<Integer, long[]> layDoanhThuTheoThang(LocalDate tuNgay, LocalDate denNgay) {
+        Map<Integer, long[]> map = new TreeMap<>();
+        for (int m = 1; m <= 12; m++) {
+            map.put(m, new long[2]);
+        }
+
+        // Doanh thu từ hóa đơn
+        for (HoaDon hd : layDanhSachHoaDon(tuNgay, denNgay)) {
+            LocalDate d = hd.getNgayThanhToan() != null ? hd.getNgayThanhToan().toLocalDate()
+                    : (hd.getNgayTao() != null ? hd.getNgayTao().toLocalDate() : null);
+            if (d == null) continue;
+            int thang = d.getMonthValue();
+            long[] val = map.computeIfAbsent(thang, k -> new long[2]);
+            val[0] += hd.canThanhToan();
+        }
+
+        // Chi phí từ phiếu nhập kho
+        for (PhieuKho pk : phieuKhoBUS.layDanhSach()) {
+            if ("Nhập mới".equalsIgnoreCase(pk.getLoaiPhieu()) && !"Đã hủy".equalsIgnoreCase(pk.getTrangThai())) {
+                LocalDate d = parseDate(pk.getNgayLap());
+                if (d != null && (tuNgay == null || !d.isBefore(tuNgay)) && (denNgay == null || !d.isAfter(denNgay))) {
+                    int thang = d.getMonthValue();
+                    long[] val = map.computeIfAbsent(thang, k -> new long[2]);
+                    val[1] += pk.getTongGiaTri();
+                }
+            }
+        }
+        return map;
+    }
+
+    /**
      * Cơ cấu nguồn thu dòng tiền cho Biểu đồ Donut:
      * - Bán lẻ sản phẩm & phụ kiện
      * - Dịch vụ Spa & Cắt tỉa
@@ -205,7 +234,7 @@ public class ThongKeBUS {
         for (HoaDon hd : layDanhSachHoaDon(tuNgay, denNgay)) {
             for (ChiTietHoaDon d : hd.getDong()) {
                 String dm = d.getSanPham().getDanhMuc() != null ? d.getSanPham().getDanhMuc() : "";
-                long tien = d.thanhTien();
+                long tien = (long) Math.round(d.getDonGia() * d.getSoLuong());
                 if (dm.contains("Spa") || dm.contains("Tắm") || dm.contains("Cắt tỉa")) {
                     map.put("Dịch vụ Spa & Tắm", map.get("Dịch vụ Spa & Tắm") + tien);
                 } else if (dm.contains("Khám") || dm.contains("Tiêm") || dm.contains("Phẫu thuật") || dm.contains("Thuốc")) {
@@ -330,12 +359,10 @@ public class ThongKeBUS {
     }
 
     public int getSoDangLuuTru() {
-        // Đọc trực tiếp từ trạng thái lồng chuồng
+        // Đọc qua ChuongBUS (chuẩn mô hình 3 lớp)
         int cnt = 0;
-        try (Connection con = ConnectDB.getConnection();
-             Statement st = con.createStatement();
-             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM CHUONGLUUTRU WHERE trangThai = N'Đang lưu trú'")) {
-            if (rs.next()) cnt = rs.getInt(1);
+        try {
+            cnt = new Bus.ChuongBUS().demDangLuuTru();
         } catch (Exception ignored) {}
 
         if (cnt == 0) {
@@ -448,7 +475,7 @@ public class ThongKeBUS {
 
                 int[] cur = banMap.computeIfAbsent(sku, k -> new int[2]);
                 cur[0] += d.getSoLuong();
-                cur[1] += (int) d.thanhTien();
+                cur[1] += (int) Math.round(d.getDonGia() * d.getSoLuong());
             }
         }
 

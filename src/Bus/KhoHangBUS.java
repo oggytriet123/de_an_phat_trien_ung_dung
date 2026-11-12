@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.List;
 
 import DAO.DichVuDAO;
+import DAO.PhieuKhoDAO;
 import Entity.SanPham;
 
 /**
@@ -14,6 +15,7 @@ public class KhoHangBUS {
     private final List<SanPham> ds = new ArrayList<>();
     private final List<Runnable> listeners = new ArrayList<>();
     private final DichVuDAO dao = new DichVuDAO();
+    private final PhieuKhoDAO phieuKhoDAO = new PhieuKhoDAO();
 
     public KhoHangBUS() {
         taiTuCSDL();
@@ -69,19 +71,28 @@ public class KhoHangBUS {
     }
 
     public String getNhapKhoTrongThang() {
-        return "85 triệu đ";
+        long tongNhap = phieuKhoDAO.getTongNhapKhoTrongThang();
+        if (tongNhap >= 1_000_000_000) {
+            return String.format("%.1f tỷ đ", tongNhap / 1_000_000_000.0);
+        } else if (tongNhap >= 1_000_000) {
+            return String.format("%.1f triệu đ", tongNhap / 1_000_000.0);
+        }
+        return String.format("%,d đ", tongNhap);
     }
 
     public SanPham them(String maSKU, String tenSP, String quyCach, String danhMuc,
                         int ton, String dvt, long donGia, String trangThai) {
         if (maSKU == null || maSKU.trim().isEmpty()) {
             String prefix = switch (danhMuc) {
-                case "Thức ăn" -> "TA";
-                case "Đồ chơi" -> "DC";
-                case "Thuốc & Y tế" -> "YT";
-                default -> "PC";
+                case "Thức ăn" -> "FOOD";
+                case "Đồ chơi" -> "TOY";
+                case "Thuốc" -> "MED";
+                case "Chăm sóc và vệ sinh" -> "CARE";
+                case "Phụ kiện" -> "ACC";
+                case "Đồ dùng và sinh hoạt" -> "LIV";
+                default -> "SP";
             };
-            maSKU = String.format("%s-%04d", prefix, ds.size() + 1);
+            maSKU = String.format("%s%03d", prefix, ds.size() + 1);
         }
         SanPham sp = new SanPham(maSKU, tenSP, quyCach, danhMuc, ton, dvt, donGia, trangThai);
         ds.add(0, sp);
@@ -131,5 +142,15 @@ public class KhoHangBUS {
             if (sp.getMaSKU().equalsIgnoreCase(maSKU.trim())) return sp;
         }
         return null;
+    }
+
+    public List<String> layDanhSachNhaCungCap() {
+        List<String> list = new ArrayList<>();
+        try {
+            for (Entity.DoiTac dt : new DAO.DoiTacDAO().layTatCa()) {
+                list.add(dt.getTenDT());
+            }
+        } catch (Exception ignored) {}
+        return list;
     }
 }

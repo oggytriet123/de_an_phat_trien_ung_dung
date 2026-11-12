@@ -514,4 +514,15 @@ public class ChuongDAO {
             return false;
         }
     }
+
+    /** Đếm số lồng chuồng đang có thú cưng lưu trú. */
+    public int demDangLuuTru() {
+        String sql = "SELECT COUNT(*) FROM CHUONGLUUTRU WHERE trangThai = N'Đang lưu trú'";
+        try (Connection con = ConnectDB.getConnection();
+             Statement st = con.createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (Exception ignored) {}
+        return 0;
+    }
 }

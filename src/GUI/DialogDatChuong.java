@@ -283,7 +283,7 @@ public class DialogDatChuong extends JDialog {
 
         RoundedButton btnHuy = new RoundedButton("Hủy bỏ", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(16, 8);
         // [UI-LC-41] Nút Xác nhận đặt lồng
-        RoundedButton btnXacNhan = new RoundedButton("✓ Xác Nhận Đặt Lồng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
+        RoundedButton btnXacNhan = new RoundedButton("Xác Nhận Đặt Lồng", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
 
         btnHuy.addActionListener(e -> dispose());
         btnXacNhan.addActionListener(e -> thucHienDatLoi());

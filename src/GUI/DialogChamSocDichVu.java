@@ -194,7 +194,7 @@ public class DialogChamSocDichVu extends JDialog {
         pnlRight.setLayout(new BorderLayout(0, 10));
         pnlRight.setBorder(new EmptyBorder(12, 14, 12, 14));
 
-        JLabel titleOrder = new JLabel("📋 PHIẾU DỊCH VỤ & CHĂM SÓC");
+        JLabel titleOrder = new JLabel("PHIẾU DỊCH VỤ & CHĂM SÓC");
         titleOrder.setFont(Theme.font(Font.BOLD, 14));
         titleOrder.setForeground(Theme.SIDEBAR);
         pnlRight.add(titleOrder, BorderLayout.NORTH);
@@ -265,7 +265,7 @@ public class DialogChamSocDichVu extends JDialog {
 
         RoundedButton btnDong = new RoundedButton("Hủy bỏ", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(16, 8);
         // [UI-LC-48] Nút Lưu phiếu chăm sóc
-        RoundedButton btnLuu = new RoundedButton("✓ Lưu Phiếu Chăm Sóc", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
+        RoundedButton btnLuu = new RoundedButton("Lưu Phiếu Chăm Sóc", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
 
         btnDong.addActionListener(e -> dispose());
         btnLuu.addActionListener(e -> luuOrder());

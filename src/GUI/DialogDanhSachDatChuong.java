@@ -95,7 +95,7 @@ public class DialogDanhSachDatChuong extends JDialog {
         // [UI-LC-35] Nút Hủy Giữ Chỗ (nền hồng, chữ đỏ)
         RoundedButton btnHuy = new RoundedButton("Hủy Giữ Chỗ", new Color(0xFADBD8), new Color(0xF5B7B1), Theme.RED, null, 8).pad(14, 8);
         // [UI-LC-36] Nút Nhận Lồng Ngay
-        RoundedButton btnNhan = new RoundedButton("🐾 Nhận Lồng Ngay", Theme.GREEN, new Color(0x278C44), Color.WHITE, null, 8).pad(16, 8);
+        RoundedButton btnNhan = new RoundedButton("Nhận Lồng Ngay", Theme.GREEN, new Color(0x278C44), Color.WHITE, null, 8).pad(16, 8);
 
         btnDong.addActionListener(e -> dispose());
         btnHuy.addActionListener(e -> huyDat());

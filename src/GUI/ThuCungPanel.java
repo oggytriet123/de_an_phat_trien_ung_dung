@@ -24,8 +24,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import Bus.ThuCungBUS;
-import DAO.ThuCungDAO;
 import DTO.ThongKeThuCung;
+import Entity.KhachHangOption;
 import Entity.ThuCung;
 
 /**
@@ -35,14 +35,14 @@ public class ThuCungPanel extends JPanel {
     // [CN-TC-02] Số dòng mỗi trang của bảng
     private static final int SO_DONG_MOI_TRANG = 7;
     // [UI-TC-02] Các loài ở nút lọc
-    private static final String[] DS_LOAI = {"Tất cả", "Chó", "Mèo", "Thỏ", "Khác"};
+    private static final String[] DS_LOAI = {"Chó", "Mèo", "Thỏ", "Khác"};
     // [UI-TC-03] Các kiểu sắp xếp
     private static final String[] DS_SAP_XEP = {"Mới nhất", "Tên A-Z", "Cân nặng cao nhất", "Cân nặng thấp nhất"};
 
     private final ThuCungBUS bus = new ThuCungBUS();
     public ThuCungBUS getBus() { return bus; }
     private List<ThuCung> dsHienThi = new ArrayList<>();
-    private String loaiDangLoc = "Tất cả";
+    private String loaiDangLoc = "";
     private String sapXepHienTai = DS_SAP_XEP[0];
     private int trangHienTai = 1;
 
@@ -63,9 +63,9 @@ public class ThuCungPanel extends JPanel {
     private final PlaceholderField txtTim = new PlaceholderField("Tìm theo tên bé, mã PET, giống, tên chủ, số điện thoại...");
     private final List<RoundedButton> chipsLoai = new ArrayList<>();
     // [UI-TC-06] Các lựa chọn lọc giới tính
-    private final JComboBox<String> cboGioiTinh = new JComboBox<>(new String[]{"Tất cả giới tính", "Đực", "Cái"});
+    private final JComboBox<String> cboGioiTinh = new JComboBox<>(new String[]{"Chọn giới tính...", "Đực", "Cái"});
     // [UI-TC-07] Các lựa chọn lọc tình trạng sức khỏe
-    private final JComboBox<String> cboTrangThai = new JComboBox<>(new String[]{"Tất cả tình trạng", "Khỏe mạnh", "Đang theo dõi", "Đang điều trị", "Chờ phẫu thuật", "Hậu phẫu", "Đang lưu trú", "Đã hồi phục"});
+    private final JComboBox<String> cboTrangThai = new JComboBox<>(new String[]{"Chọn tình trạng...", "Khỏe mạnh", "Đang theo dõi", "Đang điều trị", "Chờ phẫu thuật", "Hậu phẫu", "Đang lưu trú", "Đã hồi phục"});
     private final JComboBox<String> cboSapXep = new JComboBox<>(DS_SAP_XEP);
     private final JLabel lblTrangThai = new JLabel();
     private final JPanel pnlPhanTrang = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
@@ -267,7 +267,12 @@ public class ThuCungPanel extends JPanel {
             RoundedButton chip = new RoundedButton(loai, Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 8).pad(12, 6);
             chip.setFont(Theme.font(Font.PLAIN, 12));
             chip.addActionListener(e -> {
-                loaiDangLoc = loai;
+                // Toggle chọn/bỏ chọn chip loài
+                if (loaiDangLoc.equals(loai)) {
+                    loaiDangLoc = "";
+                } else {
+                    loaiDangLoc = loai;
+                }
                 trangHienTai = 1;
                 capNhatBang();
             });
@@ -347,14 +352,33 @@ public class ThuCungPanel extends JPanel {
     // ----------------- 4. LỌC, SẮP XẾP & ĐỔ DỮ LIỆU VÀO BẢNG -----------------
     // [CN-TC-07] Lọc + sắp xếp + phân trang vẽ lại bảng
     private void capNhatBang() {
-        String gioiTinh = (String) cboGioiTinh.getSelectedItem();
-        if (gioiTinh == null || gioiTinh.equals("Tất cả giới tính")) gioiTinh = "Tất cả";
+        String selGT = (String) cboGioiTinh.getSelectedItem();
+        boolean hasGioiTinh = selGT != null && !selGT.equals("Chọn giới tính...");
+        String gioiTinh = hasGioiTinh ? selGT : "Tất cả";
 
-        String trangThai = (String) cboTrangThai.getSelectedItem();
-        if (trangThai == null || trangThai.equals("Tất cả tình trạng") || trangThai.equals("Tất cả trạng thái")) trangThai = "Tất cả";
+        String selTT = (String) cboTrangThai.getSelectedItem();
+        boolean hasTrangThai = selTT != null && !selTT.equals("Chọn tình trạng...");
+        String trangThai = hasTrangThai ? selTT : "Tất cả";
+
+        String kw = txtTim.getText().trim();
+        boolean coDieuKien = !kw.isEmpty() || !loaiDangLoc.isEmpty() || hasGioiTinh || hasTrangThai;
+
+        // Tối ưu tránh quá tải: Khi chưa chọn bất kỳ điều kiện lọc nào thì để bảng trống
+        if (!coDieuKien) {
+            dsHienThi = new ArrayList<>();
+            tableModel.setRowCount(0);
+            lblTrangThai.setText("Chế độ tối ưu: Vui lòng chọn giới tính, tình trạng, loài hoặc tìm kiếm để xem dữ liệu.");
+            for (RoundedButton b : chipsLoai) {
+                boolean active = !loaiDangLoc.isEmpty() && b.getText().equals(loaiDangLoc);
+                if (active) b.style(Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null);
+                else b.style(Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER);
+            }
+            veNutPhanTrang(1);
+            return;
+        }
 
         // Lấy danh sách lọc từ BUS
-        List<ThuCung> list = bus.timKiemVaLoc(txtTim.getText(), loaiDangLoc, gioiTinh, trangThai);
+        List<ThuCung> list = bus.timKiemVaLoc(kw, loaiDangLoc.isEmpty() ? "Tất cả" : loaiDangLoc, gioiTinh, trangThai);
 
         // Sắp xếp
         if (sapXepHienTai.equals("Tên A-Z")) {
@@ -459,10 +483,10 @@ public class ThuCungPanel extends JPanel {
         txtCanhBao.setBorder(BorderFactory.createLineBorder(new Color(0xD5DCE1)));
 
         // Chọn chủ nuôi từ Khách hàng
-        JComboBox<ThuCungDAO.KhachHangOption> cboChuNuoi = new JComboBox<>();
+        JComboBox<KhachHangOption> cboChuNuoi = new JComboBox<>();
         try {
-            cboChuNuoi.addItem(new ThuCungDAO.KhachHangOption("", "-- Khách vãng lai (Chưa đăng ký) --", "", ""));
-            for (ThuCungDAO.KhachHangOption kh : bus.layDanhSachKhachHang()) cboChuNuoi.addItem(kh);
+            cboChuNuoi.addItem(new KhachHangOption("", "-- Khách vãng lai (Chưa đăng ký) --", "", ""));
+            for (KhachHangOption kh : bus.layDanhSachKhachHang()) cboChuNuoi.addItem(kh);
         } catch (SQLException ignored) {}
 
         if (laSua) {
@@ -475,7 +499,7 @@ public class ThuCungPanel extends JPanel {
             cboTrangThaiForm.setSelectedItem(tcHienTai.getTrangThai());
             txtCanhBao.setText(tcHienTai.getTheCanhBao());
             for (int i = 0; i < cboChuNuoi.getItemCount(); i++) {
-                ThuCungDAO.KhachHangOption op = cboChuNuoi.getItemAt(i);
+                KhachHangOption op = cboChuNuoi.getItemAt(i);
                 if (op.maKH.equalsIgnoreCase(tcHienTai.getMaKH())) { cboChuNuoi.setSelectedIndex(i); break; }
             }
         }
@@ -521,7 +545,7 @@ public class ThuCungPanel extends JPanel {
                 catch (NumberFormatException ex) { JOptionPane.showMessageDialog(dlg, "Cân nặng phải là số!", "Lỗi", JOptionPane.ERROR_MESSAGE); return; }
             }
 
-            ThuCungDAO.KhachHangOption khOpt = (ThuCungDAO.KhachHangOption) cboChuNuoi.getSelectedItem();
+            KhachHangOption khOpt = (KhachHangOption) cboChuNuoi.getSelectedItem();
             String maKH = (khOpt != null && !khOpt.maKH.isEmpty()) ? khOpt.maKH : null;
 
             ThuCung tc = new ThuCung(laSua ? tcHienTai.getPetID() : null, ten, (String) cboLoai.getSelectedItem(),

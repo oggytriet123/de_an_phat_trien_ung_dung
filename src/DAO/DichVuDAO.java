@@ -71,26 +71,26 @@ public class DichVuDAO {
             }
             if (canSua) {
                 String[][] spData = {
-                    {"SP001", "Thức ăn hạt Royal Canin Mini Adult 2kg", "Túi 2kg", "Thức ăn", "bao"},
-                    {"SP002", "Pate Whiskas cá thu & cá hồi 85g", "Gói 85g", "Thức ăn", "gói"},
-                    {"SP003", "Cát vệ sinh Cature đậu nành tự nhiên 6L", "Túi 6L", "Phụ kiện", "túi"},
-                    {"SP004", "Sữa tắm trị ve rận Bio Derma 250ml", "Chai 250ml", "Thuốc & Y tế", "chai"},
-                    {"SP005", "Vòng cổ trị ve rận Seresto cho chó", "Hộp 1 cái", "Phụ kiện", "cái"},
-                    {"SP006", "Xương gặm sạch răng Pedigree DentaStix 110g", "Gói 110g", "Thức ăn", "gói"},
-                    {"SP007", "Dung dịch nhỏ mắt Bioline 50ml", "Lọ 50ml", "Thuốc & Y tế", "chai"},
-                    {"SP008", "Gel dinh dưỡng Nourse 120g", "Tuýp 120g", "Thuốc & Y tế", "tuýp"},
-                    {"SP009", "Bánh thưởng vị thịt gà SmartHeart 100g", "Gói 100g", "Thức ăn", "gói"},
-                    {"SP010", "Cần câu mèo lông vũ gắn chuông", "Cây 50cm", "Đồ chơi", "cái"},
-                    {"SP011", "Bóng cao su đồ chơi gặm sạch răng cho chó", "Quả đk 7cm", "Đồ chơi", "cái"},
-                    {"SP012", "Thuốc tẩy giun Sanpet cho chó mèo", "Vỉ 10 viên", "Thuốc & Y tế", "viên"},
-                    {"SP013", "Xịt khử mùi chuồng trại & khay cát Forcans 300ml", "Chai 300ml", "Phụ kiện", "chai"},
-                    {"SP014", "Bát ăn chống trượt inox 2 ngăn cho thú cưng", "Cái 2 ngăn", "Phụ kiện", "cái"},
-                    {"SP015", "Lược chải lông tự làm sạch Pet Brush", "Cây cầm tay", "Phụ kiện", "cái"},
-                    {"SP016", "Dây dắt kèm yếm ngực phản quang cho chó", "Bộ dây + yếm", "Phụ kiện", "bộ"},
-                    {"SP017", "Hạt Me-O vị cá ngừ cho mèo lớn 1.2kg", "Túi 1.2kg", "Thức ăn", "bao"},
-                    {"SP018", "Cỏ tươi Catnip sấy khô cho mèo", "Hũ 45g", "Đồ chơi", "hũ"},
-                    {"SP019", "Tã bỉm thú cưng Dono size M (12 miếng)", "Bịch 12 miếng", "Phụ kiện", "gói"},
-                    {"SP020", "Bột điện giải và men vi sinh Biotic 5g", "Gói 5g", "Thuốc & Y tế", "gói"}
+                    {"FOOD001", "Thức ăn hạt Royal Canin Mini Adult 2kg", "Túi 2kg", "Thức ăn", "bao"},
+                    {"FOOD002", "Pate Whiskas cá thu & cá hồi 85g", "Gói 85g", "Thức ăn", "gói"},
+                    {"FOOD003", "Xương gặm sạch răng Pedigree DentaStix 110g", "Gói 110g", "Thức ăn", "gói"},
+                    {"FOOD004", "Bánh thưởng vị thịt gà SmartHeart 100g", "Gói 100g", "Thức ăn", "gói"},
+                    {"FOOD005", "Hạt Me-O vị cá ngừ cho mèo lớn 1.2kg", "Túi 1.2kg", "Thức ăn", "bao"},
+                    {"TOY001", "Cần câu mèo lông vũ gắn chuông", "Cây 50cm", "Đồ chơi", "cái"},
+                    {"TOY002", "Bóng cao su đồ chơi gặm sạch răng cho chó", "Quả đk 7cm", "Đồ chơi", "cái"},
+                    {"TOY003", "Cỏ tươi Catnip sấy khô cho mèo", "Hũ 45g", "Đồ chơi", "hũ"},
+                    {"MED001", "Dung dịch nhỏ mắt Bioline 50ml", "Lọ 50ml", "Thuốc", "chai"},
+                    {"MED002", "Gel dinh dưỡng Nourse 120g", "Tuýp 120g", "Thuốc", "tuýp"},
+                    {"MED003", "Thuốc tẩy giun Sanpet cho chó mèo", "Vỉ 10 viên", "Thuốc", "viên"},
+                    {"MED004", "Bột điện giải và men vi sinh Biotic 5g", "Gói 5g", "Thuốc", "gói"},
+                    {"CARE001", "Cát vệ sinh Cature đậu nành tự nhiên 6L", "Túi 6L", "Chăm sóc và vệ sinh", "túi"},
+                    {"CARE002", "Sữa tắm trị ve rận Bio Derma 250ml", "Chai 250ml", "Chăm sóc và vệ sinh", "chai"},
+                    {"CARE003", "Xịt khử mùi chuồng trại & khay cát Forcans 300ml", "Chai 300ml", "Chăm sóc và vệ sinh", "chai"},
+                    {"ACC001", "Vòng cổ trị ve rận Seresto cho chó", "Hộp 1 cái", "Phụ kiện", "cái"},
+                    {"ACC002", "Dây dắt kèm yếm ngực phản quang cho chó", "Bộ dây + yếm", "Phụ kiện", "bộ"},
+                    {"LIV001", "Bát ăn chống trượt inox 2 ngăn cho thú cưng", "Cái 2 ngăn", "Đồ dùng và sinh hoạt", "cái"},
+                    {"LIV002", "Lược chải lông tự làm sạch Pet Brush", "Cây cầm tay", "Đồ dùng và sinh hoạt", "cái"},
+                    {"LIV003", "Tã bỉm thú cưng Dono size M (12 miếng)", "Bịch 12 miếng", "Đồ dùng và sinh hoạt", "gói"}
                 };
 
                 String updateSql = "UPDATE SANPHAM SET tenSP = ?, quyCach = ?, danhMuc = ?, donViTinh = ? WHERE sku_maSP = ?";
@@ -184,7 +184,7 @@ public class DichVuDAO {
 
     public List<SanPham> layTatCaSanPham() {
         List<SanPham> ds = new ArrayList<>();
-        String sql = "SELECT sku_maSP, tenSP, donGia, soLuongTon FROM SANPHAM ORDER BY sku_maSP";
+        String sql = "SELECT sku_maSP, tenSP, donGia, soLuongTon, ISNULL(danhMuc, N'Khác') AS danhMuc FROM SANPHAM ORDER BY sku_maSP";
         try (Connection con = ConnectDB.getConnection();
              Statement st = con.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
@@ -192,10 +192,7 @@ public class DichVuDAO {
                 String sku = rs.getString("sku_maSP");
                 String ten = rs.getString("tenSP");
                 long gia = Math.round(rs.getDouble("donGia"));
-                String dm = "Sản phẩm";
-                if (sku.startsWith("TA") || sku.startsWith("RC") || sku.startsWith("CAT") || sku.startsWith("PG") || sku.startsWith("WK") || sku.startsWith("SH") || sku.startsWith("MO")) dm = "Thức ăn";
-                else if (sku.startsWith("TY")) dm = "Đồ chơi";
-                else if (sku.startsWith("MED")) dm = "Thuốc";
+                String dm = rs.getString("danhMuc");
 
                 SanPham sp = new SanPham(sku, ten, dm, gia, false);
                 ds.add(sp);
@@ -289,21 +286,23 @@ public class DichVuDAO {
     }
 
     public void themSanPham(SanPham sp) throws SQLException {
-        String sql = "INSERT INTO SANPHAM (sku_maSP, tenSP, donGia, soLuongTon) VALUES (?, ?, ?, 50)";
+        String sql = "INSERT INTO SANPHAM (sku_maSP, tenSP, danhMuc, donGia, soLuongTon) VALUES (?, ?, ?, ?, 50)";
         try (Connection con = ConnectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, sp.getSku());
             ps.setString(2, sp.getTen());
-            ps.setDouble(3, sp.getGia());
+            ps.setString(3, sp.getDanhMuc());
+            ps.setDouble(4, sp.getGia());
             ps.executeUpdate();
         }
     }
 
     public void capNhatSanPham(SanPham sp) throws SQLException {
-        String sql = "UPDATE SANPHAM SET tenSP = ?, donGia = ? WHERE sku_maSP = ?";
+        String sql = "UPDATE SANPHAM SET tenSP = ?, danhMuc = ?, donGia = ? WHERE sku_maSP = ?";
         try (Connection con = ConnectDB.getConnection(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, sp.getTen());
-            ps.setDouble(2, sp.getGia());
-            ps.setString(3, sp.getSku());
+            ps.setString(2, sp.getDanhMuc());
+            ps.setDouble(3, sp.getGia());
+            ps.setString(4, sp.getSku());
             ps.executeUpdate();
         }
     }

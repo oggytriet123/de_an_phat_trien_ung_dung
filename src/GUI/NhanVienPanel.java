@@ -25,8 +25,8 @@ import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 
 import Bus.NhanVienBUS;
-import DAO.NhanVienDAO;
 import Entity.NhanVien;
+import Entity.QuyenOption;
 import Entity.TaiKhoan;
 import DTO.ThongKeNhanVien;
 
@@ -397,15 +397,15 @@ public class NhanVienPanel extends JPanel {
         txtMatKhau.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createLineBorder(new Color(0xD5DCE1)), BorderFactory.createEmptyBorder(4, 8, 4, 8)));
 
         // [CN-PQ-20] Combobox chọn nhóm quyền khi thêm/sửa nhân viên
-        JComboBox<NhanVienDAO.QuyenOption> cboQuyen = new JComboBox<>();
+        JComboBox<QuyenOption> cboQuyen = new JComboBox<>();
         try {
-            for (NhanVienDAO.QuyenOption q : bus.layDanhSachQuyen()) cboQuyen.addItem(q);
+            for (QuyenOption q : bus.layDanhSachQuyen()) cboQuyen.addItem(q);
         } catch (SQLException ignored) {}
         if (cboQuyen.getItemCount() == 0) {
-            cboQuyen.addItem(new NhanVienDAO.QuyenOption(1, "Quản lý"));
-            cboQuyen.addItem(new NhanVienDAO.QuyenOption(2, "Bán hàng"));
-            cboQuyen.addItem(new NhanVienDAO.QuyenOption(3, "Kho"));
-            cboQuyen.addItem(new NhanVienDAO.QuyenOption(4, "Bác sĩ"));
+            cboQuyen.addItem(new QuyenOption(1, "Quản lý"));
+            cboQuyen.addItem(new QuyenOption(2, "Bán hàng"));
+            cboQuyen.addItem(new QuyenOption(3, "Kho"));
+            cboQuyen.addItem(new QuyenOption(4, "Bác sĩ"));
         }
         if (!laSua) cboQuyen.setSelectedIndex(0);
         for (JComboBox<?> c : new JComboBox<?>[] {cboQuyen}) styleCombo(c);
@@ -439,14 +439,14 @@ public class NhanVienPanel extends JPanel {
             txtMatKhau.setText("123456");
         }
 
-        JPanel form = new JPanel(new GridLayout(9, 2, 10, 8));
+        JPanel form = new JPanel(new GridLayout(laSua ? 8 : 9, 2, 10, 8));
         form.setBorder(new EmptyBorder(16, 20, 16, 20));
         form.setBackground(Color.WHITE);
 
         // [UI-NV-16] Nhãn các ô trong form Thêm/Sửa nhân viên
         form.add(new JLabel("Họ và tên (*):")); form.add(txtHoTen);
         form.add(new JLabel("Tên đăng nhập (*):")); form.add(txtTenDangNhap);
-        form.add(new JLabel(laSua ? "Mật khẩu mới:" : "Mật khẩu ban đầu:")); form.add(txtMatKhau);
+        if (!laSua) { form.add(new JLabel("Mật khẩu ban đầu:")); form.add(txtMatKhau); }
         // [UI-PQ-03] Nhãn ô chọn chức danh / nhóm quyền
         form.add(new JLabel("Chức danh (*):")); form.add(cboQuyen);
         form.add(new JLabel("Số điện thoại:")); form.add(txtSdt);
@@ -465,7 +465,7 @@ public class NhanVienPanel extends JPanel {
             String hoTen = txtHoTen.getText().trim();
             String username = txtTenDangNhap.getText().trim();
             String rawPass = new String(txtMatKhau.getPassword()).trim();
-            NhanVienDAO.QuyenOption qOpt = (NhanVienDAO.QuyenOption) cboQuyen.getSelectedItem();
+            QuyenOption qOpt = (QuyenOption) cboQuyen.getSelectedItem();
 
             if (qOpt == null) {
                 JOptionPane.showMessageDialog(dlg, "Vui lòng chọn chức danh!", "Lỗi", JOptionPane.ERROR_MESSAGE);

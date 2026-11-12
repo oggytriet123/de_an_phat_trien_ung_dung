@@ -38,12 +38,12 @@ public class KhachHangPanel extends JPanel {
     private static final int PAGE_SIZE = 7;
     private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("dd/MM/yyyy");
     // [UI-KH-02] Tên hạng thẻ ở nút lọc
-    private static final String[] HANG = {"Tất cả", "VIP", "Thân thiết", "Thường"};
+    private static final String[] HANG = {"VIP", "Thân thiết", "Thường"};
     private static final String[] SORTS = {"Điểm cao nhất", "Chi tiêu cao nhất", "Giao dịch gần nhất", "Tên A-Z"};
 
-    private final KhachHangBUS bus = new KhachHangBUS();
+    private final KhachHangBUS bus;
     private List<KhachHang> filtered = new ArrayList<>();
-    private String hangLoc = "Tất cả";
+    private String hangLoc = "";
     private String sapXep = SORTS[0];
     private int trang = 1;
     private String loiTai = null;
@@ -61,14 +61,19 @@ public class KhachHangPanel extends JPanel {
     private final JTable table = new JTable(tableModel);
     // [UI-KH-04] Chữ gợi ý ô tìm kiếm
     private final PlaceholderField txtTim = new PlaceholderField("Tìm theo tên, số điện thoại, mã thẻ...");
-    private final JComboBox<String> cboHangThe = new JComboBox<>(new String[]{"Tất cả hạng", "VIP", "Thân thiết", "Thường"});
+    private final JComboBox<String> cboHangThe = new JComboBox<>(new String[]{"Chọn hạng thẻ...", "VIP", "Thân thiết", "Thường"});
     private final JComboBox<String> cboSapXep = new JComboBox<>(SORTS);
     private final List<RoundedButton> chips = new ArrayList<>();
     private final JLabel lblFooter = new JLabel();
     private final JPanel pnlPages = new JPanel(new FlowLayout(FlowLayout.RIGHT, 6, 0));
 
     public KhachHangPanel() {
+        this(new KhachHangBUS());
+    }
+
+    public KhachHangPanel(KhachHangBUS sharedBus) {
         super(new BorderLayout(0, 18));
+        this.bus = sharedBus != null ? sharedBus : new KhachHangBUS();
         setBackground(Theme.BG);
         setBorder(new EmptyBorder(26, 28, 24, 28));
 
@@ -298,7 +303,7 @@ public class KhachHangPanel extends JPanel {
         cboHangThe.setPreferredSize(new Dimension(140, 36));
         cboHangThe.addActionListener(e -> {
             String sel = (String) cboHangThe.getSelectedItem();
-            hangLoc = (sel == null || sel.equals("Tất cả hạng")) ? "Tất cả" : sel;
+            hangLoc = (sel == null || sel.equals("Chọn hạng thẻ...")) ? "" : sel;
             trang = 1;
             refresh();
         });
@@ -309,8 +314,14 @@ public class KhachHangPanel extends JPanel {
             chip.setFont(Theme.font(Font.PLAIN, 13));
             chip.setPreferredSize(new Dimension(chip.getPreferredSize().width, 36));
             chip.addActionListener(e -> {
-                hangLoc = h;
-                cboHangThe.setSelectedItem(h.equals("Tất cả") ? "Tất cả hạng" : h);
+                // Toggle: click chip đang chọn → bỏ chọn; click chip khác → chọn chip đó
+                if (hangLoc.equals(h)) {
+                    hangLoc = "";
+                    cboHangThe.setSelectedItem("Chọn hạng thẻ...");
+                } else {
+                    hangLoc = h;
+                    cboHangThe.setSelectedItem(h);
+                }
                 trang = 1;
                 refresh();
             });
@@ -393,7 +404,7 @@ public class KhachHangPanel extends JPanel {
     // [CN-KH-07] Lọc + sắp xếp + phân trang rồi vẽ lại bảng
     private void refresh() {
         String kw = norm(txtTim.getText().trim());
-        boolean coDieuKien = !kw.isEmpty() || !hangLoc.equals("Tất cả");
+        boolean coDieuKien = !kw.isEmpty() || !hangLoc.isEmpty();
 
         // Quy tắc tối ưu No-Get-All: Khi chưa có từ khóa tìm kiếm và chưa chọn hạng lọc thì không tải toàn bộ dữ liệu lên bảng
         if (!coDieuKien) {
@@ -412,7 +423,7 @@ public class KhachHangPanel extends JPanel {
         }
         List<KhachHang> list = new ArrayList<>();
         for (KhachHang k : bus.layDanhSach()) {
-            if (!hangLoc.equals("Tất cả") && !k.getHangThe().equalsIgnoreCase(hangLoc)) continue;
+            if (!hangLoc.isEmpty() && !k.getHangThe().equalsIgnoreCase(hangLoc)) continue;
             if (!kw.isEmpty()) {
                 String hay = norm(k.getHoTen()) + "|" + KhachHangBUS.chiSo(k.getSoDienThoai()) + "|" + norm(k.getMaKH());
                 if (!hay.contains(kw) && !hay.contains(KhachHangBUS.chiSo(kw).isEmpty() ? "\u0000" : KhachHangBUS.chiSo(kw))) continue;
@@ -560,103 +571,69 @@ public class KhachHangPanel extends JPanel {
 
     // [CN-KH-09] Form Thêm khách hàng (kèm danh sách thú cưng)
     private void themKhachHang() {
-        Window owner = SwingUtilities.getWindowAncestor(this);
-        JDialog dlg = new JDialog(owner, "Thêm khách hàng", Dialog.ModalityType.APPLICATION_MODAL);
-
-        JTextField tfTen = field();
-        JTextField tfSdt = field();
-        JSpinner spDiem = new JSpinner(new SpinnerNumberModel(0, 0, 1_000_000, 10));
-        spDiem.setFont(Theme.font(Font.PLAIN, 14));
-        spDiem.setPreferredSize(new Dimension(300, 36));
-
-        JPanel petList = new JPanel();
-        petList.setLayout(new BoxLayout(petList, BoxLayout.Y_AXIS));
-        petList.setBackground(Color.WHITE);
-        List<PetRow> petRows = new ArrayList<>();
-        taoDongThuCung(petList, petRows, dlg);
-        JScrollPane petScroll = new JScrollPane(petList);
-        petScroll.setBorder(null);
-        petScroll.setPreferredSize(new Dimension(300, 120));
-        // [UI-KH-14] Nút thêm dòng thú cưng trong form
-        RoundedButton addPet = new RoundedButton("+ Thêm thú cưng", Color.WHITE, new Color(0xF3F6F8), Theme.ACCENT, Theme.BORDER, 8).pad(14, 6);
-        addPet.setFont(Theme.font(Font.PLAIN, 12));
-        addPet.addActionListener(e -> taoDongThuCung(petList, petRows, dlg));
-
-        JLabel err = new JLabel(" ");
-        err.setFont(Theme.font(Font.PLAIN, 12));
-        err.setForeground(Theme.RED);
-
-        JPanel form = new JPanel(new GridBagLayout());
-        form.setBackground(Color.WHITE);
-        form.setBorder(new EmptyBorder(20, 24, 8, 24));
-        GridBagConstraints c = new GridBagConstraints();
-        c.gridx = 0; c.weightx = 1; c.fill = GridBagConstraints.HORIZONTAL;
-
-        int y = 0;
-        // [UI-KH-15] Nhãn các ô trong form Thêm khách hàng
-        c.gridy = y++; c.insets = new Insets(0, 0, 4, 0); form.add(new JLabel("Họ tên *"), c);
-        c.gridy = y++; c.insets = new Insets(0, 0, 10, 0); form.add(tfTen, c);
-        c.gridy = y++; c.insets = new Insets(0, 0, 4, 0); form.add(new JLabel("Số điện thoại *"), c);
-        c.gridy = y++; c.insets = new Insets(0, 0, 10, 0); form.add(tfSdt, c);
-        c.gridy = y++; c.insets = new Insets(0, 0, 4, 0); form.add(new JLabel("Điểm tích lũy ban đầu:"), c);
-        c.gridy = y++; c.insets = new Insets(0, 0, 10, 0); form.add(spDiem, c);
-
-        JPanel petHead = new JPanel(new BorderLayout());
-        petHead.setBackground(Color.WHITE);
-        // [UI-KH-16] Tiêu đề khối nhập thú cưng của khách
-        petHead.add(new JLabel("Thú cưng [tên · loài · cân nặng kg]"), BorderLayout.WEST);
-        petHead.add(addPet, BorderLayout.EAST);
-        c.gridy = y++; c.insets = new Insets(0, 0, 6, 0); form.add(petHead, c);
-        c.gridy = y++; c.insets = new Insets(0, 0, 8, 0); form.add(petScroll, c);
-        c.gridy = y; c.insets = new Insets(0, 0, 0, 0); form.add(err, c);
-
-        // [UI-KH-17] Nút Lưu (form Thêm)
-        RoundedButton ok = new RoundedButton("Lưu", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(24, 9);
-        RoundedButton cancel = new RoundedButton("Hủy", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(24, 9);
-        JPanel btns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        btns.setBackground(Color.WHITE);
-        btns.setBorder(new EmptyBorder(4, 24, 18, 24));
-        btns.add(cancel); btns.add(ok);
-
-        cancel.addActionListener(e -> dlg.dispose());
-        ok.addActionListener(e -> {
-            String ten = tfTen.getText().trim().replaceAll("\\s+", " ");
-            String sdt = KhachHangBUS.chiSo(tfSdt.getText());
-            if (ten.isEmpty()) { err.setText("Vui lòng nhập họ tên."); return; }
-            // [CN-KH-10] Validate độ dài SĐT khi thêm
-            if (sdt.length() < 9 || sdt.length() > 11) { err.setText("Số điện thoại phải gồm 9–11 chữ số."); return; }
-
-            List<ThuCung> pets = new ArrayList<>();
-            for (PetRow r : petRows) {
-                String tenPet = r.tfTen.getText().trim();
-                if (tenPet.isEmpty()) continue;
-                double can = 0;
-                try { if (!r.tfCan.getText().trim().isEmpty()) can = Double.parseDouble(r.tfCan.getText().trim().replace(',', '.')); }
-                catch (Exception ex) {}
-                pets.add(new ThuCung(null, tenPet, (String) r.cbLoai.getSelectedItem(), can));
-            }
-            try {
-                // [CN-KH-11] Chặn trùng SĐT khi thêm
-                if (bus.tonTaiSoDienThoai(sdt)) { err.setText("Số điện thoại này đã tồn tại."); return; }
-                bus.them(ten, sdt, ((Number) spDiem.getValue()).intValue(), pets);
-                dlg.dispose();
-                taiDuLieu();
-                refresh();
-            } catch (SQLException ex) {
-                err.setText("Lỗi: " + ex.getMessage());
-            }
-        });
-
-        dlg.setLayout(new BorderLayout());
-        dlg.add(form, BorderLayout.CENTER);
-        dlg.add(btns, BorderLayout.SOUTH);
-        dlg.setSize(470, 560);
-        dlg.setLocationRelativeTo(owner);
-        dlg.setVisible(true);
+        KhachHang moi = DialogThemKhachHang.hienThi(this, bus, null, null);
+        if (moi != null) {
+            taiDuLieu();
+            refresh();
+        }
     }
 
     // ---------------- CHỈNH SỬA KHÁCH HÀNG ----------------
-    // [CN-KH-12] Form Sửa khách hàng (hạng thẻ tự tính theo điểm)
+    private static final class EditPetRow {
+        final JPanel panel = new JPanel(new GridBagLayout());
+        final JTextField tfTen = new JTextField();
+        final JComboBox<String> cbLoai = new JComboBox<>(new String[] {"Chó", "Mèo", "Thỏ", "Khác"});
+        final JTextField tfCan = new JTextField();
+        String petID;
+    }
+
+    private EditPetRow taoDongThuCungSua(JPanel list, List<EditPetRow> rows, String petID, String ten, String loai, double can) {
+        EditPetRow r = new EditPetRow();
+        r.petID = petID;
+        Font f = Theme.font(Font.PLAIN, 13);
+        r.tfTen.setFont(f);
+        r.cbLoai.setFont(f);
+        r.tfCan.setFont(f);
+        if (ten != null) r.tfTen.setText(ten);
+        if (loai != null) {
+            for (int i = 0; i < r.cbLoai.getItemCount(); i++) {
+                if (r.cbLoai.getItemAt(i).equalsIgnoreCase(loai.trim())) {
+                    r.cbLoai.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+        if (can > 0) r.tfCan.setText(can % 1 == 0 ? String.valueOf((int) can) : String.valueOf(can));
+        for (JTextField t : new JTextField[] {r.tfTen, r.tfCan}) {
+            t.setBorder(new CompoundBorder(new LineBorder(new Color(0xD5DCE1)), new EmptyBorder(0, 8, 0, 8)));
+        }
+        RoundedButton del = new RoundedButton("×", Color.WHITE, new Color(0xFBE9E9), Theme.RED, Theme.BORDER, 8);
+        del.setFont(new Font("Arial", Font.PLAIN, 20));
+        r.panel.setBackground(Color.WHITE);
+        GridBagConstraints c = new GridBagConstraints();
+        c.gridy = 0;
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.insets = new Insets(0, 0, 6, 6);
+        c.gridx = 0; c.weightx = 1;   r.panel.add(r.tfTen, c);
+        c.gridx = 1; c.weightx = 0;   r.cbLoai.setPreferredSize(new Dimension(80, 32)); r.panel.add(r.cbLoai, c);
+        c.gridx = 2;                  r.tfCan.setPreferredSize(new Dimension(64, 32)); r.panel.add(r.tfCan, c);
+        c.gridx = 3; c.insets = new Insets(0, 0, 6, 0);
+        del.setPreferredSize(new Dimension(32, 32));
+        r.panel.add(del, c);
+        r.tfTen.setPreferredSize(new Dimension(130, 32));
+        del.addActionListener(e -> {
+            rows.remove(r);
+            list.remove(r.panel);
+            list.revalidate();
+            list.repaint();
+        });
+        rows.add(r);
+        list.add(r.panel);
+        list.revalidate();
+        list.repaint();
+        return r;
+    }
+    // [CN-KH-12] Form Sửa khách hàng (kèm danh sách thú cưng)
     private void suaKhachHang(KhachHang kh) {
         Window owner = SwingUtilities.getWindowAncestor(this);
         JDialog dlg = new JDialog(owner, "Chỉnh sửa khách hàng: " + kh.getMaKH(), Dialog.ModalityType.APPLICATION_MODAL);
@@ -665,31 +642,67 @@ public class KhachHangPanel extends JPanel {
         tfTen.setText(kh.getHoTen());
         JTextField tfSdt = field();
         tfSdt.setText(KhachHangBUS.chiSo(kh.getSoDienThoai()));
-        JSpinner spDiem = new JSpinner(new SpinnerNumberModel(kh.getDiemTichLuy(), 0, 1_000_000, 10));
-        spDiem.setFont(Theme.font(Font.PLAIN, 14));
-        spDiem.setPreferredSize(new Dimension(300, 36));
 
-        // [UI-KH-18] Dòng hiển thị hạng thẻ trong form Sửa
-        JLabel lblHang = new JLabel("Hạng thẻ: " + kh.getHangThe() + " (Tự động cập nhật theo điểm)");
-        lblHang.setFont(Theme.font(Font.PLAIN, 12));
-        lblHang.setForeground(Theme.MUTED);
-        spDiem.addChangeListener(e -> lblHang.setText("Hạng thẻ: " + KhachHangBUS.tinhHang(((Number) spDiem.getValue()).intValue())));
-
-        JPanel form = new JPanel(new GridLayout(4, 2, 10, 10));
+        // Form thông tin khách hàng
+        JPanel form = new JPanel(new GridLayout(3, 2, 10, 10));
         form.setBackground(Color.WHITE);
-        form.setBorder(new EmptyBorder(20, 24, 10, 24));
+        form.setBorder(new EmptyBorder(16, 24, 10, 24));
         form.add(new JLabel("Mã khách hàng:")); form.add(boldLabel(kh.getMaKH()));
         form.add(new JLabel("Họ và tên (*):")); form.add(tfTen);
         form.add(new JLabel("Số điện thoại (*):")); form.add(tfSdt);
-        form.add(new JLabel("Điểm tích lũy:")); form.add(spDiem);
 
-        JPanel pCenter = new JPanel(new BorderLayout(0, 8));
+        // Danh sách thú cưng
+        JPanel petList = new JPanel();
+        petList.setLayout(new BoxLayout(petList, BoxLayout.Y_AXIS));
+        petList.setBackground(Color.WHITE);
+        List<EditPetRow> petRows = new ArrayList<>();
+
+        // Load thú cưng của khách hàng
+        List<ThuCung> currentPets = null;
+        try {
+            currentPets = bus.layDanhSachThuCungCuaKhach(kh.getMaKH());
+        } catch (Exception ignored) {}
+
+        if (currentPets != null && !currentPets.isEmpty()) {
+            for (ThuCung tc : currentPets) {
+                taoDongThuCungSua(petList, petRows, tc.getPetID(), tc.getTen(), tc.getLoai(), tc.getCanNang());
+            }
+        } else {
+            taoDongThuCungSua(petList, petRows, null, "", "Chó", 0);
+        }
+
+        JScrollPane petScroll = new JScrollPane(petList);
+        petScroll.setBorder(new LineBorder(new Color(0xE2E8F0)));
+        petScroll.setPreferredSize(new Dimension(380, 130));
+
+        RoundedButton addPet = new RoundedButton("+ Thêm thú cưng", Color.WHITE, new Color(0xF3F6F8), Theme.ACCENT, Theme.BORDER, 8).pad(14, 6);
+        addPet.setFont(Theme.font(Font.PLAIN, 12));
+        addPet.addActionListener(e -> taoDongThuCungSua(petList, petRows, null, "", "Chó", 0));
+
+        JPanel petHead = new JPanel(new BorderLayout());
+        petHead.setBackground(Color.WHITE);
+        petHead.setBorder(new EmptyBorder(4, 24, 6, 24));
+        JLabel lblPet = new JLabel("Thú cưng [tên · loài · cân nặng kg]");
+        lblPet.setFont(Theme.font(Font.BOLD, 12));
+        petHead.add(lblPet, BorderLayout.WEST);
+        petHead.add(addPet, BorderLayout.EAST);
+
+        JPanel pPet = new JPanel(new BorderLayout());
+        pPet.setBackground(Color.WHITE);
+        pPet.add(petHead, BorderLayout.NORTH);
+        
+        JPanel pScrollWrap = new JPanel(new BorderLayout());
+        pScrollWrap.setBackground(Color.WHITE);
+        pScrollWrap.setBorder(new EmptyBorder(0, 24, 0, 24));
+        pScrollWrap.add(petScroll, BorderLayout.CENTER);
+        pPet.add(pScrollWrap, BorderLayout.CENTER);
+
+        JPanel pCenter = new JPanel(new BorderLayout());
         pCenter.setBackground(Color.WHITE);
         pCenter.add(form, BorderLayout.NORTH);
-        pCenter.add(lblHang, BorderLayout.CENTER);
-        lblHang.setBorder(new EmptyBorder(0, 24, 0, 24));
+        pCenter.add(pPet, BorderLayout.CENTER);
 
-        // [UI-KH-19] Nút Lưu cập nhật (form Sửa)
+        // Nút Lưu & Hủy
         RoundedButton ok = new RoundedButton("Lưu cập nhật", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 10).pad(20, 9);
         RoundedButton cancel = new RoundedButton("Hủy", Color.WHITE, new Color(0xF3F6F8), Theme.TEXT, Theme.BORDER, 10).pad(20, 9);
         cancel.addActionListener(e -> dlg.dispose());
@@ -697,10 +710,23 @@ public class KhachHangPanel extends JPanel {
         ok.addActionListener(e -> {
             String ten = tfTen.getText().trim();
             String sdt = tfSdt.getText().trim();
-            int diem = ((Number) spDiem.getValue()).intValue();
             if (ten.isEmpty()) { JOptionPane.showMessageDialog(dlg, "Vui lòng nhập họ tên!", "Lỗi", JOptionPane.ERROR_MESSAGE); return; }
+
+            List<ThuCung> petsToSave = new ArrayList<>();
+            for (EditPetRow r : petRows) {
+                String tenPet = r.tfTen.getText().trim();
+                if (tenPet.isEmpty()) continue;
+                double can = 0;
+                try {
+                    if (!r.tfCan.getText().trim().isEmpty()) {
+                        can = Double.parseDouble(r.tfCan.getText().trim().replace(',', '.'));
+                    }
+                } catch (Exception ignored) {}
+                petsToSave.add(new ThuCung(r.petID, tenPet, (String) r.cbLoai.getSelectedItem(), can));
+            }
+
             try {
-                bus.capNhat(kh.getMaKH(), ten, sdt, diem);
+                bus.capNhat(kh.getMaKH(), ten, sdt, kh.getDiemTichLuy(), petsToSave);
                 JOptionPane.showMessageDialog(dlg, "Cập nhật khách hàng thành công!");
                 dlg.dispose();
                 taiDuLieu();
@@ -712,17 +738,19 @@ public class KhachHangPanel extends JPanel {
 
         JPanel btns = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         btns.setBackground(Color.WHITE);
+        btns.setBorder(new EmptyBorder(4, 24, 12, 24));
         btns.add(cancel); btns.add(ok);
 
         dlg.setLayout(new BorderLayout());
         dlg.add(pCenter, BorderLayout.CENTER);
         dlg.add(btns, BorderLayout.SOUTH);
-        dlg.setSize(440, 280);
+        dlg.setSize(480, 420);
+        dlg.setResizable(false);
         dlg.setLocationRelativeTo(owner);
         dlg.setVisible(true);
     }
 
-    private JLabel boldLabel(String text) {
+        private JLabel boldLabel(String text) {
         JLabel l = new JLabel(text);
         l.setFont(l.getFont().deriveFont(Font.BOLD));
         return l;

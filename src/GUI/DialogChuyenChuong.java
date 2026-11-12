@@ -174,7 +174,7 @@ public class DialogChuyenChuong extends JDialog {
                         c.getSize(),
                         c.getKhuVuc(),
                         Theme.money((long) c.getGiaTheoNgay()),
-                        c.isVip() ? "VIP Suite ⭐" : "Tiêu chuẩn"
+                        c.isVip() ? "VIP Suite" : "Tiêu chuẩn"
                     });
                 }
             }

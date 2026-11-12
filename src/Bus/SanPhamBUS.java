@@ -24,14 +24,19 @@ public class SanPhamBUS {
     private final DichVuDAO dao = new DichVuDAO();
 
     public SanPhamBUS() {
-        macDinh("Thức ăn", "TA", false);
-        macDinh("Đồ chơi", "TY", false);
+        macDinh("Thức ăn", "FOOD", false);
+        macDinh("Đồ chơi", "TOY", false);
         macDinh("Thuốc", "MED", false);
-        macDinh("Dịch vụ khám", "VET", true);
-        macDinh("Dịch vụ spa", "SPA", true);
+        macDinh("Chăm sóc và vệ sinh", "CARE", false);
+        macDinh("Phụ kiện", "ACC", false);
+        macDinh("Đồ dùng và sinh hoạt", "LIV", false);
+        macDinh("Khám & Điều trị", "VET", true);
         macDinh("Tiêm phòng", "VAC", true);
         macDinh("Phẫu thuật", "SUR", true);
-        macDinh("Lưu chuồng", "LC", true);
+        macDinh("Spa & Grooming", "SPA", true);
+        macDinh("Lưu trú", "LC", true);
+        macDinh("Xét nghiệm & Chẩn đoán", "XN", true);
+        macDinh("Nha khoa", "NK", true);
         taiTuCSDL();
     }
 
@@ -56,6 +61,11 @@ public class SanPhamBUS {
 
         List<SanPham> spList = dao.layTatCaSanPham();
         for (SanPham sp : spList) {
+            String dm = sp.getDanhMuc();
+            if (dm != null && !loai.containsKey(dm)) {
+                String prefix = dm.length() >= 3 ? dm.substring(0, 3).toUpperCase() : "SP";
+                macDinh(dm, prefix, false);
+            }
             dangKy(sp);
         }
     }
@@ -189,14 +199,14 @@ public class SanPhamBUS {
         String tienTo = l != null ? l.tienTo() : tienToChoLoaiMoi(danhMuc);
         int so = daCap.getOrDefault(tienTo, 0) + 1;
         daCap.put(tienTo, so);
-        return String.format("%s-%03d", tienTo, so);
+        return String.format("%s%03d", tienTo, so);
     }
 
     public String maTiepTheo(String danhMuc) {
         LoaiHang l = loai.get(danhMuc);
         String tienTo = l != null ? l.tienTo() : tienToChoLoaiMoi(danhMuc);
         int so = daCap.getOrDefault(tienTo, 0) + 1;
-        return String.format("%s-%03d", tienTo, so);
+        return String.format("%s%03d", tienTo, so);
     }
 
     // ------------------------------------------------------------ thêm / sửa / xóa mục
@@ -325,11 +335,15 @@ public class SanPhamBUS {
     private void dangKy(SanPham sp) {
         sp.setStt(++demStt);
         ds.add(sp);
-        int gach = sp.getSku().lastIndexOf('-');
-        if (gach > 0) {
-            try {
-                daCap.merge(sp.getSku().substring(0, gach), Integer.parseInt(sp.getSku().substring(gach + 1)), Math::max);
-            } catch (NumberFormatException ignored) { }
+        if (sp.getSku() != null) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("^([A-Za-z_-]+?)-?(\\d+)$").matcher(sp.getSku());
+            if (m.find()) {
+                String tienTo = m.group(1).replace("-", "");
+                try {
+                    int num = Integer.parseInt(m.group(2));
+                    daCap.merge(tienTo, num, Math::max);
+                } catch (NumberFormatException ignored) {}
+            }
         }
     }
 }

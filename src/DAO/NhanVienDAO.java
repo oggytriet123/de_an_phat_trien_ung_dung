@@ -12,6 +12,7 @@ import java.util.List;
 
 import ConnectDB.ConnectDB;
 import Entity.NhanVien;
+import Entity.QuyenOption;
 import DTO.ThongKeNhanVien;
 
 /**
@@ -38,23 +39,7 @@ public class NhanVienDAO {
     }
 
     // [CN-PQ-16] Mục chọn nhóm quyền (mã quyền + tên) cho combobox
-    /**
-     * Nhóm quyền từ bảng PHANQUYEN để hiển thị trong ComboBox.
-     */
-    public static class QuyenOption {
-        public final int maQuyen;
-        public final String tenQuyen;
-
-        public QuyenOption(int maQuyen, String tenQuyen) {
-            this.maQuyen = maQuyen;
-            this.tenQuyen = tenQuyen;
-        }
-
-        @Override
-        public String toString() {
-            return tenQuyen;
-        }
-    }
+    // Entity.QuyenOption được dùng độc lập trong package Entity
 
     // [CN-NV-02] SELECT danh sách nhân viên (JOIN quyền, bảng chuyên môn)
     /**

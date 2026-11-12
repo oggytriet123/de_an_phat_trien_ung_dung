@@ -11,11 +11,13 @@ import java.util.Map;
  */
 public enum DanhMucPrefix {
     // Danh mục sản phẩm phổ biến
-    THUC_AN("Thức ăn", "TA", false),
+    THUC_AN("Thức ăn", "FOOD", false),
+    DO_CHOI("Đồ chơi", "TOY", false),
+    THUOC("Thuốc", "MED", false),
+    CHAM_SOC_VE_SINH("Chăm sóc và vệ sinh", "CARE", false),
+    PHU_KIEN("Phụ kiện", "ACC", false),
+    DO_DUNG_SINH_HOAT("Đồ dùng và sinh hoạt", "LIV", false),
     MY_PHAM("Mỹ phẩm", "MP", false),
-    PHU_KIEN("Phụ kiện", "PK", false),
-    THUOC("Thuốc", "TH", false),
-    DO_CHOI("Đồ chơi", "DC", false),
     CHUONG_LONG("Chuồng lồng", "CL", false),
     VE_SINH("Vệ sinh", "VS", false),
     CAT_VE_SINH("Cát vệ sinh", "CAT", false),
@@ -53,10 +55,25 @@ public enum DanhMucPrefix {
         // Thêm các biến thể gọi phổ biến
         map.put("THUCAN", THUC_AN);
         map.put("FOOD", THUC_AN);
+        map.put("TA", THUC_AN);
+        map.put("DOCHOI", DO_CHOI);
+        map.put("TOY", DO_CHOI);
+        map.put("DC", DO_CHOI);
+        map.put("THUOC", THUOC);
+        map.put("MED", THUOC);
+        map.put("TH", THUOC);
+        map.put("CHAMSOCVESINH", CHAM_SOC_VE_SINH);
+        map.put("CHAMSOCVAVESINH", CHAM_SOC_VE_SINH);
+        map.put("CARE", CHAM_SOC_VE_SINH);
+        map.put("DODUNGSINHHOAT", DO_DUNG_SINH_HOAT);
+        map.put("DODUNGVASINHHOAT", DO_DUNG_SINH_HOAT);
+        map.put("LIV", DO_DUNG_SINH_HOAT);
         map.put("MYPHAM", MY_PHAM);
         map.put("COSMETIC", MY_PHAM);
         map.put("PHUKIEN", PHU_KIEN);
         map.put("ACCESSORY", PHU_KIEN);
+        map.put("ACC", PHU_KIEN);
+        map.put("PK", PHU_KIEN);
         map.put("DICHVU", DICH_VU);
         map.put("SERVICE", DICH_VU);
         map.put("DICHVUSPA", SPA);

@@ -100,7 +100,7 @@ public class DialogChiTietChuong extends JDialog {
         pnlPet.setBorder(new EmptyBorder(14, 16, 14, 16));
 
         // [UI-LC-22] Tiêu đề khối thú cưng + chủ nuôi
-        JLabel t1 = new JLabel("🐾 THÔNG TIN THÚ CƯNG & CHỦ NUÔI");
+        JLabel t1 = new JLabel("THÔNG TIN THÚ CƯNG & CHỦ NUÔI");
         t1.setFont(Theme.font(Font.BOLD, 13));
         t1.setForeground(Theme.SIDEBAR);
         pnlPet.add(t1);
@@ -132,7 +132,7 @@ public class DialogChiTietChuong extends JDialog {
         JPanel topDV = new JPanel(new BorderLayout());
         topDV.setOpaque(false);
         // [UI-LC-23] Tiêu đề khối dịch vụ đã dùng
-        JLabel t2 = new JLabel("🍖 DỊCH VỤ & THỨC ĂN ĐÃ DÙNG");
+        JLabel t2 = new JLabel("DỊCH VỤ & THỨC ĂN ĐÃ DÙNG");
         t2.setFont(Theme.font(Font.BOLD, 13));
         t2.setForeground(Theme.SIDEBAR);
         topDV.add(t2, BorderLayout.WEST);
@@ -241,14 +241,14 @@ public class DialogChiTietChuong extends JDialog {
 
         if (c != null && c.isDaDat()) {
             // [UI-LC-27] Nút Nhận Lồng Ngay
-            RoundedButton btnNhan = new RoundedButton("🐾 Nhận Lồng Ngay (F5)", Theme.GREEN, new Color(0x278C44), Color.WHITE, null, 8).pad(16, 8);
+            RoundedButton btnNhan = new RoundedButton("Nhận Lồng Ngay (F5)", Theme.GREEN, new Color(0x278C44), Color.WHITE, null, 8).pad(16, 8);
             btnNhan.addActionListener(e -> nhanLong(c));
             foot.add(btnNhan);
         }
 
         if (c != null && c.isDangLuuTru()) {
             // [UI-LC-28] Nút Trả Lồng & Thanh Toán
-            RoundedButton btnTra = new RoundedButton("✨ Trả Lồng & Thanh Toán (F10)", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
+            RoundedButton btnTra = new RoundedButton("Trả Lồng & Thanh Toán (F10)", Theme.ACCENT, Theme.ACCENT_HOVER, Color.WHITE, null, 8).pad(18, 8);
             btnTra.addActionListener(e -> traLongThanhToan(c));
             foot.add(btnTra);
         }

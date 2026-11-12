@@ -145,4 +145,7 @@ public class DonThuoc {
     public void setMaPhacDo(String maPhacDo) { this.maPhacDo = maPhacDo; }
 
     public List<String> getLichSu() { return Collections.unmodifiableList(lichSu); }
+
+    /** Dùng riêng cho DAO khi khôi phục lịch sử từ CSDL (không thêm timestamp). */
+    public void addLichSuRaw(String s) { if (s != null && !s.isEmpty()) lichSu.add(s); }
 }

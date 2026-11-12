@@ -51,7 +51,6 @@ public class TaiKhoan {
         this.trangThai = trangThai;
     }
 
-    // [CN-TK-29] Cập nhật SĐT/ngày sinh/email trong đối tượng đang đăng nhập
     public void capNhatLienHe(String soDienThoai, LocalDate ngaySinh, String email) {
         this.soDienThoai = soDienThoai;
         this.ngaySinh = ngaySinh;
@@ -60,92 +59,127 @@ public class TaiKhoan {
 
     private static String norm(String s) {
         if (s == null) return "";
-        return Normalizer.normalize(s, Normalizer.Form.NFD)
+        return Normalizer.normalize(s.toLowerCase(), Normalizer.Form.NFD)
                 .replaceAll("\\p{InCombiningDiacriticalMarks}+", "")
-                .toLowerCase().trim();
+                .replace("đ", "d")
+                .trim();
     }
 
-    // [CN-PQ-04] HÀM KIỂM TRA QUYỀN: tài khoản có được dùng chức năng này không
     /** Kiểm tra xem tài khoản có quyền dùng chức năng này không. */
     public boolean coQuyen(String tenChucNang) {
         if (tenChucNang == null || tenChucNang.trim().isEmpty()) return true;
 
         String target = norm(tenChucNang);
 
-        // Các chức năng dùng chung: mọi tài khoản đều có quyền
-        // [CN-PQ-05] Chức năng dùng chung: ai cũng được vào
+        // 1. Chức năng hệ thống dùng chung: mọi nhân viên đều được truy cập
         if (target.equals("trang chu") || target.equals("tai khoan") || target.equals("dang xuat") || target.equals("tro giup")) {
             return true;
         }
 
-        // Quản lý hoặc admin có toàn quyền 100% với tất cả chức năng
+        // 2. Quản lý / Admin có toàn quyền 100% tất cả chức năng
         String v = norm(vaiTro);
-        // [CN-PQ-09] Chi bypass theo vai tro, KHONG bypass theo username
         if (v.contains("quan ly") || v.contains("admin")) {
             return true;
         }
 
-        // Tìm kiếm chung: cho phép mở menu tìm kiếm nếu có quyền tra cứu
+        // 3. Tìm kiếm chung: cho phép mở menu nếu có ít nhất 1 quyền
         if (target.equals("tim kiem")) {
-            // [CN-PQ-05b] Chi hien menu Tim Kiem neu tai khoan co quyen
             return !chucNang.isEmpty();
         }
 
-        // Duyệt qua các quyền thực tế trong database của tài khoản
+        // 4. Đối chiếu trực tiếp và theo nghiệp vụ với tập quyền thực tế trong CSDL của tài khoản
         for (String cn : chucNang) {
             String c = norm(cn);
             if (c.equals(target)) return true;
 
-            // Ánh xạ Lồng Chuồng / Chuồng Lưu Trữ -> Lưu Trú
-            if ((target.contains("chuong") || target.contains("long chuong") || target.contains("luu tru"))
+            // Nhân Viên: CHỈ tài khoản có quyền Nhân Viên (hoặc Quản lý)
+            if (target.contains("nhan vien") && c.contains("nhan vien")) {
+                return true;
+            }
+
+            // Khách Hàng
+            if (target.contains("khach hang") && c.contains("khach hang")) {
+                return true;
+            }
+
+            // Thú Cưng
+            if (target.contains("thu cung") && c.contains("thu cung")) {
+                return true;
+            }
+
+            // Bán Hàng / Thu Ngân / Hóa Đơn
+            if ((target.contains("hoa don") || target.contains("ban hang"))
+                    && (c.contains("ban hang") || c.contains("hoa don") || c.contains("thu ngan"))) {
+                return true;
+            }
+
+            // Kho Hàng
+            if (target.equals("kho hang") && (c.equals("kho hang") || c.equals("quan ly kho hang") || c.equals("kho"))) {
+                return true;
+            }
+
+            // Lịch Sử Nhập / Xuất Kho
+            if ((target.contains("lich su kho") || target.contains("nhap xuat") || target.contains("lich su nhap"))
+                    && (c.contains("nhap xuat") || c.contains("kho hang") || c.equals("kho"))) {
+                return true;
+            }
+
+            // Danh Mục Bệnh
+            if (target.contains("benh") && (c.contains("benh") || c.contains("bac si") || c.contains("kham"))) {
+                return true;
+            }
+
+            // Tiêm Phòng
+            if (target.contains("tiem") && (c.contains("tiem") || c.contains("bac si") || c.contains("kham"))) {
+                return true;
+            }
+
+            // Phẫu Thuật
+            if (target.contains("phau thuat") && (c.contains("phau thuat") || c.contains("bac si"))) {
+                return true;
+            }
+
+            // Đơn Thuốc
+            if (target.contains("don thuoc") && (c.contains("don thuoc") || c.contains("bac si"))) {
+                return true;
+            }
+
+            // Phác Đồ
+            if (target.contains("phac do") && (c.contains("phac do") || c.contains("benh an") || c.contains("bac si"))) {
+                return true;
+            }
+
+            // Lồng Chuồng / Lưu Trú
+            if ((target.contains("chuong") || target.contains("luu tru"))
                     && (c.contains("luu tru") || c.contains("chuong"))) {
                 return true;
             }
 
-            // Ánh xạ Thống kê
-            if (target.contains("thong ke")) {
-                // Chi cho phep "Thong Ke Kho" neu co quyen kho
-                if (target.equals("thong ke kho") && (c.equals("thong ke kho") || c.equals("kho hang") || c.contains("san pham"))) return true;
-                if (!target.equals("thong ke kho") && c.equals("thong ke")) return true;
-                if (c.equals("thong ke kho")) return false; // Thong Ke Kho khong duoc tinh la Thong Ke chung
-                if (target.contains("ton kho") && (c.equals("kho hang") || c.contains("san pham") || c.equals("thong ke kho"))) return true;
-                if (target.contains("thu cung") && (c.contains("bac si") || c.contains("thu cung"))) return true;
-                if (target.contains("khach hang") && (c.contains("ban hang") || c.contains("khach hang"))) return true;
-            }
-
-            // Ánh xạ Hóa đơn / Bán hàng
-            if ((target.contains("hoa don") || target.contains("ban hang"))
-                    && (c.contains("hoa don") || c.contains("ban hang"))) {
+            // Lịch Hẹn
+            if (target.contains("lich hen") && (c.contains("lich hen") || c.contains("dat lich"))) {
                 return true;
             }
 
-            // Ánh xạ Bác sĩ, Tiêm phòng, Phẫu thuật, Đơn thuốc, Phác đồ, Bệnh lý
-            if ((target.contains("tiem phong") || target.contains("phau thuat") || target.contains("don thuoc")
-                    || target.contains("phac do") || target.contains("dieu tri") || target.contains("benh") || target.contains("bac si"))
-                    && (c.contains("bac si") || c.contains("kham") || c.contains("dieu tri") || c.contains("don thuoc") || c.contains("benh"))) {
-                return true;
-            }
-
-            // Ánh xạ Kho hàng / Sản phẩm / Nhập xuất
-            if ((target.contains("kho hang") || target.contains("nhap xuat") || target.contains("san pham"))
-                    && (c.equals("kho hang") || c.contains("nhap") || c.contains("san pham"))) {
-                return true;
-            }
-
-            // Ánh xạ Dịch vụ / Khuyến mãi
+            // Dịch Vụ / Khuyến Mãi
             if ((target.contains("dich vu") || target.contains("khuyen mai"))
                     && (c.contains("dich vu") || c.contains("khuyen mai"))) {
                 return true;
             }
 
-            // Ánh xạ Tìm kiếm chi tiết theo thực thể
-            if (target.startsWith("tim ") || target.equals("phieu dat lich")) {
-                if (c.contains("tim kiem")) return true;
-                if (target.contains("nhan vien") && c.contains("nhan vien")) return true;
-                if (target.contains("khach hang") && c.contains("khach hang")) return true;
-                if (target.contains("thu cung") && c.contains("thu cung")) return true;
-                if (target.contains("hoa don") && (c.contains("ban hang") || c.contains("hoa don"))) return true;
-                if ((target.contains("lich") || target.contains("dat lich")) && c.contains("lich hen")) return true;
+            // Thống Kê
+            if (target.contains("thong ke")) {
+                // Doanh thu tài chính: chỉ Quản lý
+                if (target.contains("doanh thu")) {
+                    return false;
+                }
+                // Tồn kho: Kho hàng hoặc Quản lý
+                if (target.contains("ton kho")) {
+                    if (c.contains("kho") || c.contains("san pham")) return true;
+                }
+                // Bán chạy: Bán hàng hoặc Kho
+                if (target.contains("ban chay")) {
+                    if (c.contains("ban hang") || c.contains("kho") || c.contains("san pham")) return true;
+                }
             }
         }
 

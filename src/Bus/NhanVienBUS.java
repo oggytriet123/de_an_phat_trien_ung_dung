@@ -14,6 +14,7 @@ import java.util.Locale;
 
 import DAO.NhanVienDAO;
 import Entity.NhanVien;
+import Entity.QuyenOption;
 import DTO.ThongKeNhanVien;
 
 /**
@@ -37,7 +38,7 @@ public class NhanVienBUS {
     }
 
     // [CN-PQ-19] Chuyển danh sách nhóm quyền lên giao diện
-    public List<NhanVienDAO.QuyenOption> layDanhSachQuyen() throws SQLException {
+    public List<QuyenOption> layDanhSachQuyen() throws SQLException {
         return dao.layDanhSachQuyen();
     }
 

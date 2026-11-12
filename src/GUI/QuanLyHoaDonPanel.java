@@ -165,8 +165,8 @@ public class QuanLyHoaDonPanel extends JPanel implements Refreshable {
         JPanel pnlChips = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
         pnlChips.setOpaque(false);
         pnlChips.add(createFilterChip("TẤT CẢ"));
-        pnlChips.add(createFilterChip("⚠️ QUÁ HẠN >15P"));
-        pnlChips.add(createFilterChip("📦 PRE-ORDER"));
+        pnlChips.add(createFilterChip("QUÁ HẠN >15P"));
+        pnlChips.add(createFilterChip("PRE-ORDER"));
         pnlChips.add(createFilterChip("CHỜ BÌNH THƯỜNG"));
         pnlChips.add(createFilterChip("Ô TRỐNG"));
 
@@ -258,7 +258,7 @@ public class QuanLyHoaDonPanel extends JPanel implements Refreshable {
                 tiLeTai >= 75 ? Theme.DANGER : (tiLeTai >= 50 ? Theme.ORANGE : Theme.PRIMARY));
 
         if (soQuaHan15p > 0) {
-            cardQuaHan.set(soQuaHan15p + " đơn", "⚠️ Vượt ngưỡng 15p!", Theme.DANGER);
+            cardQuaHan.set(soQuaHan15p + " đơn", "Vượt ngưỡng 15p!", Theme.DANGER);
             cardQuaHan.setBackground(Theme.RED_BG);
         } else {
             cardQuaHan.set("0 đơn", "Hàng đợi an toàn", Theme.SUCCESS);
@@ -271,7 +271,7 @@ public class QuanLyHoaDonPanel extends JPanel implements Refreshable {
 
         // Hiển thị hoặc ẩn banner cảnh báo quá tải
         if (soQuaHan15p > 0 || tiLeTai >= 75) {
-            StringBuilder sb = new StringBuilder("🚨 CẢNH BÁO CAO ĐIỂM: ");
+            StringBuilder sb = new StringBuilder("CẢNH BÁO CAO ĐIỂM: ");
             if (soQuaHan15p > 0) {
                 sb.append("Có ").append(soQuaHan15p).append(" đơn chờ quá 15 phút (lâu nhất: ").append(maxWait).append("p)! ");
             }
@@ -524,8 +524,8 @@ public class QuanLyHoaDonPanel extends JPanel implements Refreshable {
             if ("TẤT CẢ".equals(boLocHienTai)) return true;
             if ("Ô TRỐNG".equals(boLocHienTai)) return hd == null;
             if (hd == null) return false;
-            if ("⚠️ QUÁ HẠN >15P".equals(boLocHienTai)) return hd.isQuaHan15Phut();
-            if ("📦 PRE-ORDER".equals(boLocHienTai)) return hd.isPreOrder();
+            if ("QUÁ HẠN >15P".equals(boLocHienTai)) return hd.isQuaHan15Phut();
+            if ("PRE-ORDER".equals(boLocHienTai)) return hd.isPreOrder();
             if ("CHỜ BÌNH THƯỜNG".equals(boLocHienTai)) return !hd.isQuaHan15Phut() && !hd.isPreOrder();
             return true;
         }

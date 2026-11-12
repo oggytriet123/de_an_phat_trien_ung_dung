@@ -7,10 +7,12 @@ import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.border.MatteBorder;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
+import javax.swing.table.JTableHeader;
 
 import Bus.DanhMucBenhBUS;
 import Entity.DanhMucBenh;
@@ -83,28 +85,64 @@ public class DanhMucBenhPanel extends JPanel {
         table.setRowHeight(48);
         table.setFont(Theme.font(Font.PLAIN, 13));
         table.setForeground(Theme.TEXT);
-        table.setGridColor(Theme.ROW_LINE);
+        table.setShowGrid(true);
+        table.setShowHorizontalLines(true);
         table.setShowVerticalLines(false);
-        table.setSelectionBackground(Theme.BLUE_BG);
+        table.setGridColor(new Color(0xE2E8F0));
+        table.setIntercellSpacing(new Dimension(0, 1));
+        table.setSelectionBackground(new Color(0xEFF6FF));
         table.setSelectionForeground(Theme.TEXT);
-        table.getTableHeader().setFont(Theme.font(Font.BOLD, 12));
-        table.getTableHeader().setPreferredSize(new Dimension(100, 34));
-        table.getTableHeader().setForeground(Theme.MUTED);
-        table.getTableHeader().setBackground(Theme.FIELD_BG);
-        table.getColumnModel().getColumn(0).setPreferredWidth(90);
-        table.getColumnModel().getColumn(1).setPreferredWidth(220);
-        table.getColumnModel().getColumn(2).setPreferredWidth(620);
-        DefaultTableCellRenderer wrap = new DefaultTableCellRenderer() {
-            @Override public Component getTableCellRendererComponent(JTable tb, Object v, boolean sel, boolean foc, int r, int c) {
-                String txt = v == null ? "" : v.toString().replace("&", "&amp;").replace("<", "&lt;");
+
+        JTableHeader th = table.getTableHeader();
+        th.setFont(Theme.font(Font.BOLD, 12));
+        th.setPreferredSize(new Dimension(100, 42));
+        th.setForeground(new Color(0x475569));
+        th.setBackground(new Color(0xF8FAFC));
+        th.setBorder(new MatteBorder(0, 0, 1, 0, new Color(0xCBD5E1)));
+        th.setDefaultRenderer(new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable t, Object val, boolean isSel, boolean hasFoc, int r, int c) {
+                JLabel l = (JLabel) super.getTableCellRendererComponent(t, val, isSel, hasFoc, r, c);
+                l.setFont(Theme.font(Font.BOLD, 12));
+                l.setForeground(new Color(0x475569));
+                l.setBackground(new Color(0xF8FAFC));
+                l.setBorder(new EmptyBorder(0, 14, 0, 14));
+                return l;
+            }
+        });
+
+        table.getColumnModel().getColumn(0).setPreferredWidth(100);
+        table.getColumnModel().getColumn(1).setPreferredWidth(230);
+        table.getColumnModel().getColumn(2).setPreferredWidth(600);
+
+        DefaultTableCellRenderer cellRenderer = new DefaultTableCellRenderer() {
+            @Override
+            public Component getTableCellRendererComponent(JTable tb, Object v, boolean sel, boolean foc, int r, int c) {
+                String raw = v == null ? "" : v.toString();
+                String txt = raw.replace("&", "&amp;").replace("<", "&lt;");
                 JLabel l = (JLabel) super.getTableCellRendererComponent(tb, "<html>" + txt + "</html>", sel, foc, r, c);
-                l.setBorder(new EmptyBorder(4, 12, 4, 12));
+                l.setBorder(new EmptyBorder(6, 14, 6, 14));
+
+                if (!sel) {
+                    l.setBackground(r % 2 == 1 ? new Color(0xF8FAFC) : Color.WHITE);
+                }
+
+                if (c == 0) {
+                    l.setFont(Theme.font(Font.BOLD, 13));
+                    l.setForeground(Theme.PRIMARY);
+                } else if (c == 1) {
+                    l.setFont(Theme.font(Font.BOLD, 13));
+                    l.setForeground(new Color(0x0F172A));
+                } else {
+                    l.setFont(Theme.font(Font.PLAIN, 13));
+                    l.setForeground(new Color(0x334155));
+                }
                 return l;
             }
         };
-        table.getColumnModel().getColumn(2).setCellRenderer(wrap);
-        table.getColumnModel().getColumn(1).setCellRenderer(wrap);
-        table.getColumnModel().getColumn(0).setCellRenderer(wrap);
+        table.getColumnModel().getColumn(0).setCellRenderer(cellRenderer);
+        table.getColumnModel().getColumn(1).setCellRenderer(cellRenderer);
+        table.getColumnModel().getColumn(2).setCellRenderer(cellRenderer);
         table.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override public void mouseClicked(java.awt.event.MouseEvent e) {
                 if (e.getClickCount() == 2) { DanhMucBenh b = dangChon(); if (b != null) moDialog(b); }

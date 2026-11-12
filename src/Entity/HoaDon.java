@@ -3,6 +3,7 @@ package Entity;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Hóa đơn: thông tin khách hàng, nhân viên lập hóa đơn, danh sách chi tiết hóa đơn,
@@ -15,20 +16,20 @@ public class HoaDon {
     public static final int SO_LUONG_TOI_DA = 99;
 
     private final String maHD;
-    private int soO;                                    // ô đang giữ hóa đơn (1..20)
+    private int soO;                                    
 
     // Các đối tượng thực thể quan hệ theo mô hình OOP & CSDL
     private KhachHang khachHang;                        // Đối tượng Khách hàng
     private NhanVien nhanVien;                          // Đối tượng Nhân viên lập hóa đơn
-    private final List<ChiTietHoaDon> danhSachChiTiet = new ArrayList<>(); // Danh sách Chi tiết hóa đơn (thay thế DongGioHang)
+    private ThuCung thuCung;                            // Đối tượng Thú cưng được chăm sóc / khám chữa
+    private MaGiamGia maGiamGia;                        // Đối tượng Voucher / Mã giảm giá
+    private final List<ChiTietHoaDon> danhSachChiTiet = new ArrayList<>(); // Danh sách chi tiết hóa đơn (mỗi chi tiết chứa đối tượng SanPham)
 
     // Thuộc tính phụ / lưu vết chuỗi
     private String tenKH = "";
     private String sdt = "";
     private String maKH = "";
     private String maNV = "";
-
-    private MaGiamGia maGiamGia;
     private String trangThai = CHUA_THANH_TOAN;
     private String phuongThuc;
     private LocalDateTime ngayTao = LocalDateTime.now();
@@ -36,6 +37,7 @@ public class HoaDon {
     private boolean preOrder = false;
     private long tienKhachDua = 0;
     private long tienTraLai = 0;
+    private Double tongTienLuu;
 
     public HoaDon(String maHD, int soO) {
         this.maHD = maHD;
@@ -54,6 +56,7 @@ public class HoaDon {
         HoaDon h = new HoaDon(maHD, soO);
         h.khachHang = khachHang;
         h.nhanVien = nhanVien;
+        h.thuCung = thuCung;
         h.tenKH = getTenKH();
         h.sdt = getSdt();
         h.maKH = getMaKH();
@@ -71,10 +74,11 @@ public class HoaDon {
         h.preOrder = preOrder;
         h.tienKhachDua = tienKhachDua;
         h.tienTraLai = tienTraLai;
+        h.tongTienLuu = tongTienLuu;
         return h;
     }
 
-    // ---- Chi tiết hóa đơn (thay thế cho DongGioHang)
+    // ---- Chi tiết hóa đơn
     public List<ChiTietHoaDon> getDanhSachChiTiet() { return danhSachChiTiet; }
 
     /** Alias tương thích ngược với các module gọi getDong() */
@@ -87,7 +91,6 @@ public class HoaDon {
         for (ChiTietHoaDon d : danhSachChiTiet) {
             if (d.getSanPham() != null && d.getSanPham().getSku().equals(sp.getSku())) {
                 d.setSoLuong(Math.min(SO_LUONG_TOI_DA, d.getSoLuong() + 1));
-                d.tinhThanhTien();
                 return;
             }
         }
@@ -103,7 +106,6 @@ public class HoaDon {
             if (d.getSanPham() != null && ct.getSanPham() != null
                     && d.getSanPham().getSku().equals(ct.getSanPham().getSku())) {
                 d.setSoLuong(Math.min(SO_LUONG_TOI_DA, d.getSoLuong() + ct.getSoLuong()));
-                d.tinhThanhTien();
                 return;
             }
         }
@@ -119,7 +121,6 @@ public class HoaDon {
             if (sl <= 0) danhSachChiTiet.remove(i);
             else {
                 d.setSoLuong(sl);
-                d.tinhThanhTien();
             }
             return;
         }
@@ -128,16 +129,36 @@ public class HoaDon {
     // ---- Tiền
     public long tamTinh() {
         long t = 0;
-        for (ChiTietHoaDon d : danhSachChiTiet) t += d.thanhTien();
+        for (ChiTietHoaDon d : danhSachChiTiet) t += Math.round(d.getDonGia() * d.getSoLuong());
         return t;
     }
 
     public long tienGiam() {
-        return maGiamGia == null ? 0 : maGiamGia.tinhGiam(tamTinh());
+        return maGiamGia == null ? 0 : maGiamGia.tinhGiam(this);
     }
 
-    /** Cần thanh toán = tổng hàng - tiền giảm giá. */
+    /**
+     * Thuộc tính dẫn xuất: Tính tổng tiền của hóa đơn từ danh sách chi tiết hóa đơn.
+     * (Chuẩn OOP: Hóa đơn KHÔNG lưu thuộc tính 'thành tiền' độc lập, mà tổng tiền được tính từ
+     * tổng thành tiền của các chi tiết hóa đơn trừ đi tiền giảm giá từ voucher).
+     */
+    public double tinhTongTien() {
+        return canThanhToan();
+    }
+
+    public double getTongTien() {
+        return canThanhToan();
+    }
+
+    public void setTongTien(double tongTien) {
+        this.tongTienLuu = (double) Math.round(tongTien);
+    }
+
+    /** Cần thanh toán = tổng hàng - tiền giảm giá. Khi chưa tải chi tiết, dùng tổng tiền lưu từ CSDL. */
     public long canThanhToan() {
+        if (danhSachChiTiet.isEmpty() && tongTienLuu != null && tongTienLuu >= 0) {
+            return tongTienLuu.longValue();
+        }
         return tamTinh() - tienGiam();
     }
 
@@ -159,6 +180,9 @@ public class HoaDon {
             this.maNV = nv.getMaNV();
         }
     }
+
+    public ThuCung getThuCung() { return thuCung; }
+    public void setThuCung(ThuCung tc) { this.thuCung = tc; }
 
     // ---- Getter / setter thông thường
     public String getMaHD() { return maHD; }
@@ -263,5 +287,30 @@ public class HoaDon {
         this.trangThai = DA_THANH_TOAN;
         this.phuongThuc = phuongThuc;
         this.ngayThanhToan = luc;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        HoaDon hoaDon = (HoaDon) o;
+        return Objects.equals(maHD, hoaDon.maHD);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(maHD);
+    }
+
+    @Override
+    public String toString() {
+        return "HoaDon{" +
+                "maHD='" + maHD + '\'' +
+                ", khachHang=" + (khachHang != null ? khachHang.getHoTen() : tenKH) +
+                ", nhanVien=" + (nhanVien != null ? nhanVien.getHoTen() : maNV) +
+                ", soDong=" + danhSachChiTiet.size() +
+                ", tongTien=" + canThanhToan() +
+                ", trangThai='" + trangThai + '\'' +
+                '}';
     }
 }

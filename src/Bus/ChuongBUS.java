@@ -179,4 +179,9 @@ public class ChuongBUS {
         long soNgay = (soGio + 23) / 24;
         return Math.max(1, soNgay);
     }
+
+    /** Đếm số lồng chuồng đang có thú cưng lưu trú (qua DAO). */
+    public int demDangLuuTru() {
+        return dao.demDangLuuTru();
+    }
 }

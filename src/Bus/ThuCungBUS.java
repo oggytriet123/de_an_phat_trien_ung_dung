@@ -9,6 +9,7 @@ import java.util.Locale;
 
 import DAO.ThuCungDAO;
 import DTO.ThongKeThuCung;
+import Entity.KhachHangOption;
 import Entity.ThuCung;
 
 /**
@@ -73,7 +74,7 @@ public class ThuCungBUS {
     /**
      * Lấy danh sách khách hàng để chọn chủ nuôi.
      */
-    public List<ThuCungDAO.KhachHangOption> layDanhSachKhachHang() throws SQLException {
+    public List<KhachHangOption> layDanhSachKhachHang() throws SQLException {
         return dao.layDanhSachKhachHang();
     }
 
